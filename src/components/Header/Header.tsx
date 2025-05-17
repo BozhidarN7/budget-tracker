@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import ModeToggle from '@/components/ModeToggle';
 
 export default function Header() {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearchOpen] = useState(false);
 
   return (
     <header className="bg-background sticky top-0 z-10 border-b">

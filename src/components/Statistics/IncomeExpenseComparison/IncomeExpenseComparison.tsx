@@ -163,7 +163,10 @@ export default function IncomeExpenseComparison() {
                   <XAxis dataKey="month" />
                   <YAxis domain={[0, 2]} ticks={[0, 0.5, 1, 1.5, 2]} />
                   <Tooltip
-                    formatter={(value) => [`${value.toFixed(2)}`, 'Ratio']}
+                    formatter={(value: number) => [
+                      `${value.toFixed(2)}`,
+                      'Ratio',
+                    ]}
                   />
                   <Legend />
                   <Line
@@ -185,8 +188,8 @@ export default function IncomeExpenseComparison() {
             </div>
             <div className="text-muted-foreground mt-4 text-sm">
               <p>
-                A ratio above 1.0 means you're earning more than spending. Below
-                1.0 means you're spending more than earning.
+                A ratio above 1.0 means you&apos;re earning more than spending.
+                Below 1.0 means you&apos;re spending more than earning.
               </p>
             </div>
           </CardContent>

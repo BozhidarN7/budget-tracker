@@ -157,7 +157,7 @@ export default function SpendingTrends() {
                 </tr>
               </thead>
               <tbody>
-                {data.map((item, index) => {
+                {data?.map((item, index) => {
                   const prevExpense =
                     index > 0 ? data[index - 1].expenses : item.expenses;
                   const percentChange =

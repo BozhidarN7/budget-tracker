@@ -38,9 +38,9 @@ export default function EditTransactionDialog({
 }: {
   transaction: Transaction;
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange(open: boolean): void;
 }) {
-  const [date, setDate] = useState<Date>(
+  const [date, setDate] = useState<Date | undefined>(
     parse(transaction.date, 'MMM d, yyyy', new Date()),
   );
 

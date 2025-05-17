@@ -89,7 +89,7 @@ export default function CalendarView() {
                 return (
                   <div className="relative h-9 w-9 p-0 font-normal aria-selected:opacity-100">
                     <div className="text-foreground flex h-full w-full items-center justify-center">
-                      {props.day}
+                      {props.date.getDate()}
                     </div>
                     {hasTransactions && (
                       <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 gap-0.5">

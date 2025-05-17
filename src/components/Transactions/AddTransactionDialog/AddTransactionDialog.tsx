@@ -37,7 +37,7 @@ export default function AddTransactionDialog({
   open: boolean;
   onOpenChange(open: boolean): void;
 }) {
-  const [date, setDate] = useState<Date>(new Date());
+  const [date, setDate] = useState<Date | undefined>(new Date());
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -20,10 +20,12 @@ import {
 } from '@/components/ui/table';
 import { useBudgetData } from '@/hooks/';
 import { cn } from '@/lib/utils';
+import { Transaction } from '@/types/budget';
 
 export default function TransactionList() {
   const { transactions } = useBudgetData();
-  const [editingTransaction, setEditingTransaction] = useState(null);
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
 
   return (
     <div className="rounded-lg border shadow-sm">

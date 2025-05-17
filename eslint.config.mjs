@@ -23,6 +23,14 @@ const eslintConfig = [
       ],
       'sort-imports': ['error', { ignoreDeclarationSort: true }],
       'import/order': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
   },
 ];

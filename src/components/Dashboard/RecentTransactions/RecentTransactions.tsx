@@ -6,6 +6,7 @@ import RecentTransactionsSkeleton from '../RecentTransactionSkeleton';
 import { useBudgetData } from '@/hooks/';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { formatCurrency } from '@/utils';
 
 export default function RecentTransactions() {
   const { recentTransactions, isLoading } = useBudgetData();
@@ -52,8 +53,8 @@ export default function RecentTransactions() {
                   : 'text-rose-600',
               )}
             >
-              {transaction.type === 'income' ? '+' : '-'}$
-              {transaction.amount.toFixed(2)}
+              {transaction.type === 'income' ? '+' : '-'}
+              {formatCurrency(transaction.amount)}{' '}
             </div>
           </div>
         ))}

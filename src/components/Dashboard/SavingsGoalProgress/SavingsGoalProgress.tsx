@@ -2,6 +2,7 @@
 
 import { useBudgetData } from '@/hooks/';
 import { Progress } from '@/components/ui/progress';
+import { formatCurrency } from '@/utils';
 
 export default function SavingsGoalProgress() {
   const { savingsGoal, currentSavings } = useBudgetData();
@@ -12,7 +13,7 @@ export default function SavingsGoalProgress() {
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">Monthly Goal</span>
         <span className="text-sm font-medium">
-          ${currentSavings.toFixed(2)} / ${savingsGoal.toFixed(2)}
+          {formatCurrency(currentSavings)} / {formatCurrency(savingsGoal)}
         </span>
       </div>
       <Progress value={progressPercentage} className="h-2" />

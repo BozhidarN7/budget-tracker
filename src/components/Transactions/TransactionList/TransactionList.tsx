@@ -34,6 +34,7 @@ import {
 import { useBudgetContext } from '@/contexts/budget-context';
 import { Transaction } from '@/types/budget';
 import { useBudgetData } from '@/hooks/';
+import { formatCurrency } from '@/utils';
 
 export default function TransactionList() {
   const { transactions, isLoading } = useBudgetData();
@@ -146,8 +147,8 @@ export default function TransactionList() {
                     : 'text-rose-600',
                 )}
               >
-                {transaction.type === 'income' ? '+' : '-'}$
-                {transaction.amount?.toFixed(2)}
+                {transaction.type === 'income' ? '+' : '-'}
+                {formatCurrency(transaction.amount)}{' '}
               </TableCell>
               <TableCell>
                 <DropdownMenu>

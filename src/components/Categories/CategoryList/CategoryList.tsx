@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useBudgetContext } from '@/contexts/budget-context';
 import { Category } from '@/types/budget';
+import { formatCurrency } from '@/utils';
 
 export default function CategoryList() {
   const { categories, isLoading } = useBudgetData();
@@ -111,7 +112,8 @@ export default function CategoryList() {
                     isOverLimit ? 'text-rose-500' : 'text-muted-foreground',
                   )}
                 >
-                  ${category.spent?.toFixed(2)} / ${category.limit?.toFixed(2)}
+                  {formatCurrency(category.spent)} /{' '}
+                  {formatCurrency(category.limit)}
                 </span>
               </div>
               <div className={cn(isOverLimit ? 'text-rose-500' : '')}>

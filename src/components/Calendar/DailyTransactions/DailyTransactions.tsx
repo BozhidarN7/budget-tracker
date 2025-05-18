@@ -3,6 +3,7 @@
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import type { Transaction } from '@/types/budget';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/utils';
 
 export default function DailyTransactions({
   transactions,
@@ -36,13 +37,13 @@ export default function DailyTransactions({
         <div className="rounded-lg border p-3">
           <p className="text-muted-foreground text-sm">Income</p>
           <p className="text-xl font-medium text-emerald-600">
-            +${income.toFixed(2)}
+            +{formatCurrency(income)}
           </p>
         </div>
         <div className="rounded-lg border p-3">
           <p className="text-muted-foreground text-sm">Expenses</p>
           <p className="text-xl font-medium text-rose-600">
-            -${expenses.toFixed(2)}
+            -{formatCurrency(expenses)}
           </p>
         </div>
         <div className="rounded-lg border p-3">
@@ -53,7 +54,8 @@ export default function DailyTransactions({
               net >= 0 ? 'text-emerald-600' : 'text-rose-600',
             )}
           >
-            {net >= 0 ? '+' : '-'}${Math.abs(net).toFixed(2)}
+            {net >= 0 ? '+' : '-'}
+            {formatCurrency(Math.abs(net))}
           </p>
         </div>
       </div>

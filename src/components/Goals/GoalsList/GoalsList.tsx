@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Goal } from '@/types/budget';
+import { formatCurrency } from '@/utils';
 
 export default function GoalsList() {
   const { goals, isLoading } = useBudgetData();
@@ -96,7 +97,7 @@ export default function GoalsList() {
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-sm">Progress</span>
                 <span className="text-sm font-medium">
-                  ${goal.current.toFixed(2)} / ${goal.target.toFixed(2)}
+                  {formatCurrency(goal.current)} / {formatCurrency(goal.target)}
                 </span>
               </div>
               <Progress value={progressPercentage} className="h-2" />

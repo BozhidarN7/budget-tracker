@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { useBudgetData } from '@/hooks/';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBudgetContext } from '@/contexts/budget-context';
-import { Goal } from '@/types/budget';
+import { formatCurrency } from '@/utils';
 
 export default function SavingsGoalCard() {
   const { savingsGoal, currentSavings, isLoading } = useBudgetData();
@@ -18,7 +18,7 @@ export default function SavingsGoalCard() {
 
   // Find the main savings goal (assuming it's the first one with "Monthly" in the name)
   const mainGoal =
-    goals.find((goal: Goal) => goal.name.includes('Monthly')) || goals[0];
+    goals.find((goal) => goal.name.includes('Monthly')) || goals[0];
 
   const progressPercentage = (currentSavings / savingsGoal) * 100;
 
@@ -95,7 +95,7 @@ export default function SavingsGoalCard() {
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">Progress</span>
           <span className="text-sm font-medium">
-            ${currentSavings.toFixed(2)} / ${savingsGoal.toFixed(2)}
+            {formatCurrency(currentSavings)} / {formatCurrency(savingsGoal)}
           </span>
         </div>
         <Progress value={progressPercentage} className="h-2" />
@@ -110,15 +110,15 @@ export default function SavingsGoalCard() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Total Income</span>
-              <span className="font-medium">$5,200.00</span>
+              <span className="font-medium">{formatCurrency(5200)}</span>
             </div>
             <div className="flex justify-between">
               <span>Total Expenses</span>
-              <span className="font-medium">$3,750.00</span>
+              <span className="font-medium">{formatCurrency(3750)}</span>
             </div>
             <div className="flex justify-between border-t pt-2">
               <span>Available for Savings</span>
-              <span className="font-medium">$1,450.00</span>
+              <span className="font-medium">{formatCurrency(1450)}</span>
             </div>
           </div>
         </div>

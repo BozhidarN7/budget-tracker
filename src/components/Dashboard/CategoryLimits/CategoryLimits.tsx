@@ -3,6 +3,7 @@
 import { useBudgetData } from '@/hooks/';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/utils';
 
 export default function CategoryLimits() {
   const { categoryLimits } = useBudgetData();
@@ -23,7 +24,8 @@ export default function CategoryLimits() {
                   isOverLimit ? 'text-rose-500' : 'text-muted-foreground',
                 )}
               >
-                ${category.spent.toFixed(2)} / ${category.limit.toFixed(2)}
+                {formatCurrency(category.spent)} /{' '}
+                {formatCurrency(category.limit)}
               </span>
             </div>
             <div className={cn(isOverLimit ? 'text-rose-500' : '')}>

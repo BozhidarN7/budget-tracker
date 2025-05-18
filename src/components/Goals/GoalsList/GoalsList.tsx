@@ -1,6 +1,10 @@
 'use client';
 
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { Edit, MoreHorizontal, Trash } from 'lucide-react';
+import GoalsListSkeleton from '../GoalsListSkeleton';
+import EditGoalDialog from '../EditGoalDialog';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -10,9 +14,44 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { useBudgetData } from '@/hooks/';
+import { useBudgetContext } from '@/contexts/budget-context';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Goal } from '@/types/budget';
 
 export default function GoalsList() {
-  const { goals } = useBudgetData();
+  const { goals, isLoading } = useBudgetData();
+  const { removeGoal } = useBudgetContext();
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [deletingGoalId, setDeletingGoalId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!deletingGoalId) return;
+
+    setIsDeleting(true);
+    try {
+      await removeGoal(deletingGoalId);
+      toast.success('Goal deleted successfully');
+    } catch (_error) {
+      toast.error('Failed to delete goal');
+    } finally {
+      setIsDeleting(false);
+      setDeletingGoalId(null);
+    }
+  };
+
+  if (isLoading) {
+    return <GoalsListSkeleton />;
+  }
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -34,11 +73,14 @@ export default function GoalsList() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setEditingGoal(goal)}>
                     <Edit className="mr-2 h-4 w-4" />
                     Edit
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-rose-600">
+                  <DropdownMenuItem
+                    className="text-rose-600"
+                    onClick={() => setDeletingGoalId(goal.id)}
+                  >
                     <Trash className="mr-2 h-4 w-4" />
                     Delete
                   </DropdownMenuItem>
@@ -67,6 +109,39 @@ export default function GoalsList() {
           </div>
         );
       })}
+
+      {editingGoal && (
+        <EditGoalDialog
+          goal={editingGoal}
+          open={!!editingGoal}
+          onOpenChange={() => setEditingGoal(null)}
+        />
+      )}
+
+      <AlertDialog
+        open={!!deletingGoalId}
+        onOpenChange={(open) => !open && setDeletingGoalId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              savings goal.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-rose-600 hover:bg-rose-700"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

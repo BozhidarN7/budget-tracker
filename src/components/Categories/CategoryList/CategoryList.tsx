@@ -111,7 +111,7 @@ export default function CategoryList() {
                     isOverLimit ? 'text-rose-500' : 'text-muted-foreground',
                   )}
                 >
-                  ${category.spent.toFixed(2)} / ${category.limit.toFixed(2)}
+                  ${category.spent?.toFixed(2)} / ${category.limit?.toFixed(2)}
                 </span>
               </div>
               <div className={cn(isOverLimit ? 'text-rose-500' : '')}>

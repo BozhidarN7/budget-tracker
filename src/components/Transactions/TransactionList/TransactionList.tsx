@@ -147,7 +147,7 @@ export default function TransactionList() {
                 )}
               >
                 {transaction.type === 'income' ? '+' : '-'}$
-                {transaction.amount.toFixed(2)}
+                {transaction.amount?.toFixed(2)}
               </TableCell>
               <TableCell>
                 <DropdownMenu>

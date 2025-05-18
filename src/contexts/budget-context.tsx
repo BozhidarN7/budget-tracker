@@ -25,6 +25,7 @@ import {
   createGoal,
   deleteGoal,
   fetchGoals,
+  updateGoal,
 } from '@/api/budget-tracker-api/goals';
 
 type BudgetContextType = {
@@ -183,7 +184,7 @@ export default function BudgetProvider({
 
   const updateGoalData = async (id: string, goal: Partial<Goal>) => {
     try {
-      const updatedGoal = await updateCategory(id, goal);
+      const updatedGoal = await updateGoal(id, goal);
       setGoals((prev) =>
         prev.map((t) => (t.id === id ? { ...t, ...updatedGoal } : t)),
       );

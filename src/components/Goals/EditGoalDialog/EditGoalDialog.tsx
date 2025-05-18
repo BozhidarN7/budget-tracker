@@ -1,8 +1,10 @@
 'use client';
 
+import type React from 'react';
+
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,22 +26,27 @@ import {
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { useBudgetContext } from '@/contexts/budget-context';
+import type { Goal } from '@/types/budget';
 
-export default function AddGoalDialog({
+export default function EditGoalDialog({
+  goal,
   open,
   onOpenChange,
 }: {
+  goal: Goal;
   open: boolean;
   onOpenChange(open: boolean): void;
 }) {
-  const [date, setDate] = useState<Date>(new Date());
-  const [name, setName] = useState('');
-  const [target, setTarget] = useState('');
-  const [current, setCurrent] = useState('');
-  const [description, setDescription] = useState('');
+  const [date, setDate] = useState<Date>(
+    parse(goal.targetDate, 'MMM d, yyyy', new Date()),
+  );
+  const [name, setName] = useState(goal.name);
+  const [target, setTarget] = useState(goal.target.toString());
+  const [current, setCurrent] = useState(goal.current.toString());
+  const [description, setDescription] = useState(goal.description || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { addGoal } = useBudgetContext();
+  const { updateGoal } = useBudgetContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,25 +59,18 @@ export default function AddGoalDialog({
     setIsSubmitting(true);
 
     try {
-      await addGoal({
+      await updateGoal(goal.id, {
         name,
         target: Number.parseFloat(target),
-        current: current ? Number.parseFloat(current) : 0,
+        current: Number.parseFloat(current),
         targetDate: format(date, 'MMM d, yyyy'),
         description,
       });
 
-      toast.success('Savings goal created successfully');
+      toast.success('Savings goal updated successfully');
       onOpenChange(false);
-
-      // Reset form
-      setName('');
-      setTarget('');
-      setCurrent('');
-      setDate(new Date());
-      setDescription('');
     } catch (_error) {
-      toast.error('Failed to create savings goal');
+      toast.error('Failed to update savings goal');
     } finally {
       setIsSubmitting(false);
     }
@@ -80,9 +80,9 @@ export default function AddGoalDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Savings Goal</DialogTitle>
+          <DialogTitle>Edit Savings Goal</DialogTitle>
           <DialogDescription>
-            Create a new savings goal to track your progress.
+            Update the details of your savings goal.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -171,7 +171,7 @@ export default function AddGoalDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create'}
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </form>

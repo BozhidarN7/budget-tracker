@@ -2,12 +2,17 @@
 
 import Link from 'next/link';
 import { ArrowDown, ArrowUp } from 'lucide-react';
+import RecentTransactionsSkeleton from '../RecentTransactionSkeleton';
 import { useBudgetData } from '@/hooks/';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 export default function RecentTransactions() {
-  const { recentTransactions } = useBudgetData();
+  const { recentTransactions, isLoading } = useBudgetData();
+
+  if (isLoading) {
+    return <RecentTransactionsSkeleton />;
+  }
 
   return (
     <div className="space-y-4">

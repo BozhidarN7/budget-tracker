@@ -1,11 +1,16 @@
 'use client';
 
 import { ArrowDown, ArrowUp, DollarSign } from 'lucide-react';
+import DashboardCardsSkeleton from '../DashboardCardsSkeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useBudgetData } from '@/hooks/';
 
 export default function DashboardCards() {
-  const { totalIncome, totalExpenses, netBalance } = useBudgetData();
+  const { totalIncome, totalExpenses, netBalance, isLoading } = useBudgetData();
+
+  if (isLoading) {
+    return <DashboardCardsSkeleton />;
+  }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

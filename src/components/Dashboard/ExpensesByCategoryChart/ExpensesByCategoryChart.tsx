@@ -8,11 +8,15 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from 'recharts';
+import ChartSkeleton from '../ChartSkeleton';
 import { useBudgetData } from '@/hooks/';
 
 export default function ExpensesByCategoryChart() {
-  const { expensesByCategory } = useBudgetData();
+  const { expensesByCategory, isLoading } = useBudgetData();
 
+  if (isLoading) {
+    return <ChartSkeleton title="Expenses by Category" />;
+  }
   const COLORS = [
     '#3b82f6', // blue-500
     '#ef4444', // red-500

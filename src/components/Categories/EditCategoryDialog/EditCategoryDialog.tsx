@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import type { Category } from '@/types/budget';
 import { useBudgetContext } from '@/contexts/budget-context';
 
 const colorOptions = [
@@ -27,19 +28,21 @@ const colorOptions = [
   { value: '#ec4899', label: 'Pink' },
 ];
 
-export default function AddCategoryDialog({
+export default function EditCategoryDialog({
+  category,
   open,
   onOpenChange,
 }: {
+  category: Category;
   open: boolean;
   onOpenChange(open: boolean): void;
 }) {
-  const [name, setName] = useState('');
-  const [limit, setLimit] = useState('');
-  const [color, setColor] = useState(colorOptions[0].value);
+  const [name, setName] = useState(category.name);
+  const [limit, setLimit] = useState(category.limit.toString());
+  const [color, setColor] = useState(category.color);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { addCategory } = useBudgetContext();
+  const { updateCategory } = useBudgetContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,22 +55,16 @@ export default function AddCategoryDialog({
     setIsSubmitting(true);
 
     try {
-      await addCategory({
+      await updateCategory(category.id, {
         name,
         limit: Number.parseFloat(limit),
-        spent: 0, // New categories start with 0 spent
         color,
       });
 
-      toast.success('Category created successfully');
+      toast.success('Category updated successfully');
       onOpenChange(false);
-
-      // Reset form
-      setName('');
-      setLimit('');
-      setColor(colorOptions[0].value);
     } catch (_error) {
-      toast.error('Failed to create category');
+      toast.error('Failed to update category');
     } finally {
       setIsSubmitting(false);
     }
@@ -77,9 +74,9 @@ export default function AddCategoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Category</DialogTitle>
+          <DialogTitle>Edit Category</DialogTitle>
           <DialogDescription>
-            Create a new category for your transactions.
+            Update the details of your category.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -146,7 +143,7 @@ export default function AddCategoryDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create'}
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </form>

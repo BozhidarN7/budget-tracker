@@ -1,0 +1,86 @@
+import type { Transaction } from '@/types/budget';
+
+const mockTransactions: Transaction[] = [
+  {
+    id: '1',
+    description: 'Salary',
+    amount: 3500,
+    date: 'May 1, 2023',
+    category: 'Salary',
+    type: 'income',
+  },
+  {
+    id: '2',
+    description: 'Freelance Work',
+    amount: 1200,
+    date: 'May 5, 2023',
+    category: 'Freelance',
+    type: 'income',
+  },
+  {
+    id: '3',
+    description: 'Grocery Shopping',
+    amount: 120.5,
+    date: 'May 7, 2023',
+    category: 'Food',
+    type: 'expense',
+  },
+  {
+    id: '4',
+    description: 'Electricity Bill',
+    amount: 85.2,
+    date: 'May 10, 2023',
+    category: 'Utilities',
+    type: 'expense',
+  },
+  {
+    id: '5',
+    description: 'Movie Tickets',
+    amount: 35.0,
+    date: 'May 12, 2023',
+    category: 'Entertainment',
+    type: 'expense',
+  },
+  {
+    id: '6',
+    description: 'Gas',
+    amount: 45.75,
+    date: 'May 15, 2023',
+    category: 'Transport',
+    type: 'expense',
+  },
+  {
+    id: '7',
+    description: 'Restaurant Dinner',
+    amount: 78.9,
+    date: 'May 18, 2023',
+    category: 'Food',
+    type: 'expense',
+  },
+  {
+    id: '8',
+    description: 'Online Course',
+    amount: 199.99,
+    date: 'May 20, 2023',
+    category: 'Education',
+    type: 'expense',
+  },
+  {
+    id: '9',
+    description: 'Mobile Phone Bill',
+    amount: 65.0,
+    date: 'May 22, 2023',
+    category: 'Utilities',
+    type: 'expense',
+  },
+  {
+    id: '10',
+    description: 'Bonus',
+    amount: 500,
+    date: 'May 25, 2023',
+    category: 'Salary',
+    type: 'income',
+  },
+];
+
+export default mockTransactions;

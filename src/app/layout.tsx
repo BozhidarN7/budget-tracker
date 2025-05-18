@@ -8,6 +8,7 @@ import { fetchTransactions } from '@/api/budget-tracker-api/transactions';
 import { fetchGoals } from '@/api/budget-tracker-api/goals';
 import { fetchCategories } from '@/api/budget-tracker-api/categories';
 import { BudgetProvider } from '@/contexts';
+import { Toaster } from '@/components/ui/sonner';
 
 const inter = Inter({ subsets: ['latin'] });
 

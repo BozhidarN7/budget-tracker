@@ -23,50 +23,6 @@ export async function fetchTransactions() {
   }
 }
 
-export async function fetchCategories() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/categorys`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.message || `Failed to fetch categories: ${response.status}`,
-      );
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching categories:', error);
-    return [];
-  }
-}
-
-export async function fetchGoals() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/goals`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.message || `Failed to fetch goals: ${response.status}`,
-      );
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching goals:', error);
-    return [];
-  }
-}
-
 export async function createTransaction(transaction: Omit<Transaction, 'id'>) {
   try {
     const response = await fetch(`${API_BASE_URL}/transactions`, {

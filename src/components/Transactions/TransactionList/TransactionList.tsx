@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { ArrowDown, ArrowUp, Edit, MoreHorizontal, Trash } from 'lucide-react';
 import EditTransactionDialog from '../EditTransactionDialog';
 import { Button } from '@/components/ui/button';
@@ -18,14 +19,88 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useBudgetData } from '@/hooks/';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useBudgetContext } from '@/contexts/budget-context';
 import { Transaction } from '@/types/budget';
+import { useBudgetData } from '@/hooks/';
 
 export default function TransactionList() {
-  const { transactions } = useBudgetData();
+  const { transactions, isLoading } = useBudgetData();
+  const { removeTransaction } = useBudgetContext();
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
+  const [deletingTransactionId, setDeletingTransactionId] = useState<
+    string | null
+  >(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!deletingTransactionId) return;
+
+    setIsDeleting(true);
+    try {
+      await removeTransaction(deletingTransactionId);
+      toast.success('Transaction deleted successfully');
+    } catch (_error) {
+      toast.error('Failed to delete transaction');
+    } finally {
+      setIsDeleting(false);
+      setDeletingTransactionId(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="rounded-lg border shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Description</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="w-[80px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-24" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-24" />
+                </TableCell>
+                <TableCell className="text-right">
+                  <Skeleton className="ml-auto h-4 w-16" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-8 w-8 rounded-md" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg border shadow-sm">
@@ -40,7 +115,7 @@ export default function TransactionList() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {transactions.map((transaction) => (
+          {transactions.map((transaction: Transaction) => (
             <TableRow key={transaction.id}>
               <TableCell className="font-medium">
                 <div className="flex items-center gap-2">
@@ -89,7 +164,10 @@ export default function TransactionList() {
                       <Edit className="mr-2 h-4 w-4" />
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-rose-600">
+                    <DropdownMenuItem
+                      className="text-rose-600"
+                      onClick={() => setDeletingTransactionId(transaction.id)}
+                    >
                       <Trash className="mr-2 h-4 w-4" />
                       Delete
                     </DropdownMenuItem>
@@ -108,6 +186,31 @@ export default function TransactionList() {
           onOpenChange={() => setEditingTransaction(null)}
         />
       )}
+
+      <AlertDialog
+        open={!!deletingTransactionId}
+        onOpenChange={(open) => !open && setDeletingTransactionId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              transaction.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-rose-600 hover:bg-rose-700"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

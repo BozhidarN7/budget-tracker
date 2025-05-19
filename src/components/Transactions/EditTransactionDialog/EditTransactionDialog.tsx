@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { format, parse } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -53,10 +53,20 @@ export default function EditTransactionDialog({
 
   const { updateTransaction, categories } = useBudgetContext();
 
+  const filteredCategories = categories.filter(
+    (cat) => cat.type === type || (type === 'expense' && !cat.type),
+  );
+
+  useEffect(() => {
+    if (type !== transaction.type) {
+      setCategory('');
+    }
+  }, [type, transaction.type]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!amount || !category || !description) {
+    if (!amount || !category || category === 'no-categories' || !description) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -129,13 +139,25 @@ export default function EditTransactionDialog({
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>
-                      {cat.name}
+                  {filteredCategories.length > 0 ? (
+                    filteredCategories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no-categories" disabled>
+                      No {type} categories available
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
+              {filteredCategories.length === 0 && (
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Please create a {type} category first in the Categories
+                  section
+                </p>
+              )}
             </div>
 
             <div className="grid gap-2">
@@ -185,7 +207,10 @@ export default function EditTransactionDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={isSubmitting || filteredCategories.length === 0}
+            >
               {isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>

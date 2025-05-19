@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -34,6 +35,7 @@ export default function AddCategoryDialog({
   open: boolean;
   onOpenChange(open: boolean): void;
 }) {
+  const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
   const [name, setName] = useState('');
   const [limit, setLimit] = useState('');
   const [color, setColor] = useState(colorOptions[0].value);
@@ -44,8 +46,14 @@ export default function AddCategoryDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !limit) {
-      toast.error('Please fill in all required fields');
+    if (!name) {
+      toast.error('Please enter a category name');
+      return;
+    }
+
+    // For income categories, limit is optional
+    if (activeTab === 'expense' && !limit) {
+      toast.error('Please enter a spending limit');
       return;
     }
 
@@ -54,9 +62,10 @@ export default function AddCategoryDialog({
     try {
       await addCategory({
         name,
-        limit: Number.parseFloat(limit),
+        limit: Number.parseFloat(limit || '0'),
         spent: 0, // New categories start with 0 spent
         color,
+        type: activeTab, // Set the category type based on the active tab
       });
 
       toast.success('Category created successfully');
@@ -66,6 +75,7 @@ export default function AddCategoryDialog({
       setName('');
       setLimit('');
       setColor(colorOptions[0].value);
+      setActiveTab('expense');
     } catch (_error) {
       toast.error('Failed to create category');
     } finally {
@@ -84,6 +94,30 @@ export default function AddCategoryDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) =>
+                setActiveTab(value as 'expense' | 'income')
+              }
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="expense">Expense</TabsTrigger>
+                <TabsTrigger value="income">Income</TabsTrigger>
+              </TabsList>
+              <TabsContent value="expense" className="mt-4">
+                <p className="text-muted-foreground mb-4 text-sm">
+                  Create a category for tracking your expenses like groceries,
+                  rent, or entertainment.
+                </p>
+              </TabsContent>
+              <TabsContent value="income" className="mt-4">
+                <p className="text-muted-foreground mb-4 text-sm">
+                  Create a category for tracking your income sources like
+                  salary, freelance work, or investments.
+                </p>
+              </TabsContent>
+            </Tabs>
+
             <div className="grid gap-2">
               <Label htmlFor="name">Name</Label>
               <Input
@@ -94,18 +128,20 @@ export default function AddCategoryDialog({
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="limit">Monthly Limit</Label>
-              <Input
-                id="limit"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={limit}
-                onChange={(e) => setLimit(e.target.value)}
-              />
-            </div>
+            {activeTab === 'expense' && (
+              <div className="grid gap-2">
+                <Label htmlFor="limit">Monthly Limit</Label>
+                <Input
+                  id="limit"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={limit}
+                  onChange={(e) => setLimit(e.target.value)}
+                />
+              </div>
+            )}
 
             <div className="grid gap-2">
               <Label>Color</Label>

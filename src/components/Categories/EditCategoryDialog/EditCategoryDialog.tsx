@@ -47,8 +47,13 @@ export default function EditCategoryDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !limit) {
-      toast.error('Please fill in all required fields');
+    if (!name) {
+      toast.error('Please enter a category name');
+      return;
+    }
+
+    if (category.type === 'expense' && !limit) {
+      toast.error('Please enter a spending limit');
       return;
     }
 
@@ -57,8 +62,9 @@ export default function EditCategoryDialog({
     try {
       await updateCategory(category.id, {
         name,
-        limit: Number.parseFloat(limit),
+        limit: Number.parseFloat(limit || '0'),
         color,
+        // We don't change the type when editing
       });
 
       toast.success('Category updated successfully');
@@ -74,7 +80,9 @@ export default function EditCategoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Category</DialogTitle>
+          <DialogTitle>
+            Edit {category.type === 'income' ? 'Income' : 'Expense'} Category
+          </DialogTitle>
           <DialogDescription>
             Update the details of your category.
           </DialogDescription>
@@ -91,18 +99,20 @@ export default function EditCategoryDialog({
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="limit">Monthly Limit</Label>
-              <Input
-                id="limit"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={limit}
-                onChange={(e) => setLimit(e.target.value)}
-              />
-            </div>
+            {category.type === 'expense' && (
+              <div className="grid gap-2">
+                <Label htmlFor="limit">Monthly Limit</Label>
+                <Input
+                  id="limit"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={limit}
+                  onChange={(e) => setLimit(e.target.value)}
+                />
+              </div>
+            )}
 
             <div className="grid gap-2">
               <Label>Color</Label>

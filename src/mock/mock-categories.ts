@@ -7,6 +7,7 @@ const mockCategories: Category[] = [
     limit: 500,
     spent: 199.4,
     color: '#ef4444',
+    type: 'expense',
   },
   {
     id: '2',
@@ -14,6 +15,7 @@ const mockCategories: Category[] = [
     limit: 200,
     spent: 45.75,
     color: '#f59e0b',
+    type: 'expense',
   },
   {
     id: '3',
@@ -21,6 +23,7 @@ const mockCategories: Category[] = [
     limit: 150,
     spent: 35.0,
     color: '#10b981',
+    type: 'expense',
   },
   {
     id: '4',
@@ -28,6 +31,7 @@ const mockCategories: Category[] = [
     limit: 300,
     spent: 150.2,
     color: '#3b82f6',
+    type: 'expense',
   },
   {
     id: '5',
@@ -35,6 +39,7 @@ const mockCategories: Category[] = [
     limit: 200,
     spent: 199.99,
     color: '#8b5cf6',
+    type: 'expense',
   },
   {
     id: '6',
@@ -42,6 +47,7 @@ const mockCategories: Category[] = [
     limit: 300,
     spent: 0,
     color: '#ec4899',
+    type: 'expense',
   },
 ];
 

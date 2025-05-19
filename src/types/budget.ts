@@ -13,6 +13,7 @@ export interface Category {
   limit: number;
   spent: number;
   color: string;
+  type: 'income' | 'expense';
 }
 
 export interface Goal {

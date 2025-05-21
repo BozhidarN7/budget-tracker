@@ -116,7 +116,7 @@ export default function TransactionList() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {transactions.map((transaction: Transaction) => (
+          {transactions.map((transaction) => (
             <TableRow key={transaction.id}>
               <TableCell className="font-medium">
                 <div className="flex items-center gap-2">
@@ -148,7 +148,7 @@ export default function TransactionList() {
                 )}
               >
                 {transaction.type === 'income' ? '+' : '-'}
-                {formatCurrency(transaction.amount)}{' '}
+                {formatCurrency(transaction.amount)}
               </TableCell>
               <TableCell>
                 <DropdownMenu>

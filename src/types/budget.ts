@@ -10,10 +10,14 @@ export interface Transaction {
 export interface Category {
   id: string;
   name: string;
-  limit: number;
-  spent: number;
   color: string;
   type: 'income' | 'expense';
+  monthlyData: {
+    [month: string]: {
+      limit: number;
+      spent: number;
+    };
+  }; // e.g., { "2025-05": { limit: 200, spent: 120 } }
 }
 
 export interface Goal {

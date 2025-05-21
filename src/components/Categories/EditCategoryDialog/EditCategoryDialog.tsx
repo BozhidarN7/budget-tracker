@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import type { Category } from '@/types/budget';
 import { useBudgetContext } from '@/contexts/budget-context';
+import { formatMonthKeyToReadable } from '@/utils';
 
 const colorOptions = [
   { value: '#ef4444', label: 'Red' },
@@ -37,12 +38,18 @@ export default function EditCategoryDialog({
   open: boolean;
   onOpenChange(open: boolean): void;
 }) {
+  const { updateCategory, selectedMonth } = useBudgetContext();
+
   const [name, setName] = useState(category.name);
-  const [limit, setLimit] = useState(category.limit.toString());
   const [color, setColor] = useState(category.color);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { updateCategory } = useBudgetContext();
+  // Get the current month's limit or default to 0
+  const currentMonthData = category.monthlyData[selectedMonth] || {
+    limit: 0,
+    spent: 0,
+  };
+  const [limit, setLimit] = useState(currentMonthData.limit.toString());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +59,7 @@ export default function EditCategoryDialog({
       return;
     }
 
+    // For income categories, limit is optional
     if (category.type === 'expense' && !limit) {
       toast.error('Please enter a spending limit');
       return;
@@ -101,7 +109,9 @@ export default function EditCategoryDialog({
 
             {category.type === 'expense' && (
               <div className="grid gap-2">
-                <Label htmlFor="limit">Monthly Limit</Label>
+                <Label htmlFor="limit">
+                  Monthly Limit for {formatMonthKeyToReadable(selectedMonth)}
+                </Label>
                 <Input
                   id="limit"
                   type="number"
@@ -111,6 +121,9 @@ export default function EditCategoryDialog({
                   value={limit}
                   onChange={(e) => setLimit(e.target.value)}
                 />
+                <p className="text-muted-foreground text-xs">
+                  Note: This will only change the limit for the current month.
+                </p>
               </div>
             )}
 

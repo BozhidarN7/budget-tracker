@@ -1,6 +1,7 @@
 'use client';
 
 import type React from 'react';
+
 import {
   createContext,
   useCallback,
@@ -8,46 +9,16 @@ import {
   useEffect,
   useState,
 } from 'react';
-import type { Category, Goal, Transaction } from '@/types/budget';
-import {
-  createTransaction,
-  deleteTransaction,
-  fetchTransactions,
-  updateTransaction,
-} from '@/api/budget-tracker-api/transactions';
-import {
-  createCategory,
-  deleteCategory,
-  fetchCategories,
-  updateCategory,
-} from '@/api/budget-tracker-api/categories';
-import {
-  createGoal,
-  deleteGoal,
-  fetchGoals,
-  updateGoal,
-} from '@/api/budget-tracker-api/goals';
-
-type BudgetContextType = {
-  transactions: Transaction[];
-  categories: Category[];
-  goals: Goal[];
-  isLoading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
-  updateTransaction: (
-    id: string,
-    transaction: Partial<Transaction>,
-  ) => Promise<void>;
-  removeTransaction: (id: string) => Promise<void>;
-  addCategory: (category: Omit<Category, 'id'>) => Promise<void>;
-  updateCategory: (id: string, category: Partial<Category>) => Promise<void>;
-  removeCategory: (id: string) => Promise<void>;
-  addGoal: (goal: Omit<Goal, 'id'>) => Promise<void>;
-  updateGoal: (id: string, goal: Partial<Goal>) => Promise<void>;
-  removeGoal: (id: string) => Promise<void>;
-};
+import type {
+  BudgetContextType,
+  BudgetProviderProps,
+  BudgetState,
+} from './budget/types';
+import { createTransactionOperations } from './budget/transaction-operations';
+import { createCategoryOperations } from './budget/category-operations';
+import { createGoalOperations } from './budget/goal-operations';
+import { fetchBudgetData } from './budget/data-fetching';
+import { getCurrentMonthKey } from '@/utils';
 
 // Default values
 const defaultContext: BudgetContextType = {
@@ -56,13 +27,18 @@ const defaultContext: BudgetContextType = {
   goals: [],
   isLoading: true,
   error: null,
+  selectedMonth: getCurrentMonthKey(),
+  setSelectedMonth: () => {},
   refetch: async () => {},
+  // Transaction operations
   addTransaction: async () => {},
   updateTransaction: async () => {},
-  removeTransaction: async () => {},
+  removeTransaction: async () => false,
+  // Category operations
   addCategory: async () => {},
   updateCategory: async () => {},
   removeCategory: async () => {},
+  // Goal operations
   addGoal: async () => {},
   updateGoal: async () => {},
   removeGoal: async () => {},
@@ -75,154 +51,105 @@ export default function BudgetProvider({
   initialTransactions,
   initialCategories,
   initialGoals,
-}: {
-  children: React.ReactNode;
-  initialTransactions?: Transaction[];
-  initialCategories?: Category[];
-  initialGoals?: Goal[];
-}) {
-  const [transactions, setTransactions] = useState<Transaction[]>(
-    initialTransactions || [],
-  );
-  const [categories, setCategories] = useState<Category[]>(
-    initialCategories || [],
-  );
-  const [goals, setGoals] = useState<Goal[]>(initialGoals || []);
-  const [isLoading, setIsLoading] = useState(
-    !initialTransactions || !initialCategories || !initialGoals,
-  );
-  const [error, setError] = useState<string | null>(null);
+}: BudgetProviderProps) {
+  // State
+  const [state, setState] = useState<BudgetState>({
+    transactions: initialTransactions || [],
+    categories: initialCategories || [],
+    goals: initialGoals || [],
+    isLoading: !initialTransactions || !initialCategories || !initialGoals,
+    error: null,
+    selectedMonth: getCurrentMonthKey(),
+  });
 
-  const fetchData = useCallback(async () => {
+  // Destructure state for easier access
+  const { transactions, categories, goals, isLoading, error, selectedMonth } =
+    state;
+
+  // State setters
+  const setTransactions = useCallback(
+    (value: React.SetStateAction<typeof transactions>) => {
+      setState((prev) => ({
+        ...prev,
+        transactions:
+          typeof value === 'function' ? value(prev.transactions) : value,
+      }));
+    },
+    [],
+  );
+
+  const setCategories = useCallback(
+    (value: React.SetStateAction<typeof categories>) => {
+      setState((prev) => ({
+        ...prev,
+        categories:
+          typeof value === 'function' ? value(prev.categories) : value,
+      }));
+    },
+    [],
+  );
+
+  const setGoals = useCallback((value: React.SetStateAction<typeof goals>) => {
+    setState((prev) => ({
+      ...prev,
+      goals: typeof value === 'function' ? value(prev.goals) : value,
+    }));
+  }, []);
+
+  const setIsLoading = useCallback((value: boolean) => {
+    setState((prev) => ({ ...prev, isLoading: value }));
+  }, []);
+
+  const setError = useCallback((value: string | null) => {
+    setState((prev) => ({ ...prev, error: value }));
+  }, []);
+
+  const setSelectedMonth = useCallback((value: string) => {
+    setState((prev) => ({ ...prev, selectedMonth: value }));
+  }, []);
+
+  // Data fetching
+  const refetch = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const [transactionsData, categoriesData, goalsData] = await Promise.all([
-        fetchTransactions(),
-        fetchCategories(),
-        fetchGoals(),
-      ]);
-
-      setTransactions(transactionsData);
-      setCategories(categoriesData);
-      setGoals(goalsData);
+      const data = await fetchBudgetData();
+      setTransactions(data.transactions);
+      setCategories(data.categories);
+      setGoals(data.goals);
     } catch (err) {
       setError('Failed to fetch budget data');
       console.error('Error fetching budget data:', err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setIsLoading, setError, setTransactions, setCategories, setGoals]);
 
   // Fetch data if no initial data was provided
   useEffect(() => {
     if (!initialTransactions || !initialCategories || !initialGoals) {
-      fetchData();
+      refetch();
     }
-  }, [initialTransactions, initialCategories, initialGoals, fetchData]);
+  }, [initialTransactions, initialCategories, initialGoals, refetch]);
 
-  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
-    try {
-      const newTransaction = await createTransaction(transaction);
-      setTransactions((prev) => [...prev, newTransaction]);
-    } catch (err) {
-      setError('Failed to add transaction');
-      throw err;
-    }
-  };
+  // Create operations
+  const transactionOps = createTransactionOperations(
+    transactions,
+    categories,
+    setTransactions,
+    setCategories,
+    setError,
+  );
 
-  const addGoal = async (goal: Omit<Goal, 'id'>) => {
-    try {
-      const newGoal = await createGoal(goal);
-      setGoals((prev) => [...prev, newGoal]);
-    } catch (err) {
-      setError('Failed to add goal');
-      throw err;
-    }
-  };
+  const categoryOps = createCategoryOperations(
+    categories,
+    setCategories,
+    setError,
+    selectedMonth,
+  );
 
-  const addCategory = async (category: Omit<Category, 'id'>) => {
-    try {
-      const newCategory = await createCategory(category);
-      setCategories((prev) => [...prev, newCategory]);
-    } catch (err) {
-      setError('Failed to add category');
-      throw err;
-    }
-  };
-
-  const updateTransactionData = async (
-    id: string,
-    transaction: Partial<Transaction>,
-  ) => {
-    try {
-      const updatedTransaction = await updateTransaction(id, transaction);
-      setTransactions((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, ...updatedTransaction } : t)),
-      );
-    } catch (err) {
-      setError('Failed to update transaction');
-      throw err;
-    }
-  };
-
-  const updateCategoryData = async (
-    id: string,
-    category: Partial<Category>,
-  ) => {
-    try {
-      const updatedCategory = await updateCategory(id, category);
-      setCategories((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, ...updatedCategory } : t)),
-      );
-    } catch (err) {
-      setError('Failed to update category');
-      throw err;
-    }
-  };
-
-  const updateGoalData = async (id: string, goal: Partial<Goal>) => {
-    try {
-      const updatedGoal = await updateGoal(id, goal);
-      setGoals((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, ...updatedGoal } : t)),
-      );
-    } catch (err) {
-      setError('Failed to update goal');
-      throw err;
-    }
-  };
-
-  const removeTransaction = async (id: string) => {
-    try {
-      await deleteTransaction(id);
-      setTransactions((prev) => prev.filter((t) => t.id !== id));
-    } catch (err) {
-      setError('Failed to delete transaction');
-      throw err;
-    }
-  };
-
-  const removeCategory = async (id: string) => {
-    try {
-      await deleteCategory(id);
-      setTransactions((prev) => prev.filter((t) => t.id !== id));
-    } catch (err) {
-      setError('Failed to delete category');
-      throw err;
-    }
-  };
-
-  const removeGoal = async (id: string) => {
-    try {
-      await deleteGoal(id);
-      setTransactions((prev) => prev.filter((t) => t.id !== id));
-    } catch (err) {
-      setError('Failed to delete goal');
-      throw err;
-    }
-  };
+  const goalOps = createGoalOperations(setGoals, setError);
 
   return (
     <BudgetContext.Provider
@@ -232,16 +159,15 @@ export default function BudgetProvider({
         goals,
         isLoading,
         error,
-        refetch: fetchData,
-        addTransaction,
-        updateTransaction: updateTransactionData,
-        removeTransaction,
-        addCategory,
-        updateCategory: updateCategoryData,
-        removeCategory,
-        addGoal,
-        updateGoal: updateGoalData,
-        removeGoal,
+        selectedMonth,
+        setSelectedMonth,
+        refetch,
+        // Transaction operations
+        ...transactionOps,
+        // Category operations
+        ...categoryOps,
+        // Goal operations
+        ...goalOps,
       }}
     >
       {children}

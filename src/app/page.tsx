@@ -4,11 +4,15 @@ import MonthlyTrendsChart from '@/components/Dashboard/MonthlyTrendsChart';
 import RecentTransactions from '@/components/Dashboard/RecentTransactions';
 import SavingsGoalProgress from '@/components/Dashboard/SavingsGoalProgress';
 import CategoryLimits from '@/components/Dashboard/CategoryLimits';
+import MonthSelector from '@/components/Dashboard/MonthSelector';
 
 export default function Dashboard() {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
+      <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <MonthSelector />
+      </div>
 
       <DashboardCards />
 

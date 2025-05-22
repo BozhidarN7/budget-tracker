@@ -63,7 +63,6 @@ export default function AddCategoryDialog({
       await addCategory({
         name,
         limit: Number.parseFloat(limit || '0'),
-        spent: 0, // New categories start with 0 spent
         color,
         type: activeTab, // Set the category type based on the active tab
       });

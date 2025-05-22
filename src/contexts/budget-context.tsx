@@ -33,7 +33,7 @@ const defaultContext: BudgetContextType = {
   // Transaction operations
   addTransaction: async () => {},
   updateTransaction: async () => {},
-  removeTransaction: async () => {},
+  removeTransaction: async () => false,
   // Category operations
   addCategory: async () => {},
   updateCategory: async () => {},
@@ -136,6 +136,7 @@ export default function BudgetProvider({
   // Create operations
   const transactionOps = createTransactionOperations(
     transactions,
+    categories,
     setTransactions,
     setCategories,
     setError,

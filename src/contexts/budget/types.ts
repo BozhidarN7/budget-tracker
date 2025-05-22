@@ -19,7 +19,7 @@ export type BudgetContextType = {
     id: string,
     transaction: Partial<Transaction>,
   ) => Promise<void>;
-  removeTransaction: (id: string) => Promise<void>;
+  removeTransaction: (id: string) => Promise<boolean>;
 
   // Category operations
   addCategory: (

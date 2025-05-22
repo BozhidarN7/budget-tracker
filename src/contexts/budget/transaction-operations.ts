@@ -5,19 +5,21 @@ import {
   createTransaction,
   deleteTransaction,
 } from '@/api/budget-tracker-api/transactions';
+import { updateCategory as apiUpdateCategory } from '@/api/budget-tracker-api/categories';
 import { formatMonthKey, parseDate } from '@/utils';
 
 // Helper function to update category spending
-export const updateCategorySpending = (
+export const updateCategorySpending = async (
   categories: Category[],
   transaction: Transaction,
   isAdding = true,
-): Category[] => {
+): Promise<Category[]> => {
   const { category: categoryName, amount, type, date } = transaction;
   const transactionDate = parseDate(date);
   const monthKey = formatMonthKey(transactionDate);
 
-  return categories.map((category) => {
+  // First, create an updated categories array for the local state
+  const updatedCategories = categories.map((category) => {
     if (category.name === categoryName && category.type === type) {
       const monthlyData = { ...category.monthlyData };
 
@@ -43,11 +45,48 @@ export const updateCategorySpending = (
     }
     return category;
   });
+
+  // Then, find the category that needs to be updated in the database
+  const categoryToUpdate = categories.find(
+    (c) => c.name === categoryName && c.type === type,
+  );
+  if (categoryToUpdate) {
+    try {
+      const monthlyData = { ...categoryToUpdate.monthlyData };
+
+      // Initialize month data if it doesn't exist
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = {
+          limit: 0,
+          spent: 0,
+        };
+      }
+
+      // Update spent amount
+      const currentSpent = monthlyData[monthKey].spent || 0;
+      monthlyData[monthKey] = {
+        ...monthlyData[monthKey],
+        spent: isAdding ? currentSpent + amount : currentSpent - amount,
+      };
+
+      // Call the API to update the category in the database
+      await apiUpdateCategory(categoryToUpdate.id, {
+        monthlyData,
+      });
+    } catch (error) {
+      console.error('Failed to update category in database:', error);
+      // Don't throw the error here to prevent transaction operations from failing
+      // Just log it and continue
+    }
+  }
+
+  return updatedCategories;
 };
 
 // Create transaction operations factory
 export const createTransactionOperations = (
   transactions: Transaction[],
+  categories: Category[],
   setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>,
   setCategories: React.Dispatch<React.SetStateAction<Category[]>>,
   setError: (value: string | null) => void,
@@ -58,10 +97,14 @@ export const createTransactionOperations = (
       const newTransaction = await createTransaction(transaction);
       setTransactions((prev) => [...prev, newTransaction]);
 
-      // Update category spending
-      setCategories((prevCategories) =>
-        updateCategorySpending(prevCategories, newTransaction as Transaction),
+      // Update category spending and save to database
+      const updatedCategories = await updateCategorySpending(
+        categories,
+        newTransaction as Transaction,
       );
+      setCategories(updatedCategories);
+
+      return newTransaction;
     } catch (err) {
       setError('Failed to add transaction');
       throw err;
@@ -81,9 +124,12 @@ export const createTransactionOperations = (
       }
 
       // Remove spending from the original category
-      setCategories((prevCategories) =>
-        updateCategorySpending(prevCategories, originalTransaction, false),
+      const categoriesAfterRemoval = await updateCategorySpending(
+        categories,
+        originalTransaction,
+        false,
       );
+      setCategories(categoriesAfterRemoval);
 
       const updatedTransaction = await apiUpdateTransaction(id, transaction);
       setTransactions((prev) =>
@@ -95,9 +141,13 @@ export const createTransactionOperations = (
         ...originalTransaction,
         ...updatedTransaction,
       } as Transaction;
-      setCategories((prevCategories) =>
-        updateCategorySpending(prevCategories, mergedTransaction),
+      const finalCategories = await updateCategorySpending(
+        categoriesAfterRemoval,
+        mergedTransaction,
       );
+      setCategories(finalCategories);
+
+      return updatedTransaction;
     } catch (err) {
       setError('Failed to update transaction');
       throw err;
@@ -116,10 +166,15 @@ export const createTransactionOperations = (
       await deleteTransaction(id);
       setTransactions((prev) => prev.filter((t) => t.id !== id));
 
-      // Remove spending from the category
-      setCategories((prevCategories) =>
-        updateCategorySpending(prevCategories, transaction, false),
+      // Remove spending from the category and update database
+      const updatedCategories = await updateCategorySpending(
+        categories,
+        transaction,
+        false,
       );
+      setCategories(updatedCategories);
+
+      return true;
     } catch (err) {
       setError('Failed to delete transaction');
       throw err;

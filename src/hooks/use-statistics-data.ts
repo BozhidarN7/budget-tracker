@@ -1,197 +1,264 @@
 'use client';
 
 import { useMemo } from 'react';
+import { format, startOfDay, startOfWeek, subDays, subWeeks } from 'date-fns';
 import useBudgetData from './use-budget-data';
+import { formatMonthKey, getLastNMonthKeys, parseDate } from '@/utils';
 
 export default function useStatisticsData() {
-  const { transactions, categories, goals } = useBudgetData();
+  // Get ALL transaction data, not filtered by selected month
+  const { allTransactions, categories, goals } = useBudgetData();
 
-  // Daily spending data
+  // Use allTransactions instead of transactions throughout the hook
+  const transactions = useMemo(() => allTransactions || [], [allTransactions]);
+
+  // Helper function to group transactions by time period
+  const groupTransactionsByPeriod = useMemo(() => {
+    return (periodType: 'daily' | 'weekly' | 'monthly', count: number) => {
+      const now = new Date();
+      const periods: Array<{
+        period: string;
+        expenses: number;
+        income: number;
+        transactions: number;
+      }> = [];
+
+      for (let i = 0; i < count; i++) {
+        let periodStart: Date;
+        let periodEnd: Date;
+        let periodLabel: string;
+
+        switch (periodType) {
+          case 'daily':
+            periodStart = startOfDay(subDays(now, i));
+            periodEnd = new Date(periodStart);
+            periodEnd.setHours(23, 59, 59, 999);
+            periodLabel = format(periodStart, 'MMM d');
+            break;
+          case 'weekly':
+            periodStart = startOfWeek(subWeeks(now, i));
+            periodEnd = new Date(periodStart);
+            periodEnd.setDate(periodEnd.getDate() + 6);
+            periodEnd.setHours(23, 59, 59, 999);
+            periodLabel = `Week ${format(periodStart, 'MMM d')}`;
+            break;
+          case 'monthly':
+            periodStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            periodEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+            periodEnd.setHours(23, 59, 59, 999);
+            periodLabel = format(periodStart, 'MMM');
+            break;
+        }
+
+        const periodTransactions = transactions.filter((transaction) => {
+          const transactionDate = parseDate(transaction.date);
+          return transactionDate >= periodStart && transactionDate <= periodEnd;
+        });
+
+        const expenses = periodTransactions
+          .filter((t) => t.type === 'expense')
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        const income = periodTransactions
+          .filter((t) => t.type === 'income')
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        periods.unshift({
+          period: periodLabel,
+          expenses,
+          income,
+          transactions: periodTransactions.length,
+        });
+      }
+
+      return periods;
+    };
+  }, [transactions]);
+
+  // Daily spending data (last 7 days)
   const dailySpending = useMemo(
-    () => [
-      { period: 'May 1', expenses: 120, transactions: 2 },
-      { period: 'May 2', expenses: 85, transactions: 3 },
-      { period: 'May 3', expenses: 150, transactions: 4 },
-      { period: 'May 4', expenses: 75, transactions: 2 },
-      { period: 'May 5', expenses: 200, transactions: 5 },
-      { period: 'May 6', expenses: 65, transactions: 2 },
-      { period: 'May 7', expenses: 180, transactions: 3 },
-    ],
-    [],
+    () => groupTransactionsByPeriod('daily', 7),
+    [groupTransactionsByPeriod],
   );
 
-  // Weekly spending data
+  // Weekly spending data (last 4 weeks)
   const weeklySpending = useMemo(
-    () => [
-      { period: 'Week 1', expenses: 650, transactions: 12 },
-      { period: 'Week 2', expenses: 720, transactions: 15 },
-      { period: 'Week 3', expenses: 590, transactions: 10 },
-      { period: 'Week 4', expenses: 810, transactions: 14 },
-    ],
-    [],
+    () => groupTransactionsByPeriod('weekly', 4),
+    [groupTransactionsByPeriod],
   );
 
-  // Monthly spending data
+  // Monthly spending data (last 6 months)
   const monthlySpending = useMemo(
-    () => [
-      { period: 'Jan', expenses: 2800, transactions: 45 },
-      { period: 'Feb', expenses: 2600, transactions: 42 },
-      { period: 'Mar', expenses: 3100, transactions: 50 },
-      { period: 'Apr', expenses: 2900, transactions: 48 },
-      { period: 'May', expenses: 3200, transactions: 52 },
-    ],
-    [],
+    () => groupTransactionsByPeriod('monthly', 6),
+    [groupTransactionsByPeriod],
   );
 
-  // Category breakdown
+  // Category breakdown (all time)
   const categoryBreakdown = useMemo(() => {
-    return categories
-      .map((category) => ({
-        name: category.name,
-        value: transactions
-          .filter((t) => t.type === 'expense' && t.category === category.name)
-          .reduce((sum, t) => sum + t.amount, 0),
-      }))
+    const categoryTotals = new Map<string, number>();
+
+    transactions
+      .filter((t) => t.type === 'expense')
+      .forEach((transaction) => {
+        const current = categoryTotals.get(transaction.category) || 0;
+        categoryTotals.set(transaction.category, current + transaction.amount);
+      });
+
+    return Array.from(categoryTotals.entries())
+      .map(([name, value]) => ({ name, value }))
       .filter((category) => category.value > 0)
       .sort((a, b) => b.value - a.value);
-  }, [categories, transactions]);
+  }, [transactions]);
 
-  // Category trends over time
-  const categoryTrends = useMemo(
-    () => [
-      {
-        month: 'Jan',
-        Food: 450,
-        Transport: 180,
-        Entertainment: 120,
-        Utilities: 250,
-        Education: 150,
-      },
-      {
-        month: 'Feb',
-        Food: 420,
-        Transport: 190,
-        Entertainment: 140,
-        Utilities: 230,
-        Education: 180,
-      },
-      {
-        month: 'Mar',
-        Food: 480,
-        Transport: 200,
-        Entertainment: 160,
-        Utilities: 260,
-        Education: 200,
-      },
-      {
-        month: 'Apr',
-        Food: 460,
-        Transport: 210,
-        Entertainment: 150,
-        Utilities: 240,
-        Education: 190,
-      },
-      {
-        month: 'May',
-        Food: 500,
-        Transport: 220,
-        Entertainment: 170,
-        Utilities: 270,
-        Education: 210,
-      },
-    ],
-    [],
-  );
+  // Category trends over time (last 6 months)
+  const categoryTrends = useMemo(() => {
+    const lastSixMonths = getLastNMonthKeys(6).reverse();
 
-  // Category limits
+    return lastSixMonths.map((monthKey) => {
+      const monthTransactions = transactions.filter((transaction) => {
+        const transactionDate = parseDate(transaction.date);
+        return formatMonthKey(transactionDate) === monthKey;
+      });
+
+      const monthData: Record<string, string | number> = {
+        month: format(new Date(monthKey + '-01'), 'MMM'),
+      };
+
+      // Get all unique expense categories
+      const expenseCategories = Array.from(
+        new Set(
+          transactions
+            .filter((t) => t.type === 'expense')
+            .map((t) => t.category),
+        ),
+      );
+
+      expenseCategories.forEach((category) => {
+        const categoryTotal = monthTransactions
+          .filter((t) => t.type === 'expense' && t.category === category)
+          .reduce((sum, t) => sum + t.amount, 0);
+        monthData[category] = categoryTotal;
+      });
+
+      return monthData;
+    });
+  }, [transactions]);
+
+  // Category limits (from categories data for current month)
   const categoryLimits = useMemo(() => {
-    return categories.map((category) => ({
-      name: category.name,
-      spent: category.spent,
-      limit: category.limit,
-      color: category.color,
-    }));
+    const currentMonth = formatMonthKey(new Date());
+
+    return categories
+      .filter((category) => category.type === 'expense')
+      .map((category) => {
+        const monthData = category.monthlyData[currentMonth] || {
+          limit: 0,
+          spent: 0,
+        };
+        return {
+          name: category.name,
+          spent: monthData.spent,
+          limit: monthData.limit,
+          color: category.color,
+        };
+      })
+      .filter((category) => category.limit > 0)
+      .sort((a, b) => b.spent / b.limit - a.spent / a.limit);
   }, [categories]);
 
-  // Monthly income vs expenses comparison
-  const monthlyComparison = useMemo(
-    () => [
-      { month: 'Jan', income: 4200, expenses: 2800, net: 1400 },
-      { month: 'Feb', income: 4500, expenses: 2600, net: 1900 },
-      { month: 'Mar', income: 4800, expenses: 3100, net: 1700 },
-      { month: 'Apr', income: 4700, expenses: 2900, net: 1800 },
-      { month: 'May', income: 5200, expenses: 3200, net: 2000 },
-    ],
-    [],
-  );
+  // Monthly income vs expenses comparison (last 6 months)
+  const monthlyComparison = useMemo(() => {
+    return monthlySpending.map((month) => {
+      const net = month.income - month.expenses;
+      return {
+        month: month.period,
+        income: month.income,
+        expenses: month.expenses,
+        net,
+      };
+    });
+  }, [monthlySpending]);
 
-  // Income source breakdown
-  const incomeSourceBreakdown = useMemo(
-    () => [
-      { source: 'Salary', amount: 3500 },
-      { source: 'Freelance', amount: 1200 },
-      { source: 'Investments', amount: 350 },
-      { source: 'Side Business', amount: 150 },
-    ],
-    [],
-  );
+  // Income source breakdown (all time)
+  const incomeSourceBreakdown = useMemo(() => {
+    const incomeTotals = new Map<string, number>();
 
-  // Income vs expense ratio
-  const incomeVsExpenseRatio = useMemo(
-    () => [
-      { month: 'Jan', ratio: 1.5, baseline: 1 },
-      { month: 'Feb', ratio: 1.73, baseline: 1 },
-      { month: 'Mar', ratio: 1.55, baseline: 1 },
-      { month: 'Apr', ratio: 1.62, baseline: 1 },
-      { month: 'May', ratio: 1.63, baseline: 1 },
-    ],
-    [],
-  );
+    transactions
+      .filter((t) => t.type === 'income')
+      .forEach((transaction) => {
+        const current = incomeTotals.get(transaction.category) || 0;
+        incomeTotals.set(transaction.category, current + transaction.amount);
+      });
 
-  // Savings rate
-  const savingsRate = useMemo(
-    () => [
-      { month: 'Jan', rate: 33, target: 20 },
-      { month: 'Feb', rate: 42, target: 20 },
-      { month: 'Mar', rate: 35, target: 20 },
-      { month: 'Apr', rate: 38, target: 20 },
-      { month: 'May', rate: 38, target: 20 },
-    ],
-    [],
-  );
+    return Array.from(incomeTotals.entries())
+      .map(([source, amount]) => ({ source, amount }))
+      .filter((source) => source.amount > 0)
+      .sort((a, b) => b.amount - a.amount);
+  }, [transactions]);
+
+  // Income vs expense ratio (last 6 months)
+  const incomeVsExpenseRatio = useMemo(() => {
+    return monthlyComparison.map((month) => ({
+      month: month.month,
+      ratio: month.expenses > 0 ? month.income / month.expenses : 0,
+      baseline: 1,
+    }));
+  }, [monthlyComparison]);
+
+  // Savings rate (last 6 months)
+  const savingsRate = useMemo(() => {
+    return monthlyComparison.map((month) => ({
+      month: month.month,
+      rate: month.income > 0 ? (month.net / month.income) * 100 : 0,
+      target: 20, // 20% target savings rate
+    }));
+  }, [monthlyComparison]);
 
   // Savings goal progress
   const savingsGoalProgress = useMemo(() => {
     return goals.map((goal) => ({
       name: goal.name,
       value: goal.current,
+      target: goal.target,
     }));
   }, [goals]);
 
-  // Savings projection
-  const savingsProjection = useMemo(
-    () => [
-      { month: 'Jun', optimistic: 2300, expected: 2000, conservative: 1800 },
-      { month: 'Jul', optimistic: 4800, expected: 4000, conservative: 3500 },
-      { month: 'Aug', optimistic: 7500, expected: 6000, conservative: 5100 },
-      { month: 'Sep', optimistic: 10400, expected: 8000, conservative: 6600 },
-      { month: 'Oct', optimistic: 13500, expected: 10000, conservative: 8000 },
-      { month: 'Nov', optimistic: 16800, expected: 12000, conservative: 9300 },
-      { month: 'Dec', optimistic: 20300, expected: 14000, conservative: 10500 },
-    ],
-    [],
-  );
+  // Savings projection (next 6 months based on current trends)
+  const savingsProjection = useMemo(() => {
+    // Calculate average monthly savings from last 3 months
+    const recentMonths = monthlyComparison.slice(-3);
+    const avgMonthlySavings =
+      recentMonths.length > 0
+        ? recentMonths.reduce((sum, month) => sum + month.net, 0) /
+          recentMonths.length
+        : 0;
 
-  // Savings distribution
-  const savingsDistribution = useMemo(
-    () => [
-      { name: 'Emergency Fund', current: 5000, target: 10000 },
-      { name: 'Retirement', current: 15000, target: 50000 },
-      { name: 'Vacation', current: 1500, target: 3000 },
-      { name: 'New Laptop', current: 1200, target: 2000 },
-    ],
-    [],
-  );
+    const currentSavings = goals.reduce((sum, goal) => sum + goal.current, 0);
+
+    const projections = [];
+    for (let i = 1; i <= 6; i++) {
+      const futureDate = new Date();
+      futureDate.setMonth(futureDate.getMonth() + i);
+
+      projections.push({
+        month: format(futureDate, 'MMM yyyy'),
+        conservative: Math.max(0, currentSavings + avgMonthlySavings * 0.8 * i), // 20% less optimistic
+        expected: Math.max(0, currentSavings + avgMonthlySavings * i),
+        optimistic: Math.max(0, currentSavings + avgMonthlySavings * 1.2 * i), // 20% more optimistic
+      });
+    }
+
+    return projections;
+  }, [monthlyComparison, goals]);
+
+  // Savings distribution (current savings across different goals)
+  const savingsDistribution = useMemo(() => {
+    return goals.map((goal) => ({
+      name: goal.name,
+      current: goal.current,
+      target: goal.target,
+    }));
+  }, [goals]);
 
   return {
     dailySpending,

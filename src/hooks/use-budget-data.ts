@@ -28,6 +28,9 @@ export default function useBudgetData() {
     });
   }, [data.transactionsData, selectedMonth]);
 
+  // All transactions (unfiltered) for statistics
+  const allTransactions = data.transactionsData;
+
   // Calculate total income for the selected month
   const totalIncome = filteredTransactions
     .filter((t) => t.type === 'income')
@@ -116,6 +119,7 @@ export default function useBudgetData() {
 
   return {
     transactions: filteredTransactions,
+    allTransactions,
     categories: data.categoriesData,
     goals: data.goalsData,
     totalIncome,

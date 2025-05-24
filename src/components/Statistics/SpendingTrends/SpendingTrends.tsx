@@ -40,6 +40,44 @@ export default function SpendingTrends() {
     monthly: monthlySpending,
   }[timeframe];
 
+  const hasData =
+    data &&
+    data.length > 0 &&
+    data.some((item) => item.expenses > 0 || item.income > 0);
+
+  if (!hasData) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <h2 className="text-2xl font-bold">Spending Trends</h2>
+          <Select value={timeframe} onValueChange={setTimeframe}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select timeframe" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="daily">Daily</SelectItem>
+              <SelectItem value="weekly">Weekly</SelectItem>
+              <SelectItem value="monthly">Monthly</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Card>
+          <CardContent className="flex h-[400px] items-center justify-center">
+            <div className="text-center">
+              <p className="text-muted-foreground">
+                No spending data available
+              </p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Add some transactions to see your spending trends
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -84,13 +122,21 @@ export default function SpendingTrends() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="period" />
                   <YAxis />
-                  <Tooltip formatter={(value) => [`$${value}`, 'Expenses']} />
+                  <Tooltip formatter={(value) => [`$${value}`, '']} />
                   <Legend />
                   <Line
                     type="monotone"
                     dataKey="expenses"
                     stroke="#ef4444"
                     activeDot={{ r: 8 }}
+                    name="Expenses"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="income"
+                    stroke="#10b981"
+                    activeDot={{ r: 8 }}
+                    name="Income"
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -125,9 +171,9 @@ export default function SpendingTrends() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="period" />
                   <YAxis />
-                  <Tooltip formatter={(value) => [`$${value}`, 'Expenses']} />
+                  <Tooltip formatter={(value) => [`$${value}`, '']} />
                   <Legend />
-                  <Bar dataKey="expenses" fill="#ef4444" />
+                  <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -148,50 +194,39 @@ export default function SpendingTrends() {
               <thead>
                 <tr className="border-b">
                   <th className="pb-2 text-left font-medium">Period</th>
+                  <th className="pb-2 text-right font-medium">Income</th>
                   <th className="pb-2 text-right font-medium">Expenses</th>
-                  <th className="pb-2 text-right font-medium">% Change</th>
-                  <th className="pb-2 text-right font-medium">
-                    Avg. Transaction
-                  </th>
+                  <th className="pb-2 text-right font-medium">Net</th>
                   <th className="pb-2 text-right font-medium">Transactions</th>
                 </tr>
               </thead>
               <tbody>
-                {data?.map((item, index) => {
-                  const prevExpense =
-                    index > 0 ? data[index - 1].expenses : item.expenses;
-                  const percentChange =
-                    ((item.expenses - prevExpense) / prevExpense) * 100;
+                {data &&
+                  data.map((item) => {
+                    const net = item.income - item.expenses;
 
-                  return (
-                    <tr key={item.period} className="border-b">
-                      <td className="py-2">{item.period}</td>
-                      <td className="py-2 text-right">
-                        ${item.expenses.toFixed(2)}
-                      </td>
-                      <td className="py-2 text-right">
-                        {index === 0 ? (
-                          '-'
-                        ) : (
-                          <span
-                            className={
-                              percentChange > 0
-                                ? 'text-rose-500'
-                                : 'text-emerald-500'
-                            }
-                          >
-                            {percentChange > 0 ? '+' : ''}
-                            {percentChange.toFixed(1)}%
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-2 text-right">
-                        ${(item.expenses / item.transactions).toFixed(2)}
-                      </td>
-                      <td className="py-2 text-right">{item.transactions}</td>
-                    </tr>
-                  );
-                })}
+                    return (
+                      <tr key={item.period} className="border-b">
+                        <td className="py-2">{item.period}</td>
+                        <td className="py-2 text-right text-emerald-600">
+                          {item.income > 0 ? `$${item.income.toFixed(2)}` : '-'}
+                        </td>
+                        <td className="py-2 text-right text-rose-600">
+                          {item.expenses > 0
+                            ? `$${item.expenses.toFixed(2)}`
+                            : '-'}
+                        </td>
+                        <td
+                          className={`py-2 text-right ${net >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
+                        >
+                          {net !== 0
+                            ? `${net >= 0 ? '+' : ''}$${net.toFixed(2)}`
+                            : '-'}
+                        </td>
+                        <td className="py-2 text-right">{item.transactions}</td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>

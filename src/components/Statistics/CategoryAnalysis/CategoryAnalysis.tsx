@@ -23,6 +23,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { useStatisticsData } from '@/hooks/';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/utils';
 
 export default function CategoryAnalysis() {
   const { categoryBreakdown, categoryTrends, categoryLimits } =
@@ -77,14 +78,19 @@ export default function CategoryAnalysis() {
                         `${name}: ${(percent * 100).toFixed(0)}%`
                       }
                     >
-                      {categoryBreakdown.map((entry, index) => (
+                      {categoryBreakdown.map((_entry, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={COLORS[index % COLORS.length]}
                         />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`$${value}`, 'Amount']} />
+                    <Tooltip
+                      formatter={(value) => [
+                        formatCurrency(Number(value)),
+                        'Amount',
+                      ]}
+                    />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -128,7 +134,12 @@ export default function CategoryAnalysis() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" />
                     <YAxis type="category" dataKey="name" />
-                    <Tooltip formatter={(value) => [`$${value}`, 'Amount']} />
+                    <Tooltip
+                      formatter={(value) => [
+                        formatCurrency(Number(value)),
+                        'Amount',
+                      ]}
+                    />
                     <Legend />
                     <Bar dataKey="value" fill="#3b82f6" />
                   </BarChart>
@@ -183,8 +194,8 @@ export default function CategoryAnalysis() {
                             : 'text-muted-foreground',
                         )}
                       >
-                        ${category.spent.toFixed(2)} / $
-                        {category.limit.toFixed(2)}
+                        {formatCurrency(category.spent)} /{' '}
+                        {formatCurrency(category.limit)}
                       </span>
                     </div>
                     <div className={cn(isOverLimit ? 'text-rose-500' : '')}>
@@ -206,8 +217,8 @@ export default function CategoryAnalysis() {
                       </span>
                       <span className="text-muted-foreground">
                         {isOverLimit
-                          ? `$${(category.spent - category.limit).toFixed(2)} over`
-                          : `$${(category.limit - category.spent).toFixed(2)} remaining`}
+                          ? `${formatCurrency(category.spent - category.limit)} over`
+                          : `${formatCurrency(category.limit - category.spent)} remaining`}
                       </span>
                     </div>
                   </div>

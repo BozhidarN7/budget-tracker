@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useStatisticsData } from '@/hooks/';
+import { formatCurrency } from '@/utils';
 
 export default function SpendingTrends() {
   const { dailySpending, weeklySpending, monthlySpending } =
@@ -122,7 +123,9 @@ export default function SpendingTrends() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="period" />
                   <YAxis />
-                  <Tooltip formatter={(value) => [`$${value}`, '']} />
+                  <Tooltip
+                    formatter={(value) => [formatCurrency(Number(value)), '']}
+                  />
                   <Legend />
                   <Line
                     type="monotone"
@@ -171,7 +174,9 @@ export default function SpendingTrends() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="period" />
                   <YAxis />
-                  <Tooltip formatter={(value) => [`$${value}`, '']} />
+                  <Tooltip
+                    formatter={(value) => [formatCurrency(Number(value)), '']}
+                  />
                   <Legend />
                   <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
                 </BarChart>
@@ -209,18 +214,18 @@ export default function SpendingTrends() {
                       <tr key={item.period} className="border-b">
                         <td className="py-2">{item.period}</td>
                         <td className="py-2 text-right text-emerald-600">
-                          {item.income > 0 ? `$${item.income.toFixed(2)}` : '-'}
+                          {item.income > 0 ? formatCurrency(item.income) : '-'}
                         </td>
                         <td className="py-2 text-right text-rose-600">
                           {item.expenses > 0
-                            ? `$${item.expenses.toFixed(2)}`
+                            ? formatCurrency(item.expenses)
                             : '-'}
                         </td>
                         <td
                           className={`py-2 text-right ${net >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
                         >
                           {net !== 0
-                            ? `${net >= 0 ? '+' : ''}$${net.toFixed(2)}`
+                            ? `${net >= 0 ? '+' : ''}${formatCurrency(Math.abs(net))}`
                             : '-'}
                         </td>
                         <td className="py-2 text-right">{item.transactions}</td>

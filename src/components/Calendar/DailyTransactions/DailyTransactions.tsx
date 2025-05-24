@@ -96,8 +96,8 @@ export default function DailyTransactions({
                   : 'text-rose-600',
               )}
             >
-              {transaction.type === 'income' ? '+' : '-'}$
-              {transaction.amount.toFixed(2)}
+              {transaction.type === 'income' ? '+' : '-'}
+              {formatCurrency(transaction.amount)}
             </div>
           </div>
         ))}

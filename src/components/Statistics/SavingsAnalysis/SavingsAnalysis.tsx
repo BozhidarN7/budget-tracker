@@ -25,6 +25,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useStatisticsData } from '@/hooks/';
+import { formatCurrency } from '@/utils';
 
 export default function SavingsAnalysis() {
   const {
@@ -139,14 +140,19 @@ export default function SavingsAnalysis() {
                         `${name}: ${(percent * 100).toFixed(0)}%`
                       }
                     >
-                      {savingsGoalProgress.map((entry, index) => (
+                      {savingsGoalProgress.map((_entry, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={COLORS[index % COLORS.length]}
                         />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`$${value}`, 'Amount']} />
+                    <Tooltip
+                      formatter={(value) => [
+                        formatCurrency(Number(value)),
+                        'Amount',
+                      ]}
+                    />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
@@ -191,7 +197,7 @@ export default function SavingsAnalysis() {
                 <YAxis />
                 <Tooltip
                   formatter={(value) => [
-                    `$${typeof value === 'number' ? value.toFixed(0) : value}`,
+                    formatCurrency(typeof value === 'number' ? value : 0),
                     '',
                   ]}
                 />
@@ -259,7 +265,12 @@ export default function SavingsAnalysis() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip formatter={(value) => [`$${value}`, 'Amount']} />
+                  <Tooltip
+                    formatter={(value) => [
+                      formatCurrency(Number(value)),
+                      'Amount',
+                    ]}
+                  />
                   <Legend />
                   <Bar dataKey="current" fill="#3b82f6" name="Current Amount" />
                   <Bar dataKey="target" fill="#9ca3af" name="Target Amount" />

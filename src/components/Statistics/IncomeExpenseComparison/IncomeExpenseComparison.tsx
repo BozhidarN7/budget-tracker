@@ -21,6 +21,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useStatisticsData } from '@/hooks/';
+import { formatCurrency } from '@/utils';
 
 export default function IncomeExpenseComparison() {
   const { monthlyComparison, incomeSourceBreakdown, incomeVsExpenseRatio } =
@@ -60,7 +61,9 @@ export default function IncomeExpenseComparison() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip formatter={(value) => [`$${value}`, '']} />
+                    <Tooltip
+                      formatter={(value) => [formatCurrency(Number(value)), '']}
+                    />
                     <Legend />
                     <Bar dataKey="income" fill="#10b981" name="Income" />
                     <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
@@ -103,7 +106,9 @@ export default function IncomeExpenseComparison() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip formatter={(value) => [`$${value}`, '']} />
+                    <Tooltip
+                      formatter={(value) => [formatCurrency(Number(value)), '']}
+                    />
                     <Legend />
                     <Line
                       type="monotone"
@@ -156,7 +161,12 @@ export default function IncomeExpenseComparison() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" />
                     <YAxis type="category" dataKey="source" />
-                    <Tooltip formatter={(value) => [`$${value}`, 'Amount']} />
+                    <Tooltip
+                      formatter={(value) => [
+                        formatCurrency(Number(value)),
+                        'Amount',
+                      ]}
+                    />
                     <Legend />
                     <Bar dataKey="amount" fill="#10b981" />
                   </BarChart>

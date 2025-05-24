@@ -32,12 +32,18 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useBudgetContext } from '@/contexts/budget-context';
-import { Transaction } from '@/types/budget';
-import { useBudgetData } from '@/hooks/';
 import { formatCurrency } from '@/utils';
+import { Transaction } from '@/types/budget';
 
-export default function TransactionList() {
-  const { transactions, isLoading } = useBudgetData();
+interface TransactionListProps {
+  transactions: Transaction[];
+  isLoading: boolean;
+}
+
+export default function TransactionList({
+  transactions,
+  isLoading,
+}: TransactionListProps) {
   const { removeTransaction } = useBudgetContext();
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
@@ -99,6 +105,21 @@ export default function TransactionList() {
             ))}
           </TableBody>
         </Table>
+      </div>
+    );
+  }
+
+  if (transactions.length === 0) {
+    return (
+      <div className="rounded-lg border shadow-sm">
+        <div className="flex h-40 items-center justify-center">
+          <div className="text-center">
+            <p className="text-muted-foreground">No transactions found</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Try adjusting your filters or add some transactions
+            </p>
+          </div>
+        </div>
       </div>
     );
   }

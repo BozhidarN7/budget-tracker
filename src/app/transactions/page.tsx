@@ -1,5 +1,4 @@
-import TransactionFilters from '@/components/Transactions/TransactionFilters';
-import TransactionList from '@/components/Transactions/TransactionList';
+import TransactionListWithFilters from '@/components/Transactions/TransactionListWithFilters';
 import AddTransactionButton from '@/components/Transactions/AddTransactionButton';
 import MonthSelector from '@/components/Dashboard/MonthSelector';
 
@@ -14,8 +13,7 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <TransactionFilters />
-      <TransactionList />
+      <TransactionListWithFilters />
     </div>
   );
 }

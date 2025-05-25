@@ -6,7 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import { Toaster } from '@/components/ui/sonner';
 import RouteGuard from '@/components/Auth/RouteGuard';
-import ConditionalBudgetProvider from '@/ConditionalBugdetProvider';
+import ConditionalBudgetProvider from '@/components/ConditionalBugdetProvider';
 import { AuthProvider } from '@/contexts';
 
 const inter = Inter({ subsets: ['latin'] });

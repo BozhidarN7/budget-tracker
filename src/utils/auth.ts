@@ -97,22 +97,39 @@ export class AuthService {
       return { user, tokens };
     } catch (error) {
       console.error('Sign in error:', error);
-      if (typeof error === 'object' && error !== null && 'name' in error) {
-        // Handle specific Cognito errors
-        if (error.name === 'NotAuthorizedException') {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'name' in error &&
+        'message' in error
+      ) {
+        // Handle specific Cognito errors with more user-friendly messages
+        const err = error as { message: string; name: string };
+        if (err.name === 'NotAuthorizedException') {
           throw new Error('Invalid username or password');
-        } else if (error.name === 'UserNotConfirmedException') {
-          throw new Error('Please confirm your account before signing in');
-        } else if (error.name === 'PasswordResetRequiredException') {
+        } else if (err.name === 'UserNotConfirmedException') {
+          throw new Error('User is not confirmed');
+        } else if (err.name === 'PasswordResetRequiredException') {
           throw new Error('Password reset required');
-        } else if (error.name === 'UserNotFoundException') {
+        } else if (err.name === 'UserNotFoundException') {
           throw new Error('User not found');
-        } else if (error.name === 'TooManyRequestsException') {
+        } else if (err.name === 'TooManyRequestsException') {
           throw new Error('Too many requests. Please try again later');
+        } else if (err.name === 'InvalidParameterException') {
+          throw new Error('Invalid username or password format');
+        } else if (err.name === 'ResourceNotFoundException') {
+          throw new Error('Authentication service unavailable');
+        } else if (
+          err.message?.includes('Network') ||
+          err.message?.includes('fetch')
+        ) {
+          throw new Error('Network error. Please check your connection');
         }
+
+        throw new Error('Sign in failed. Please try again');
       }
 
-      throw new Error('Sign in failed. Please try again');
+      throw new Error('Unexpected sign in error');
     }
   }
 
@@ -174,6 +191,8 @@ export class AuthService {
           throw new Error('Invalid session. Please try signing in again');
         } else if (error.name === 'ExpiredCodeException') {
           throw new Error('Session expired. Please try signing in again');
+        } else if (error.name === 'TooManyRequestsException') {
+          throw new Error('Too many requests. Please try again later');
         }
       }
 

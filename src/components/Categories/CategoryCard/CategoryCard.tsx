@@ -27,6 +27,10 @@ import { formatCurrency } from '@/utils';
 import { formatMonthKeyToReadable } from '@/utils';
 import type { Category } from '@/types/budget';
 import { useBudgetContext } from '@/contexts/budget-context';
+import {
+  getMostRecentMonthWithData,
+  getPreviousMonthKey,
+} from '@/utils/category-utils';
 
 interface CategoryCardProps {
   category: Category;
@@ -44,10 +48,45 @@ export default function CategoryCard({
   );
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const monthData = category.monthlyData[selectedMonth] || {
-    limit: 0,
-    spent: 0,
+  // Get month data with inheritance logic
+  const getMonthDataWithInheritance = (
+    category: Category,
+    monthKey: string,
+  ) => {
+    // If data exists for this month, return it
+    if (category.monthlyData[monthKey]) {
+      return category.monthlyData[monthKey];
+    }
+
+    // For expense categories, try to inherit from previous months
+    if (category.type === 'expense') {
+      // Try previous month first
+      const previousMonth = getPreviousMonthKey(monthKey);
+      if (category.monthlyData[previousMonth]?.limit > 0) {
+        return {
+          limit: category.monthlyData[previousMonth].limit,
+          spent: 0,
+        };
+      }
+
+      // Find most recent month with data
+      const recentMonthWithData = getMostRecentMonthWithData(category);
+      if (
+        recentMonthWithData &&
+        category.monthlyData[recentMonthWithData]?.limit > 0
+      ) {
+        return {
+          limit: category.monthlyData[recentMonthWithData].limit,
+          spent: 0,
+        };
+      }
+    }
+
+    // Default fallback
+    return { limit: 0, spent: 0 };
   };
+
+  const monthData = getMonthDataWithInheritance(category, selectedMonth);
 
   const handleDelete = async () => {
     if (!deletingCategoryId) return;
@@ -68,6 +107,8 @@ export default function CategoryCard({
     const progressPercentage =
       monthData.limit > 0 ? (monthData.spent / monthData.limit) * 100 : 0;
     const isOverLimit = progressPercentage > 100;
+    const isInheritedLimit =
+      !category.monthlyData[selectedMonth] && monthData.limit > 0;
 
     return (
       <>
@@ -107,6 +148,11 @@ export default function CategoryCard({
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground text-sm">
                 Monthly Limit
+                {isInheritedLimit && (
+                  <span className="ml-1 text-xs text-blue-600 dark:text-blue-400">
+                    (inherited)
+                  </span>
+                )}
               </span>
               <span
                 className={cn(
@@ -133,6 +179,11 @@ export default function CategoryCard({
                 : isOverLimit
                   ? `${(progressPercentage - 100).toFixed(0)}% over limit`
                   : `${progressPercentage.toFixed(0)}% of monthly limit used`}
+              {isInheritedLimit && monthData.limit > 0 && (
+                <span className="mt-1 block text-blue-600 dark:text-blue-400">
+                  Limit inherited from previous month
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -175,7 +226,6 @@ export default function CategoryCard({
       </>
     );
   }
-
   // Income category rendering
   return (
     <>

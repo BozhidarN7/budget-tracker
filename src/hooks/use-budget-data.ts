@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useBudgetContext } from '@/contexts/budget-context';
 import { mockCategories, mockGoals, mockTransactions } from '@/mock';
 import { formatMonthKey, parseDate } from '@/utils';
+import { ensureCategoriesMonthData } from '@/utils/category-utils';
 
 export default function useBudgetData() {
   const { transactions, categories, goals, isLoading, selectedMonth } =
@@ -16,9 +17,19 @@ export default function useBudgetData() {
     const categoriesData = categories.length > 0 ? categories : mockCategories;
     const goalsData = goals.length > 0 ? goals : mockGoals;
 
-    return { transactionsData, categoriesData, goalsData, isLoading };
-  }, [transactions, categories, goals, isLoading]);
+    // Ensure all categories have data for the selected month with inherited limits
+    const categoriesWithMonthData = ensureCategoriesMonthData(
+      categoriesData,
+      selectedMonth,
+    );
 
+    return {
+      transactionsData,
+      categoriesData: categoriesWithMonthData,
+      goalsData,
+      isLoading,
+    };
+  }, [transactions, categories, goals, isLoading, selectedMonth]);
   // Filter transactions for the selected month
   const filteredTransactions = useMemo(() => {
     return data.transactionsData.filter((transaction) => {

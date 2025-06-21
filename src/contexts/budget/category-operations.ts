@@ -6,6 +6,7 @@ import {
   deleteCategory,
 } from '@/api/budget-tracker-api/categories';
 import { getCurrentMonthKey } from '@/utils';
+import { initializeCategoryMonthData } from '@/utils/category-utils';
 
 // Create category operations factory
 export const createCategoryOperations = (
@@ -56,21 +57,20 @@ export const createCategoryOperations = (
         ...category,
       };
 
-      // If limit is provided, update only the current month's limit
+      // If limit is provided, update only the selected month's limit
       if (category.limit !== undefined) {
-        const currentMonth = selectedMonth;
         const monthlyData = { ...existingCategory.monthlyData };
 
-        // Initialize month data if it doesn't exist
-        if (!monthlyData[currentMonth]) {
-          monthlyData[currentMonth] = {
-            limit: 0,
-            spent: 0,
-          };
+        // Initialize month data if it doesn't exist (with inheritance)
+        if (!monthlyData[selectedMonth]) {
+          monthlyData[selectedMonth] = initializeCategoryMonthData(
+            existingCategory,
+            selectedMonth,
+          );
         }
 
-        monthlyData[currentMonth] = {
-          ...monthlyData[currentMonth],
+        monthlyData[selectedMonth] = {
+          ...monthlyData[selectedMonth],
           limit: category.limit,
         };
 

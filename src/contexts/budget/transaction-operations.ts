@@ -7,6 +7,7 @@ import {
 } from '@/api/budget-tracker-api/transactions';
 import { updateCategory as apiUpdateCategory } from '@/api/budget-tracker-api/categories';
 import { formatMonthKey, parseDate } from '@/utils';
+import { initializeCategoryMonthData } from '@/utils/category-utils';
 
 // Helper function to update category spending
 export const updateCategorySpending = async (
@@ -25,10 +26,7 @@ export const updateCategorySpending = async (
 
       // Initialize month data if it doesn't exist
       if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = {
-          limit: 0,
-          spent: 0,
-        };
+        monthlyData[monthKey] = initializeCategoryMonthData(category, monthKey);
       }
 
       // Update spent amount
@@ -56,10 +54,10 @@ export const updateCategorySpending = async (
 
       // Initialize month data if it doesn't exist
       if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = {
-          limit: 0,
-          spent: 0,
-        };
+        monthlyData[monthKey] = initializeCategoryMonthData(
+          categoryToUpdate,
+          monthKey,
+        );
       }
 
       // Update spent amount

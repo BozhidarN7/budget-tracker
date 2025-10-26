@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { format } from 'date-fns';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import DailyTransactions from '../DailyTransactions';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -18,6 +19,10 @@ import { parseDate } from '@/utils';
 export default function CalendarView() {
   const { transactions } = useBudgetData();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+
+  const onDateSelect = useEffectEvent((latestDateStr: string) => {
+    setSelectedDate(new Date(latestDateStr));
+  });
 
   // Group transactions by date
   const transactionsByDate = transactions.reduce(
@@ -37,7 +42,7 @@ export default function CalendarView() {
     if (!selectedDate && Object.keys(transactionsByDate).length > 0) {
       const latestDateStr = Object.keys(transactionsByDate).sort().pop();
       if (latestDateStr) {
-        setSelectedDate(new Date(latestDateStr));
+        onDateSelect(latestDateStr);
       }
     }
   }, [transactionsByDate, selectedDate]);
@@ -81,29 +86,61 @@ export default function CalendarView() {
             onSelect={setSelectedDate}
             className="rounded-md border"
             components={{
-              DayContent: (props) => {
-                const dateStr = format(props.date, 'yyyy-MM-dd');
+              DayButton: (props) => {
+                const { day, modifiers, ...buttonProps } = props;
+
+                if (!day) return <button {...buttonProps} />;
+
+                const dateStr = format(day.date, 'yyyy-MM-dd');
                 const hasTransactions = !!transactionsByDate[dateStr];
                 const dayTotal = dailyTotals[dateStr];
 
+                const mergedButtonClass = cn(
+                  'size-8 p-0 font-normal aria-selected:opacity-100',
+                  buttonProps.className,
+                );
+
                 return (
-                  <div className="relative h-9 w-9 p-0 font-normal aria-selected:opacity-100">
-                    <div className="text-foreground flex h-full w-full items-center justify-center">
-                      {props.date.getDate()}
-                    </div>
-                    {hasTransactions && (
-                      <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 gap-0.5">
-                        <div
-                          className={cn(
-                            'h-1 w-1 rounded-full',
-                            dayTotal?.net >= 0
-                              ? 'bg-emerald-500'
-                              : 'bg-rose-500',
-                          )}
-                        />
+                  <button
+                    {...buttonProps}
+                    className={mergedButtonClass}
+                    aria-pressed={modifiers.selected}
+                  >
+                    <div className="relative h-9 w-9 p-0 font-normal">
+                      <div className="text-foreground flex h-full w-full items-center justify-center">
+                        {day.date.getDate()}
                       </div>
-                    )}
-                  </div>
+
+                      {hasTransactions && (
+                        <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 gap-0.5">
+                          <div
+                            className={cn(
+                              'h-1 w-1 rounded-full',
+                              dayTotal?.net >= 0
+                                ? 'bg-emerald-500'
+                                : 'bg-rose-500',
+                            )}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              },
+              Chevron: ({ className, orientation, ...props }) => {
+                if (orientation === 'left') {
+                  return (
+                    <ChevronLeft
+                      className={cn('size-4', className)}
+                      {...props}
+                    />
+                  );
+                }
+                return (
+                  <ChevronRight
+                    className={cn('size-4', className)}
+                    {...props}
+                  />
                 );
               },
             }}

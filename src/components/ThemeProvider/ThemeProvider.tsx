@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import type { ThemeProviderProps } from 'next-themes';
 
@@ -9,9 +9,12 @@ export default function ThemeProvider({
 }: ThemeProviderProps) {
   const [mounted, setMounted] = useState(false);
 
-  // Only show the UI after hydration to prevent hydration mismatch
-  useEffect(() => {
+  const onMounted = useEffectEvent(() => {
     setMounted(true);
+  });
+  // Only show he UI after hydration to prevent hydration mismatch
+  useEffect(() => {
+    onMounted();
   }, []);
 
   // If not mounted yet, render a placeholder with the same structure

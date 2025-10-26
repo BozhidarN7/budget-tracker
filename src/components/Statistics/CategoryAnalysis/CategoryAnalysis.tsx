@@ -75,6 +75,7 @@ export default function CategoryAnalysis() {
                       dataKey="value"
                       nameKey="name"
                       label={({ name, percent }) =>
+                        /* @ts-expect-error type unknown */
                         `${name}: ${(percent * 100).toFixed(0)}%`
                       }
                     >

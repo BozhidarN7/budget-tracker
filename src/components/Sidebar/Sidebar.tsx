@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -14,6 +15,7 @@ import {
   Target,
   X,
 } from 'lucide-react';
+import logo from '../../../public/financemore.svg';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -33,15 +35,29 @@ export default function Sidebar() {
 
   return (
     <>
-      <Button
-        variant="outline"
-        size="icon"
-        className="fixed top-4 left-4 z-40 md:hidden"
-        onClick={() => setIsOpen(!isOpen)}
+      <div
+        className={
+          'bg-background relative z-50 flex h-16 items-center justify-between gap-2 border-b px-4 md:hidden'
+        }
       >
-        {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-        <span className="sr-only">Toggle Menu</span>
-      </Button>
+        <div className="flex items-center">
+          <Image
+            src={logo}
+            alt="Budget Tracker"
+            className="h-auto w-full"
+            fetchPriority="high"
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          className="bg-transparent"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          <span className="sr-only">Toggle Menu</span>
+        </Button>
+      </div>
 
       <div
         className={cn(
@@ -54,13 +70,22 @@ export default function Sidebar() {
       <aside
         className={cn(
           'bg-background fixed inset-y-0 left-0 z-30 w-64 border-r transition-transform md:static md:translate-x-0',
-          isOpen ? 'translate-x-0' : '-translate-x-full',
+          isOpen ? 'top-16 translate-x-0' : '-translate-x-full',
+          'md:inset-y-0 md:top-0',
         )}
       >
-        <div className="flex h-16 items-center border-b px-6">
-          <Link href="/" className="flex items-center gap-2 font-bold">
-            <PieChart className="h-6 w-6" />
-            <span>Budget Tracker</span>
+        <div className="hidden h-16 items-center border-b pr-2 md:flex">
+          <Link
+            href="/"
+            className="flex items-center"
+            onClick={() => setIsOpen(false)}
+          >
+            <Image
+              src={logo}
+              alt="Budget Tracker"
+              className="h-auto w-full"
+              fetchPriority="high"
+            />
           </Link>
         </div>
 

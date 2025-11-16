@@ -11,10 +11,10 @@ export default async function CategoriesPage() {
     redirect('/login');
   }
 
-  const { user, tokens } = result;
+  const { user } = result;
 
   return (
-    <ProtectedAppLayout user={user} tokens={tokens}>
+    <ProtectedAppLayout user={user}>
       <div className="space-y-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <h1 className="text-3xl font-bold">Categories</h1>

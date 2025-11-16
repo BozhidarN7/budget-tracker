@@ -1,25 +1,11 @@
 'use client';
 
 import type React from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
-import {
-  type AuthChallenge,
-  AuthService,
-  type AuthTokens,
-  type SignInResult,
-  type User,
-} from '@/utils/auth';
+import { createContext, useCallback, useContext, useState } from 'react';
+import { type AuthChallenge, type SignInResult, type User } from '@/types/auth';
 
 interface AuthContextType {
   user: User | null;
-  tokens: AuthTokens | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -46,37 +32,17 @@ export function useAuth() {
 interface AuthProviderProps {
   children: React.ReactNode;
   initialUser?: User | null;
-  initialTokens?: AuthTokens | null;
 }
 
 export default function AuthProvider({
   children,
   initialUser = null,
-  initialTokens = null,
 }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(initialUser);
-  const [tokens, setTokens] = useState<AuthTokens | null>(initialTokens);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [challenge, setChallenge] = useState<AuthChallenge | null>(null);
   const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
-
-  const router = useRouter();
-  const pathname = usePathname();
-
-  // When initial user and tokens come from the server (cookies), mirror them into
-  // localStorage so the existing client API layer using AuthService.getTokens continues to work.
-  useEffect(() => {
-    if (initialUser && initialTokens) {
-      AuthService.applySession(initialTokens, initialUser);
-    }
-  }, [initialUser, initialTokens]);
-
-  useEffect(() => {
-    if (!user && !tokens && pathname !== 'login') {
-      router.push('/login');
-    }
-  }, [user, tokens, pathname, router]);
 
   const signIn = async (username: string, password: string) => {
     try {
@@ -110,13 +76,10 @@ export default function AuthProvider({
         return;
       }
 
-      if ('user' in data && data.user && 'tokens' in data && data.tokens) {
+      if ('user' in data && data.user) {
         setUser(data.user);
-        setTokens(data.tokens);
         setChallenge(null);
         setRequiresPasswordChange(false);
-
-        AuthService.applySession(data.tokens, data.user);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Sign in failed';
@@ -150,22 +113,18 @@ export default function AuthProvider({
 
       const data = (await response.json().catch(() => ({}))) as {
         user?: User;
-        tokens?: AuthTokens;
         error?: string;
       };
 
-      if (!response.ok || !data.user || !data.tokens) {
+      if (!response.ok || !data.user) {
         const message = data.error || 'Password change failed';
         setError(message);
         throw new Error(message);
       }
 
       setUser(data.user);
-      setTokens(data.tokens);
       setChallenge(null);
       setRequiresPasswordChange(false);
-
-      AuthService.applySession(data.tokens, data.user);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Password change failed';
@@ -184,18 +143,15 @@ export default function AuthProvider({
 
       const data = (await response.json().catch(() => ({}))) as {
         user?: User;
-        tokens?: AuthTokens;
         error?: string;
       };
 
-      if (!response.ok || !data.tokens || !data.user) {
+      if (!response.ok || !data.user) {
         signOut();
         return false;
       }
 
       setUser(data.user);
-      setTokens(data.tokens);
-      AuthService.applySession(data.tokens, data.user);
       return true;
     } catch (error) {
       console.error('Token refresh error:', error);
@@ -212,9 +168,7 @@ export default function AuthProvider({
       console.error('Logout error:', error);
     });
 
-    AuthService.signOut();
     setUser(null);
-    setTokens(null);
     setError(null);
     setChallenge(null);
     setRequiresPasswordChange(false);
@@ -231,8 +185,7 @@ export default function AuthProvider({
 
   const value: AuthContextType = {
     user,
-    tokens,
-    isAuthenticated: !!user && !!tokens,
+    isAuthenticated: !!user,
     isLoading,
     error,
     challenge,

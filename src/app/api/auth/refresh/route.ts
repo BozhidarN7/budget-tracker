@@ -7,7 +7,7 @@ import {
   getUserFromTokenServer,
   refreshTokensServer,
 } from '@/utils/server-auth';
-import type { AuthTokens, User } from '@/utils/auth';
+import type { AuthTokens, User } from '@/types/auth';
 
 function setAuthCookies(
   response: NextResponse,

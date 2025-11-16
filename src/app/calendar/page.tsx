@@ -10,10 +10,10 @@ export default async function CalendarPage() {
     redirect('/login');
   }
 
-  const { user, tokens } = result;
+  const { user } = result;
 
   return (
-    <ProtectedAppLayout user={user} tokens={tokens}>
+    <ProtectedAppLayout user={user}>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Calendar</h1>
         <p className="text-muted-foreground">

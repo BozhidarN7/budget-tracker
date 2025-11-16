@@ -24,15 +24,3 @@ export interface SignInResult {
   challenge?: AuthChallenge;
   requiresPasswordChange?: boolean;
 }
-
-/**
- * This file now only defines shared auth types.
- *
- * All Cognito interactions and token handling are implemented on the server side
- * in:
- * - server auth utilities: src/utils/server-auth.ts
- * - Next API routes: src/app/api/auth/login, logout, new-password, refresh
- *
- * No auth logic here should access browser APIs (window, localStorage, etc.)
- * and no client-side code should attempt to read or write tokens directly.
- */

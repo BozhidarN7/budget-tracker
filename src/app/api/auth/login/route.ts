@@ -12,8 +12,12 @@ import {
   REFRESH_TOKEN_COOKIE,
   getUserFromTokenServer,
 } from '@/utils/server-auth';
-import type { AuthTokens } from '@/utils/auth';
-import type { AuthChallenge, SignInResult, User } from '@/utils/auth';
+import type {
+  AuthChallenge,
+  AuthTokens,
+  SignInResult,
+  User,
+} from '@/types/auth';
 
 const cognitoClient = new CognitoIdentityProviderClient({
   region: process.env.NEXT_PUBLIC_AWS_REGION || 'us-east-1',

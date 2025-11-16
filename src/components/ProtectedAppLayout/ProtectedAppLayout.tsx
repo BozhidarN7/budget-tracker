@@ -5,11 +5,10 @@ import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import ConditionalBudgetProvider from '@/components/ConditionalBugdetProvider';
 import { AuthProvider } from '@/contexts';
-import type { AuthTokens, User } from '@/utils/auth';
+import type { User } from '@/types/auth';
 
 interface ProtectedAppLayoutProps {
   user: User;
-  tokens: AuthTokens;
   children: React.ReactNode;
 }
 
@@ -17,17 +16,16 @@ interface ProtectedAppLayoutProps {
  * ProtectedAppLayout
  *
  * Client-side shell used by protected pages:
- * - Expects an authenticated user and tokens (resolved on the server)
+ * - Expects an authenticated user (resolved on the server)
  * - Provides AuthContext and BudgetContext to the subtree
  * - Renders the main app chrome (sidebar, header, layout, toaster is in RootLayout)
  */
 export default function ProtectedAppLayout({
   user,
-  tokens,
   children,
 }: ProtectedAppLayoutProps) {
   return (
-    <AuthProvider initialUser={user} initialTokens={tokens}>
+    <AuthProvider initialUser={user}>
       <ConditionalBudgetProvider>
         <div className="flex min-h-screen flex-col md:flex-row">
           <Sidebar />

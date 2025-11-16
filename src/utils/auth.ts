@@ -332,6 +332,11 @@ export class AuthService {
     }
   }
 
+  static applySession(tokens: AuthTokens, user: User): void {
+    this.storeTokens(tokens);
+    this.storeUser(user);
+  }
+
   private static storeTokens(tokens: AuthTokens): void {
     if (typeof window !== 'undefined') {
       localStorage.setItem(this.ACCESS_TOKEN_KEY, tokens.accessToken);

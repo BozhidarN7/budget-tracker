@@ -1,15 +1,28 @@
+import { redirect } from 'next/navigation';
+import ProtectedAppLayout from '@/components/ProtectedAppLayout';
+import { getCurrentUser } from '@/utils/server-auth';
 import CategoryList from '@/components/Categories/CategoryList';
 import AddCategoryButton from '@/components/Categories/AddCategoryButton';
 
-export default function CategoriesPage() {
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <h1 className="text-3xl font-bold">Categories</h1>
-        <AddCategoryButton />
-      </div>
+export default async function CategoriesPage() {
+  const result = await getCurrentUser();
 
-      <CategoryList />
-    </div>
+  if (!result) {
+    redirect('/login');
+  }
+
+  const { user, tokens } = result;
+
+  return (
+    <ProtectedAppLayout user={user} tokens={tokens}>
+      <div className="space-y-6">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <h1 className="text-3xl font-bold">Categories</h1>
+          <AddCategoryButton />
+        </div>
+
+        <CategoryList />
+      </div>
+    </ProtectedAppLayout>
   );
 }

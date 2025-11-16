@@ -1,6 +1,7 @@
 'use client';
 
 import type React from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   createContext,
   useCallback,
@@ -12,6 +13,7 @@ import {
   type AuthChallenge,
   AuthService,
   type AuthTokens,
+  type SignInResult,
   type User,
 } from '@/utils/auth';
 
@@ -43,66 +45,83 @@ export function useAuth() {
 
 interface AuthProviderProps {
   children: React.ReactNode;
+  initialUser?: User | null;
+  initialTokens?: AuthTokens | null;
 }
 
-export default function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [tokens, setTokens] = useState<AuthTokens | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export default function AuthProvider({
+  children,
+  initialUser = null,
+  initialTokens = null,
+}: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(initialUser);
+  const [tokens, setTokens] = useState<AuthTokens | null>(initialTokens);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [challenge, setChallenge] = useState<AuthChallenge | null>(null);
   const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
 
-  const checkAuthStatus = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const storedTokens = AuthService.getTokens();
-      const storedUser = AuthService.getUser();
+  const router = useRouter();
+  const pathname = usePathname();
 
-      if (storedTokens && storedUser) {
-        const isValid = await AuthService.isAuthenticated();
-        if (isValid) {
-          setTokens(AuthService.getTokens()); // Get potentially refreshed tokens
-          setUser(storedUser);
-        } else {
-          // Clear invalid session
-          AuthService.signOut();
-          setTokens(null);
-          setUser(null);
-        }
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      AuthService.signOut();
-      setTokens(null);
-      setUser(null);
-    } finally {
-      setIsLoading(false);
+  // When initial user and tokens come from the server (cookies), mirror them into
+  // localStorage so the existing client API layer using AuthService.getTokens continues to work.
+  useEffect(() => {
+    if (initialUser && initialTokens) {
+      AuthService.applySession(initialTokens, initialUser);
     }
-  }, []);
+  }, [initialUser, initialTokens]);
 
   useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
+    if (!user && !tokens && pathname !== 'login') {
+      router.push('/login');
+    }
+  }, [user, tokens, pathname, router]);
 
   const signIn = async (username: string, password: string) => {
     try {
       setError(null);
       setIsLoading(true);
-      const result = await AuthService.signIn(username, password);
 
-      if (result.challenge) {
-        setChallenge(result.challenge);
-        setRequiresPasswordChange(result.requiresPasswordChange || false);
-      } else if (result.user && result.tokens) {
-        setUser(result.user);
-        setTokens(result.tokens);
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as
+        | (SignInResult & { error?: string })
+        | { error?: string };
+
+      if (!response.ok) {
+        const message = data.error || 'Sign in failed';
+        setError(message);
+        throw new Error(message);
+      }
+
+      if ('challenge' in data && data.challenge) {
+        setChallenge(data.challenge);
+        setRequiresPasswordChange(data.requiresPasswordChange || false);
+        return;
+      }
+
+      if ('user' in data && data.user && 'tokens' in data && data.tokens) {
+        setUser(data.user);
+        setTokens(data.tokens);
         setChallenge(null);
         setRequiresPasswordChange(false);
+
+        AuthService.applySession(data.tokens, data.user);
       }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Sign in failed');
-      throw error;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Sign in failed';
+      setError(message);
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -116,21 +135,42 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     try {
       setError(null);
       setIsLoading(true);
-      const { user: authUser, tokens: authTokens } =
-        await AuthService.respondToNewPasswordChallenge(
-          challenge.username,
+
+      const response = await fetch('/api/auth/new-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: challenge.username,
           newPassword,
-          challenge.session,
-        );
-      setUser(authUser);
-      setTokens(authTokens);
+          session: challenge.session,
+        }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        user?: User;
+        tokens?: AuthTokens;
+        error?: string;
+      };
+
+      if (!response.ok || !data.user || !data.tokens) {
+        const message = data.error || 'Password change failed';
+        setError(message);
+        throw new Error(message);
+      }
+
+      setUser(data.user);
+      setTokens(data.tokens);
       setChallenge(null);
       setRequiresPasswordChange(false);
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : 'Password change failed',
-      );
-      throw error;
+
+      AuthService.applySession(data.tokens, data.user);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Password change failed';
+      setError(message);
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -138,12 +178,25 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
   const refreshTokens = async (): Promise<boolean> => {
     try {
-      const newTokens = await AuthService.refreshTokens();
-      if (newTokens) {
-        setTokens(newTokens);
-        return true;
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        user?: User;
+        tokens?: AuthTokens;
+        error?: string;
+      };
+
+      if (!response.ok || !data.tokens || !data.user) {
+        signOut();
+        return false;
       }
-      return false;
+
+      setUser(data.user);
+      setTokens(data.tokens);
+      AuthService.applySession(data.tokens, data.user);
+      return true;
     } catch (error) {
       console.error('Token refresh error:', error);
       signOut();
@@ -152,6 +205,13 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const signOut = useCallback(() => {
+    // Fire-and-forget logout request to clear HttpOnly cookies
+    fetch('/api/auth/logout', {
+      method: 'POST',
+    }).catch((error) => {
+      console.error('Logout error:', error);
+    });
+
     AuthService.signOut();
     setUser(null);
     setTokens(null);
@@ -185,5 +245,5 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     refreshTokens,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext value={value}>{children}</AuthContext>;
 }

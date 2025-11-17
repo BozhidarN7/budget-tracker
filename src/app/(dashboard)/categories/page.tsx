@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/utils/server-auth';
+import { getCurrentUser } from '@/server/auth';
 import CategoryList from '@/components/Categories/CategoryList';
 import AddCategoryButton from '@/components/Categories/AddCategoryButton';
 

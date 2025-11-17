@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-import { getCurrentUser } from '@/utils/server-auth';
+import { getCurrentUser } from '@/server/auth';
 import CalendarView from '@/components/Calendar/CalendarView';
 
 export default async function CalendarPage() {

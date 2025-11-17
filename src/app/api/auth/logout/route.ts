@@ -3,7 +3,7 @@ import {
   ACCESS_TOKEN_COOKIE,
   ID_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
-} from '@/utils/server-auth';
+} from '@/server/auth';
 
 export async function POST(): Promise<NextResponse> {
   const response = NextResponse.json({ success: true }, { status: 200 });

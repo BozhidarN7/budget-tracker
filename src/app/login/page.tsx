@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { AuthProvider } from '@/contexts';
-import { getCurrentUser } from '@/utils/server-auth';
+import { getCurrentUser } from '@/server/auth';
 import LoginPageShell from '@/components/Auth/LoginPageShell';
 
 export default async function LoginPage() {

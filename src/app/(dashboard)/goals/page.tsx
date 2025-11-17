@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/utils/server-auth';
+import { getCurrentUser } from '@/server/auth';
 import SavingsGoalCard from '@/components/Goals/SavingsGoalCard';
 import AddGoalButton from '@/components/Goals/AddGoalButton';
 import GoalsList from '@/components/Goals/GoalsList';

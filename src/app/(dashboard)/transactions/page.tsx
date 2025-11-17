@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-import { getCurrentUser } from '@/utils/server-auth';
+import { getCurrentUser } from '@/server/auth';
 import TransactionListWithFilters from '@/components/Transactions/TransactionListWithFilters';
 import AddTransactionButton from '@/components/Transactions/AddTransactionButton';
 import MonthSelector from '@/components/Dashboard/MonthSelector';

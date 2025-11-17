@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/utils/server-auth';
+import { getCurrentUser } from '@/server/auth';
 import DashboardCards from '@/components/Dashboard/DashboardCards';
 import ExpensesByCategoryChart from '@/components/Dashboard/ExpensesByCategoryChart';
 import MonthlyTrendsChart from '@/components/Dashboard/MonthlyTrendsChart';

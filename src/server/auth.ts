@@ -1,5 +1,4 @@
 import { cookies } from 'next/headers';
-
 import {
   AuthFlowType,
   CognitoIdentityProviderClient,
@@ -7,7 +6,7 @@ import {
   InitiateAuthCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 
-import type { AuthTokens, User } from './auth';
+import type { AuthTokens, User } from '@/types/auth';
 
 const cognitoClient = new CognitoIdentityProviderClient({
   region: process.env.NEXT_PUBLIC_AWS_REGION || 'us-east-1',
@@ -49,7 +48,11 @@ function isJwtExpired(token: string): boolean {
   return exp <= currentTime;
 }
 
+/**
+ * Read tokens from HttpOnly cookies on the server.
+ */
 export async function getTokensFromCookies(): Promise<ServerAuthTokens | null> {
+  // In your environment cookies() appears to be typed as async, so we await it.
   const cookieStore = await cookies();
   const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
   const idToken = cookieStore.get(ID_TOKEN_COOKIE)?.value;
@@ -62,6 +65,9 @@ export async function getTokensFromCookies(): Promise<ServerAuthTokens | null> {
   return { accessToken, idToken, refreshToken };
 }
 
+/**
+ * Fetch Cognito user info given an access token.
+ */
 export async function getUserFromTokenServer(
   accessToken: string,
 ): Promise<User | null> {
@@ -91,6 +97,9 @@ export async function getUserFromTokenServer(
   }
 }
 
+/**
+ * Refresh tokens on the server using the Cognito REFRESH_TOKEN_AUTH flow.
+ */
 export async function refreshTokensServer(
   refreshToken: string,
 ): Promise<ServerAuthTokens | null> {
@@ -123,6 +132,9 @@ export async function refreshTokensServer(
   }
 }
 
+/**
+ * High-level helper used by layouts/pages to determine the current user from cookies.
+ */
 export async function getCurrentUser(): Promise<{
   user: User;
   tokens: ServerAuthTokens;
@@ -134,7 +146,7 @@ export async function getCurrentUser(): Promise<{
 
   if (isJwtExpired(tokens.accessToken)) {
     // For now, treat expired access tokens as unauthenticated on the server.
-    // Refresh can be handled via dedicated API routes on the client side.
+    // Token refresh can be handled via dedicated API routes.
     return null;
   }
 

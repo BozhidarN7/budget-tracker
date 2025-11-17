@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { API_BASE_URL } from '@/constants/api';
-import { getTokensFromCookies } from '@/utils/server-auth';
+import { getTokensFromCookies } from '@/server/auth';
 
 async function buildAuthHeaders() {
   const tokens = await getTokensFromCookies();

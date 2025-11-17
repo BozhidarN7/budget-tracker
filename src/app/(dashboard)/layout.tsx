@@ -1,7 +1,10 @@
 import type React from 'react';
+import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import ProtectedAppLayout from '@/components/ProtectedAppLayout/ProtectedAppLayout';
-import { getCurrentUser } from '@/utils/server-auth';
+import { getCurrentUser } from '@/server/auth';
+import BudgetDataProvider from '@/components/BudgetDataProvider';
+import BudgetLoading from '@/components/Budget/BudgetLoading';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -13,9 +16,10 @@ interface DashboardLayoutProps {
  * This layout:
  * - Runs on the server
  * - Enforces authentication via getCurrentUser and redirects to /login if unauthenticated
- * - Wraps all child pages in ProtectedAppLayout, so:
- *   - AuthProvider and ConditionalBudgetProvider are mounted once
- *   - Budget data is fetched once and kept in context across sidebar route navigation
+ * - Wraps all child pages in:
+ *   - BudgetDataProvider (server), which fetches budget data once on the server
+ *   - ProtectedAppLayout (client), which provides Auth context and the app chrome
+ * - Uses Suspense with BudgetLoading as a fallback while budget data loads
  */
 export default async function DashboardLayout({
   children,
@@ -28,5 +32,11 @@ export default async function DashboardLayout({
 
   const { user } = result;
 
-  return <ProtectedAppLayout user={user}>{children}</ProtectedAppLayout>;
+  return (
+    <Suspense fallback={<BudgetLoading />}>
+      <BudgetDataProvider>
+        <ProtectedAppLayout user={user}>{children}</ProtectedAppLayout>
+      </BudgetDataProvider>
+    </Suspense>
+  );
 }

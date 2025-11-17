@@ -10,7 +10,7 @@ import {
   ID_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
   getUserFromTokenServer,
-} from '@/utils/server-auth';
+} from '@/server/auth';
 import type { AuthTokens, User } from '@/types/auth';
 
 const cognitoClient = new CognitoIdentityProviderClient({

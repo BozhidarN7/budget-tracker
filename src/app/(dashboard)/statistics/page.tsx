@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/utils/server-auth';
+import { getCurrentUser } from '@/server/auth';
 import StatisticsView from '@/components/Statistics/StatisticsView';
 
 export default async function StatisticsPage() {

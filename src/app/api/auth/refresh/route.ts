@@ -6,7 +6,7 @@ import {
   getTokensFromCookies,
   getUserFromTokenServer,
   refreshTokensServer,
-} from '@/utils/server-auth';
+} from '@/server/auth';
 import type { AuthTokens, User } from '@/types/auth';
 
 function setAuthCookies(

@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/utils/server-auth';
+import { getCurrentUser } from '@/server/auth';
 import SettingsForm from '@/components/Settings/SettingsForm';
 
 export default async function SettingsPage() {

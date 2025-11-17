@@ -7,13 +7,13 @@ export default async function LoginPage() {
   const result = await getCurrentUser();
 
   // If the user already has a valid session (cookies), redirect from the server
-  if (result?.user && result.tokens) {
+  if (result?.user) {
     redirect('/');
   }
 
   // No valid session: render the client-side login experience
   return (
-    <AuthProvider initialUser={null} initialTokens={null}>
+    <AuthProvider initialUser={null}>
       <LoginPageShell />
     </AuthProvider>
   );

@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import ProtectedAppLayout from '@/components/ProtectedAppLayout';
 import { getCurrentUser } from '@/utils/server-auth';
 import SavingsGoalCard from '@/components/Goals/SavingsGoalCard';
 import AddGoalButton from '@/components/Goals/AddGoalButton';
@@ -12,19 +11,15 @@ export default async function GoalsPage() {
     redirect('/login');
   }
 
-  const { user } = result;
-
   return (
-    <ProtectedAppLayout user={user}>
-      <div className="space-y-6">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <h1 className="text-3xl font-bold">Savings Goals</h1>
-          <AddGoalButton />
-        </div>
-
-        <SavingsGoalCard />
-        <GoalsList />
+    <div className="space-y-6">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <h1 className="text-3xl font-bold">Savings Goals</h1>
+        <AddGoalButton />
       </div>
-    </ProtectedAppLayout>
+
+      <SavingsGoalCard />
+      <GoalsList />
+    </div>
   );
 }

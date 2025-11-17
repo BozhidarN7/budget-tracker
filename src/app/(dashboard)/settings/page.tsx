@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import ProtectedAppLayout from '@/components/ProtectedAppLayout';
 import { getCurrentUser } from '@/utils/server-auth';
 import SettingsForm from '@/components/Settings/SettingsForm';
 
@@ -10,14 +9,12 @@ export default async function SettingsPage() {
     redirect('/login');
   }
 
-  const { user, tokens } = result;
+  // const { user, tokens } = result;
 
   return (
-    <ProtectedAppLayout user={user} tokens={tokens}>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <SettingsForm />
-      </div>
-    </ProtectedAppLayout>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold">Settings</h1>
+      <SettingsForm />
+    </div>
   );
 }

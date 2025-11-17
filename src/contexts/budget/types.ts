@@ -14,11 +14,13 @@ export type BudgetContextType = {
   refetch: () => Promise<void>;
 
   // Transaction operations
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  addTransaction: (
+    transaction: Omit<Transaction, 'id'>,
+  ) => Promise<Transaction>;
   updateTransaction: (
     id: string,
     transaction: Partial<Transaction>,
-  ) => Promise<void>;
+  ) => Promise<Transaction>;
   removeTransaction: (id: string) => Promise<boolean>;
 
   // Category operations

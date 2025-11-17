@@ -30,18 +30,39 @@ const defaultContext: BudgetContextType = {
   selectedMonth: getCurrentMonthKey(),
   setSelectedMonth: () => {},
   refetch: async () => {},
+
   // Transaction operations
-  addTransaction: async () => {},
-  updateTransaction: async () => {},
-  removeTransaction: async () => false,
+  addTransaction: async (_transaction) => {
+    throw new Error('BudgetContext not initialized: addTransaction');
+  },
+  updateTransaction: async (_id, _transaction) => {
+    throw new Error('BudgetContext not initialized: updateTransaction');
+  },
+  removeTransaction: async (_id) => {
+    throw new Error('BudgetContext not initialized: removeTransaction');
+  },
+
   // Category operations
-  addCategory: async () => {},
-  updateCategory: async () => {},
-  removeCategory: async () => {},
+  addCategory: async (_category) => {
+    throw new Error('BudgetContext not initialized: addCategory');
+  },
+  updateCategory: async (_id, _category) => {
+    throw new Error('BudgetContext not initialized: updateCategory');
+  },
+  removeCategory: async (_id) => {
+    throw new Error('BudgetContext not initialized: removeCategory');
+  },
+
   // Goal operations
-  addGoal: async () => {},
-  updateGoal: async () => {},
-  removeGoal: async () => {},
+  addGoal: async (_goal) => {
+    throw new Error('BudgetContext not initialized: addGoal');
+  },
+  updateGoal: async (_id, _goal) => {
+    throw new Error('BudgetContext not initialized: updateGoal');
+  },
+  removeGoal: async (_id) => {
+    throw new Error('BudgetContext not initialized: removeGoal');
+  },
 };
 
 const BudgetContext = createContext<BudgetContextType>(defaultContext);

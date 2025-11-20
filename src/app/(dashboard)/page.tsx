@@ -1,5 +1,3 @@
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/server/auth';
 import DashboardCards from '@/components/Dashboard/DashboardCards';
 import ExpensesByCategoryChart from '@/components/Dashboard/ExpensesByCategoryChart';
 import MonthlyTrendsChart from '@/components/Dashboard/MonthlyTrendsChart';
@@ -9,12 +7,6 @@ import CategoryLimits from '@/components/Dashboard/CategoryLimits';
 import MonthSelector from '@/components/Dashboard/MonthSelector';
 
 export default async function Dashboard() {
-  const result = await getCurrentUser();
-
-  if (!result) {
-    redirect('/login');
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">

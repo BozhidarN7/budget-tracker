@@ -155,5 +155,8 @@ export async function getCurrentUser(): Promise<{
     return null;
   }
 
+  // return new Promise((resolve, _reject) =>
+  //   setTimeout(() => resolve({ user, tokens }), 300),
+  // );
   return { user, tokens };
 }

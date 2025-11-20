@@ -13,7 +13,6 @@ interface DashboardErrorProps {
  * DashboardError
  *
  * Error boundary UI for the (dashboard) route group.
- * Reuses the error look and feel from ConditionalBudgetProvider's
  * "Unable to load your budget data" branch.
  */
 export default function DashboardError({ error, reset }: DashboardErrorProps) {

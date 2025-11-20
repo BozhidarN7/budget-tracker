@@ -1,15 +1,6 @@
-import { redirect } from 'next/navigation';
-
-import { getCurrentUser } from '@/server/auth';
 import CalendarView from '@/components/Calendar/CalendarView';
 
 export default async function CalendarPage() {
-  const result = await getCurrentUser();
-
-  if (!result) {
-    redirect('/login');
-  }
-
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Calendar</h1>

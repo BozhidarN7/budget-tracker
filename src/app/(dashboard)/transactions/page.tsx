@@ -1,17 +1,8 @@
-import { redirect } from 'next/navigation';
-
-import { getCurrentUser } from '@/server/auth';
 import TransactionListWithFilters from '@/components/Transactions/TransactionListWithFilters';
 import AddTransactionButton from '@/components/Transactions/AddTransactionButton';
 import MonthSelector from '@/components/Dashboard/MonthSelector';
 
 export default async function TransactionsPage() {
-  const result = await getCurrentUser();
-
-  if (!result) {
-    redirect('/login');
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">

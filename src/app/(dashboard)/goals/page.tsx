@@ -1,16 +1,8 @@
-import { redirect } from 'next/navigation';
-import { getCurrentUser } from '@/server/auth';
 import SavingsGoalCard from '@/components/Goals/SavingsGoalCard';
 import AddGoalButton from '@/components/Goals/AddGoalButton';
 import GoalsList from '@/components/Goals/GoalsList';
 
 export default async function GoalsPage() {
-  const result = await getCurrentUser();
-
-  if (!result) {
-    redirect('/login');
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">

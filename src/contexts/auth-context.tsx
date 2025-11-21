@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import type React from 'react';
 import { createContext, useCallback, useContext, useState } from 'react';
 import { type AuthChallenge, type SignInResult, type User } from '@/types/auth';
@@ -38,6 +39,8 @@ export default function AuthProvider({
   children,
   initialUser = null,
 }: AuthProviderProps) {
+  const router = useRouter();
+
   const [user, setUser] = useState<User | null>(initialUser);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -172,6 +175,8 @@ export default function AuthProvider({
     setError(null);
     setChallenge(null);
     setRequiresPasswordChange(false);
+
+    router.push('/login');
   }, []);
 
   const clearError = useCallback(() => {

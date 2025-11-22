@@ -1,44 +1,11 @@
 import { NextResponse } from 'next/server';
 import {
-  ACCESS_TOKEN_COOKIE,
-  ID_TOKEN_COOKIE,
-  REFRESH_TOKEN_COOKIE,
   getTokensFromCookies,
   getUserFromTokenServer,
   refreshTokensServer,
+  setAuthCookies,
 } from '@/server/auth';
-import type { AuthTokens, User } from '@/types/auth';
-
-function setAuthCookies(
-  response: NextResponse,
-  tokens: AuthTokens,
-): NextResponse {
-  const commonOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
-    path: '/',
-  };
-
-  const accessTokenMaxAge = 60 * 60; // 1 hour
-  const idTokenMaxAge = 60 * 60; // 1 hour
-  const refreshTokenMaxAge = 60 * 60 * 24 * 7; // 7 days
-
-  response.cookies.set(ACCESS_TOKEN_COOKIE, tokens.accessToken, {
-    ...commonOptions,
-    maxAge: accessTokenMaxAge,
-  });
-  response.cookies.set(ID_TOKEN_COOKIE, tokens.idToken, {
-    ...commonOptions,
-    maxAge: idTokenMaxAge,
-  });
-  response.cookies.set(REFRESH_TOKEN_COOKIE, tokens.refreshToken, {
-    ...commonOptions,
-    maxAge: refreshTokenMaxAge,
-  });
-
-  return response;
-}
+import type { User } from '@/types/auth';
 
 export async function POST(): Promise<NextResponse> {
   try {
@@ -76,7 +43,8 @@ export async function POST(): Promise<NextResponse> {
       { status: 200 },
     );
 
-    return setAuthCookies(jsonResponse, newTokens);
+    await setAuthCookies(newTokens);
+    return jsonResponse;
   } catch (error) {
     console.error('Token refresh error (API route):', error);
     return NextResponse.json(

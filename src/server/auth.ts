@@ -133,7 +133,39 @@ export async function refreshTokensServer(
 }
 
 /**
+ * Set authentication cookies on the server.
+ */
+export async function setAuthCookies(tokens: ServerAuthTokens): Promise<void> {
+  const cookieStore = await cookies();
+
+  const commonOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+  };
+
+  const accessTokenMaxAge = 60 * 60; // 1 hour
+  const idTokenMaxAge = 60 * 60; // 1 hour
+  const refreshTokenMaxAge = 60 * 60 * 24 * 7; // 7 days
+
+  cookieStore.set(ACCESS_TOKEN_COOKIE, tokens.accessToken, {
+    ...commonOptions,
+    maxAge: accessTokenMaxAge,
+  });
+  cookieStore.set(ID_TOKEN_COOKIE, tokens.idToken, {
+    ...commonOptions,
+    maxAge: idTokenMaxAge,
+  });
+  cookieStore.set(REFRESH_TOKEN_COOKIE, tokens.refreshToken, {
+    ...commonOptions,
+    maxAge: refreshTokenMaxAge,
+  });
+}
+
+/**
  * High-level helper used by layouts/pages to determine the current user from cookies.
+ * Automatically refreshes tokens when they expire.
  */
 export async function getCurrentUser(): Promise<{
   user: User;
@@ -144,19 +176,22 @@ export async function getCurrentUser(): Promise<{
     return null;
   }
 
+  let currentTokens = tokens;
+
   if (isJwtExpired(tokens.accessToken)) {
-    // For now, treat expired access tokens as unauthenticated on the server.
-    // Token refresh can be handled via dedicated API routes.
-    return null;
+    const refreshedTokens = await refreshTokensServer(tokens.refreshToken);
+    if (!refreshedTokens) {
+      return null;
+    }
+
+    await setAuthCookies(refreshedTokens);
+    currentTokens = refreshedTokens;
   }
 
-  const user = await getUserFromTokenServer(tokens.accessToken);
+  const user = await getUserFromTokenServer(currentTokens.accessToken);
   if (!user) {
     return null;
   }
 
-  // return new Promise((resolve, _reject) =>
-  //   setTimeout(() => resolve({ user, tokens }), 300),
-  // );
-  return { user, tokens };
+  return { user, tokens: currentTokens };
 }

@@ -177,7 +177,7 @@ export default function AuthProvider({
     setRequiresPasswordChange(false);
 
     router.push('/login');
-  }, []);
+  }, [router]);
 
   const clearError = useCallback(() => {
     setError(null);

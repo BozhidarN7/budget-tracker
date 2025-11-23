@@ -1,6 +1,8 @@
+import { revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { API_BASE_URL } from '@/constants/api';
 import { getTokensFromCookies } from '@/server/auth';
+import { CACHE_TAGS } from '@/constants';
 
 async function buildAuthHeaders() {
   const tokens = await getTokensFromCookies();
@@ -44,5 +46,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   });
 
   const data = await res.json().catch(() => null);
+
+  if (res.ok) {
+    try {
+      revalidateTag(CACHE_TAGS.budget.categories, { expire: 0 });
+    } catch (error) {
+      console.warn('Failed to revalidate cache:', error);
+    }
+  }
+
   return NextResponse.json(data, { status: res.status });
 }

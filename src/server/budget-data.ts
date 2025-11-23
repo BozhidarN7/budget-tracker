@@ -1,6 +1,7 @@
 import { getTokensFromCookies } from '@/server/auth';
 import { API_BASE_URL } from '@/constants/api';
 import type { Category, Goal, Transaction } from '@/types/budget';
+import { CACHE_TAGS } from '@/constants';
 
 export interface BudgetData {
   transactions: Transaction[];
@@ -55,17 +56,20 @@ export async function getInitialBudgetData(): Promise<BudgetDataResult> {
       fetch(`${API_BASE_URL}/transactions`, {
         method: 'GET',
         headers,
-        cache: 'no-store',
+        cache: 'force-cache',
+        next: { tags: [CACHE_TAGS.budget.transactions] },
       }),
       fetch(`${API_BASE_URL}/categorys`, {
         method: 'GET',
         headers,
-        cache: 'no-store',
+        cache: 'force-cache',
+        next: { tags: [CACHE_TAGS.budget.categories] },
       }),
       fetch(`${API_BASE_URL}/goals`, {
         method: 'GET',
         headers,
-        cache: 'no-store',
+        cache: 'force-cache',
+        next: { tags: [CACHE_TAGS.budget.goals] },
       }),
     ]);
 

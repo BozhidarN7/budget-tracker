@@ -1,8 +1,15 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
-import { createContext, useCallback, useContext, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
+import { useAuthRefresh, useBackgroundTokenRefresh } from '@/hooks';
 import { type AuthChallenge, type SignInResult, type User } from '@/types/auth';
 
 interface AuthContextType {
@@ -39,13 +46,50 @@ export default function AuthProvider({
   children,
   initialUser = null,
 }: AuthProviderProps) {
-  const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [user, setUser] = useState<User | null>(initialUser);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [challenge, setChallenge] = useState<AuthChallenge | null>(null);
   const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
+
+  const refreshTokens = async (): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        user?: User;
+        error?: string;
+      };
+
+      if (!response.ok || !data.user) {
+        // Don't automatically sign out here - let the caller decide
+        return false;
+      }
+
+      setUser(data.user);
+      setError(null); // Clear any previous errors
+      return true;
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      return false;
+    }
+  };
+
+  // Custom hooks for token refresh
+  const { refetch: checkAndRefreshTokens } = useAuthRefresh({
+    user,
+    refreshTokens,
+  });
+
+  useBackgroundTokenRefresh({
+    user,
+    refreshTokens,
+  });
 
   const signIn = async (username: string, password: string) => {
     try {
@@ -138,46 +182,32 @@ export default function AuthProvider({
     }
   };
 
-  const refreshTokens = async (): Promise<boolean> => {
-    try {
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
-      });
-
-      const data = (await response.json().catch(() => ({}))) as {
-        user?: User;
-        error?: string;
-      };
-
-      if (!response.ok || !data.user) {
-        signOut();
-        return false;
-      }
-
-      setUser(data.user);
-      return true;
-    } catch (error) {
-      console.error('Token refresh error:', error);
-      signOut();
-      return false;
+  // Effect to handle initial auth recovery when server returns null user
+  useEffect(() => {
+    if (!initialUser && !user && !isLoading) {
+      // Server didn't provide a user (probably expired tokens)
+      // Try to refresh tokens on the client side
+      checkAndRefreshTokens();
     }
-  };
+  }, [initialUser, user, isLoading, checkAndRefreshTokens]);
 
-  const signOut = useCallback(() => {
+  const signOut = useCallback(async () => {
     // Fire-and-forget logout request to clear HttpOnly cookies
-    fetch('/api/auth/logout', {
+    await fetch('/api/auth/logout', {
       method: 'POST',
     }).catch((error) => {
       console.error('Logout error:', error);
     });
+
+    queryClient.removeQueries({ queryKey: ['auth'] });
 
     setUser(null);
     setError(null);
     setChallenge(null);
     setRequiresPasswordChange(false);
 
-    router.push('/login');
-  }, [router]);
+    window.location.href = '/login';
+  }, [queryClient]);
 
   const clearError = useCallback(() => {
     setError(null);

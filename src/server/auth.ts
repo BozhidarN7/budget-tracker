@@ -58,11 +58,18 @@ export async function getTokensFromCookies(): Promise<ServerAuthTokens | null> {
   const idToken = cookieStore.get(ID_TOKEN_COOKIE)?.value;
   const refreshToken = cookieStore.get(REFRESH_TOKEN_COOKIE)?.value;
 
-  if (!accessToken || !idToken || !refreshToken) {
+  // If no refresh token, we can't authenticate at all
+  if (!refreshToken) {
     return null;
   }
 
-  return { accessToken, idToken, refreshToken };
+  // If we have refresh token but missing access/id tokens, they might have expired
+  // Return what we have and let getCurrentUser handle the refresh
+  return {
+    accessToken: accessToken || '',
+    idToken: idToken || '',
+    refreshToken,
+  };
 }
 
 /**
@@ -133,7 +140,7 @@ export async function refreshTokensServer(
 }
 
 /**
- * Set authentication cookies on the server.
+ * Set authentication cookies on the server - ONLY for use in API routes or Server Actions.
  */
 export async function setAuthCookies(tokens: ServerAuthTokens): Promise<void> {
   const cookieStore = await cookies();
@@ -165,7 +172,8 @@ export async function setAuthCookies(tokens: ServerAuthTokens): Promise<void> {
 
 /**
  * High-level helper used by layouts/pages to determine the current user from cookies.
- * Automatically refreshes tokens when they expire.
+ * This is read-only for server components. Token refresh must be handled by the client
+ * via the /api/auth/refresh route.
  */
 export async function getCurrentUser(): Promise<{
   user: User;
@@ -176,22 +184,20 @@ export async function getCurrentUser(): Promise<{
     return null;
   }
 
-  let currentTokens = tokens;
+  // Check if access token is missing or expired
+  const needsRefresh =
+    !tokens.accessToken || !tokens.idToken || isJwtExpired(tokens.accessToken);
 
-  if (isJwtExpired(tokens.accessToken)) {
-    const refreshedTokens = await refreshTokensServer(tokens.refreshToken);
-    if (!refreshedTokens) {
-      return null;
-    }
-
-    await setAuthCookies(refreshedTokens);
-    currentTokens = refreshedTokens;
+  if (needsRefresh) {
+    // Server components cannot modify cookies or make fetch requests to same app
+    // Return null and let client handle refresh via /api/auth/refresh
+    return null;
   }
 
-  const user = await getUserFromTokenServer(currentTokens.accessToken);
+  const user = await getUserFromTokenServer(tokens.accessToken);
   if (!user) {
     return null;
   }
 
-  return { user, tokens: currentTokens };
+  return { user, tokens };
 }

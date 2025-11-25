@@ -5,7 +5,7 @@ import { AuthProvider } from '@/contexts';
 import type { User } from '@/types/auth';
 
 interface ProtectedAppLayoutProps {
-  user: User;
+  user: User | null;
   children: React.ReactNode;
 }
 
@@ -13,9 +13,9 @@ interface ProtectedAppLayoutProps {
  * ProtectedAppLayout
  *
  * Client-side shell used by protected pages:
- * - Expects an authenticated user (resolved on the server)
- * - Provides AuthContext and BudgetContext to the subtree
- * - Renders the main app chrome (sidebar, header, layout, toaster is in RootLayout)
+ * - Accepts user from server (null if tokens expired)
+ * - AuthProvider will handle token refresh if needed
+ * - Renders the main app chrome (sidebar, header, layout)
  */
 export default function ProtectedAppLayout({
   user,

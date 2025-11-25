@@ -16,18 +16,18 @@ export default function LoginPageShell() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/');
+      router.replace('/');
     }
   }, [isAuthenticated, router]);
 
   const handleLoginSuccess = () => {
     toast.success('Welcome back!');
-    router.push('/');
+    router.replace('/');
   };
 
   const handlePasswordChangeSuccess = () => {
     toast.success('Password updated successfully! Welcome to Budget Tracker!');
-    router.push('/');
+    router.replace('/');
   };
 
   const handleBackToLogin = () => {

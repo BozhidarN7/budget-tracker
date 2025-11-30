@@ -4,15 +4,13 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   Legend,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
+import ExpensesByCategoryChart from '@/components/Dashboard/ExpensesByCategoryChart';
 import {
   Card,
   CardContent,
@@ -52,115 +50,55 @@ export default function CategoryAnalysis() {
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">Category Analysis</h2>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Spending by Category</CardTitle>
-            <CardDescription>
-              Breakdown of your expenses by category
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {hasExpenseData ? (
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categoryBreakdown}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                      nameKey="name"
-                      label={({ name, percent }) =>
-                        /* @ts-expect-error type unknown */
-                        `${name}: ${(percent * 100).toFixed(0)}%`
-                      }
-                    >
-                      {categoryBreakdown.map((_entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value) => [
-                        formatCurrency(Number(value)),
-                        'Amount',
-                      ]}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <div className="flex h-[300px] items-center justify-center">
-                <div className="text-center">
-                  <p className="text-muted-foreground">
-                    No expense data available
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    Add some expense transactions to see category breakdown
-                  </p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      <ExpensesByCategoryChart />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Category Comparison</CardTitle>
-            <CardDescription>
-              Compare spending across categories
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {hasExpenseData ? (
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={categoryBreakdown}
-                    layout="vertical"
-                    margin={{
-                      top: 5,
-                      right: 30,
-                      left: 60,
-                      bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis type="category" dataKey="name" />
-                    <Tooltip
-                      formatter={(value) => [
-                        formatCurrency(Number(value)),
-                        'Amount',
-                      ]}
-                    />
-                    <Legend />
-                    <Bar dataKey="value" fill="#3b82f6" />
-                  </BarChart>
-                </ResponsiveContainer>
+      <Card>
+        <CardHeader>
+          <CardTitle>Category Comparison</CardTitle>
+          <CardDescription>Compare spending across categories</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {hasExpenseData ? (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={categoryBreakdown}
+                  layout="vertical"
+                  margin={{
+                    top: 5,
+                    right: 30,
+                    left: 60,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis type="category" dataKey="name" />
+                  <Tooltip
+                    formatter={(value) => [
+                      formatCurrency(Number(value)),
+                      'Amount',
+                    ]}
+                  />
+                  <Legend />
+                  <Bar dataKey="value" fill="#3b82f6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="flex h-[300px] items-center justify-center">
+              <div className="text-center">
+                <p className="text-muted-foreground">
+                  No expense data available
+                </p>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Add some expense transactions to see category comparison
+                </p>
               </div>
-            ) : (
-              <div className="flex h-[300px] items-center justify-center">
-                <div className="text-center">
-                  <p className="text-muted-foreground">
-                    No expense data available
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    Add some expense transactions to see category comparison
-                  </p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {hasLimitData ? (
         <Card>
@@ -205,7 +143,7 @@ export default function CategoryAnalysis() {
                         className={cn(
                           'h-2',
                           isOverLimit
-                            ? '[--primary:theme(colors.rose.500)]'
+                            ? '[--primary:var(--colors-rose-500)]'
                             : '',
                         )}
                       />

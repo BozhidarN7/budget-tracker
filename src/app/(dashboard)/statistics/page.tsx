@@ -1,6 +1,16 @@
 import StatisticsView from '@/components/Statistics/StatisticsView';
 
-export default async function StatisticsPage() {
+interface StatisticsPageProps {
+  searchParams: Promise<{
+    tab?: string;
+  }>;
+}
+
+export default async function StatisticsPage({
+  searchParams,
+}: StatisticsPageProps) {
+  const tab = (await searchParams).tab;
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Statistics</h1>
@@ -8,7 +18,7 @@ export default async function StatisticsPage() {
         Analyze your financial data with detailed charts and insights to make
         better budgeting decisions.
       </p>
-      <StatisticsView />
+      <StatisticsView initialTab={tab} />
     </div>
   );
 }

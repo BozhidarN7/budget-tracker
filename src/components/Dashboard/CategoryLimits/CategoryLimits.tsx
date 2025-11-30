@@ -33,7 +33,7 @@ export default function CategoryLimits() {
                 value={Math.min(progressPercentage, 100)}
                 className={cn(
                   'h-2',
-                  isOverLimit ? '[--primary:theme(colors.rose.500)]' : '',
+                  isOverLimit ? '[--primary:var(--colors-rose-500)]' : '',
                 )}
               />
             </div>

@@ -3,8 +3,10 @@
 import { useMemo } from 'react';
 import { useBudgetContext } from '@/contexts/budget-context';
 import { mockCategories, mockGoals, mockTransactions } from '@/mock';
-import { formatMonthKey, parseDate } from '@/utils';
+import { formatMonthKey, formatMonthKeyToReadable, parseDate } from '@/utils';
 import { ensureCategoriesMonthData } from '@/utils/category-utils';
+
+const MONTHLY_TRENDS_LIMIT = 6;
 
 export default function useBudgetData() {
   const { transactions, categories, goals, isLoading, selectedMonth } =
@@ -75,34 +77,54 @@ export default function useBudgetData() {
     })
     .filter((category) => category.value > 0);
 
+  const monthlyTrendRange = useMemo(() => {
+    const months: string[] = [];
+    const [yearStr, monthStr] = selectedMonth.split('-');
+    const baseYear = Number.parseInt(yearStr, 10);
+    const baseMonthIndex = Number.parseInt(monthStr, 10) - 1;
+
+    for (let offset = MONTHLY_TRENDS_LIMIT - 1; offset >= 0; offset -= 1) {
+      const date = new Date(baseYear, baseMonthIndex - offset, 1);
+      months.push(formatMonthKey(date));
+    }
+
+    return months;
+  }, [selectedMonth]);
+
   // Monthly trends data for the line chart
-  const monthlyTrends = [
-    {
-      month: 'Jan',
-      income: 4200,
-      expenses: 3100,
-    },
-    {
-      month: 'Feb',
-      income: 4500,
-      expenses: 3300,
-    },
-    {
-      month: 'Mar',
-      income: 4800,
-      expenses: 3500,
-    },
-    {
-      month: 'Apr',
-      income: 4700,
-      expenses: 3600,
-    },
-    {
-      month: 'May',
-      income: 5200,
-      expenses: 3750,
-    },
-  ];
+  const monthlyTrends = useMemo(() => {
+    const monthBuckets = new Map<
+      string,
+      {
+        income: number;
+        expenses: number;
+      }
+    >();
+
+    data.transactionsData.forEach((transaction) => {
+      const monthKey = formatMonthKey(parseDate(transaction.date));
+      const bucket = monthBuckets.get(monthKey) ?? { income: 0, expenses: 0 };
+
+      if (transaction.type === 'income') {
+        bucket.income += transaction.amount;
+      } else if (transaction.type === 'expense') {
+        bucket.expenses += transaction.amount;
+      }
+
+      monthBuckets.set(monthKey, bucket);
+    });
+
+    return monthlyTrendRange.map((monthKey) => {
+      const bucket = monthBuckets.get(monthKey) ?? { income: 0, expenses: 0 };
+
+      return {
+        monthKey,
+        month: formatMonthKeyToReadable(monthKey),
+        income: bucket.income,
+        expenses: bucket.expenses,
+      };
+    });
+  }, [data.transactionsData, monthlyTrendRange]);
 
   // Category limits data for the selected month
   const categoryLimits = data.categoriesData

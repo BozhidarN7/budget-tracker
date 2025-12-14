@@ -61,7 +61,10 @@ export default function TransactionFilters({
 
       <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
-          <label htmlFor="search" className="text-sm font-medium">
+          <label
+            htmlFor="search"
+            className="mb-2 inline-block text-sm font-medium"
+          >
             Search
           </label>
           <Input
@@ -73,7 +76,10 @@ export default function TransactionFilters({
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="category" className="text-sm font-medium">
+          <label
+            htmlFor="category"
+            className="mb-2 inline-block text-sm font-medium"
+          >
             Category
           </label>
           <Select
@@ -95,7 +101,10 @@ export default function TransactionFilters({
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="type" className="text-sm font-medium">
+          <label
+            htmlFor="type"
+            className="mb-2 inline-block text-sm font-medium"
+          >
             Type
           </label>
           <Select
@@ -114,7 +123,9 @@ export default function TransactionFilters({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Date Range</label>
+          <label className="mb-2 inline-block text-sm font-medium">
+            Date Range
+          </label>
           <div className="flex gap-2">
             <Popover>
               <PopoverTrigger asChild>

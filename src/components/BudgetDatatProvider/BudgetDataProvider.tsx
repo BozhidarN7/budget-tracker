@@ -1,7 +1,9 @@
 import type React from 'react';
 import BudgetProvider from '@/contexts/budget-context';
+import CurrencyProvider from '@/contexts/currency-context';
 import { getInitialBudgetData } from '@/server/budget-data';
 import BudgetDataError from '@/components/Budget/BudgetDataError';
+import { getUserPreference } from '@/server/user-preference';
 
 /**
  * BudgetDataProvider
@@ -20,7 +22,10 @@ export default async function BudgetDataProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const result = await getInitialBudgetData();
+  const [result, userPreference] = await Promise.all([
+    getInitialBudgetData(),
+    getUserPreference(),
+  ]);
 
   if (!result.ok) {
     return (
@@ -35,12 +40,14 @@ export default async function BudgetDataProvider({
   const { transactions, categories, goals } = result.data;
 
   return (
-    <BudgetProvider
-      initialTransactions={transactions}
-      initialCategories={categories}
-      initialGoals={goals}
-    >
-      {children}
-    </BudgetProvider>
+    <CurrencyProvider initialPreference={userPreference}>
+      <BudgetProvider
+        initialTransactions={transactions}
+        initialCategories={categories}
+        initialGoals={goals}
+      >
+        {children}
+      </BudgetProvider>
+    </CurrencyProvider>
   );
 }

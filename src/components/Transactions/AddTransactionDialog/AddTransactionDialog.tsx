@@ -31,6 +31,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { useBudgetContext } from '@/contexts/budget-context';
+import { useCurrencyPreference } from '@/contexts/currency-context';
 
 export default function AddTransactionDialog({
   open,
@@ -47,6 +48,7 @@ export default function AddTransactionDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { addTransaction, categories } = useBudgetContext();
+  const { preferredCurrency } = useCurrencyPreference();
 
   const filteredCategories = categories.filter(
     (cat) => cat.type === type || (type === 'expense' && !cat.type),
@@ -72,6 +74,7 @@ export default function AddTransactionDialog({
         date: format(date, 'MMM d, yyyy'),
         category,
         description,
+        currency: preferredCurrency,
         type,
       });
 

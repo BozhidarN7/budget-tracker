@@ -4,6 +4,9 @@ const CACHE_TAGS = {
     categories: 'budget-categories',
     goals: 'budget-goals',
   },
+  user: {
+    preference: 'user-preference',
+  },
 } as const;
 
 export default CACHE_TAGS;

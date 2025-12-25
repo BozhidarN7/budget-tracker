@@ -1,7 +1,25 @@
+export type CurrencyCode = 'EUR' | 'BGN' | 'USD' | 'GBP';
+
+export interface ExchangeRateSnapshot {
+  fromCurrency: CurrencyCode;
+  toCurrency: CurrencyCode;
+  rate: number;
+  provider: string;
+  capturedAt: string;
+}
+
 export interface Transaction {
   id: string;
   description: string;
   amount: number;
+  currency: CurrencyCode;
+  baseAmount?: number;
+  baseCurrency?: CurrencyCode;
+  originalAmount?: number;
+  originalCurrency?: CurrencyCode;
+  displayAmount?: number;
+  displayCurrency?: CurrencyCode;
+  exchangeRateSnapshot?: ExchangeRateSnapshot;
   date: string;
   category: string;
   type: 'income' | 'expense';
@@ -12,12 +30,17 @@ export interface Category {
   name: string;
   color: string;
   type: 'income' | 'expense';
+  currency?: CurrencyCode;
+  baseCurrency?: CurrencyCode;
   monthlyData: {
     [month: string]: {
       limit: number;
       spent: number;
+      baseLimit?: number;
+      baseSpent?: number;
+      currency?: CurrencyCode;
     };
-  }; // e.g., { "2025-05": { limit: 200, spent: 120 } }
+  };
 }
 
 export interface Goal {
@@ -25,6 +48,18 @@ export interface Goal {
   name: string;
   target: number;
   current: number;
+  currency?: CurrencyCode;
+  baseCurrency?: CurrencyCode;
+  displayTarget?: number;
+  displayCurrent?: number;
+  exchangeRateSnapshot?: ExchangeRateSnapshot;
   targetDate: string;
   description: string;
+}
+
+export interface UserPreference {
+  userId: string;
+  preferredCurrency: CurrencyCode;
+  updatedAt: string;
+  supportedCurrencies?: CurrencyCode[];
 }

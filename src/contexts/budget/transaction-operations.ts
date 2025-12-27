@@ -15,8 +15,7 @@ export const updateCategorySpending = async (
   transaction: Transaction,
   isAdding = true,
 ): Promise<Category[]> => {
-  const { category: categoryName, type, date } = transaction;
-  const amount = transaction.baseAmount ?? transaction.amount;
+  const { category: categoryName, amount, type, date } = transaction;
   const transactionDate = parseDate(date);
   const monthKey = formatMonthKey(transactionDate);
 

@@ -36,8 +36,6 @@ export interface Category {
     [month: string]: {
       limit: number;
       spent: number;
-      baseLimit?: number;
-      baseSpent?: number;
       currency?: CurrencyCode;
     };
   };

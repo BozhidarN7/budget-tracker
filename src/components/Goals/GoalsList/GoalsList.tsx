@@ -97,7 +97,8 @@ export default function GoalsList() {
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground text-sm">Progress</span>
                 <span className="text-sm font-medium">
-                  {formatCurrency(goal.current)} / {formatCurrency(goal.target)}
+                  {formatCurrency(goal.displayCurrent ?? 0)} /{' '}
+                  {formatCurrency(goal.displayTarget ?? 0)}
                 </span>
               </div>
               <Progress value={progressPercentage} className="h-2" />

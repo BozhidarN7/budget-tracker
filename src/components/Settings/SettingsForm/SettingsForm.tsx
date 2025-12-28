@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useMemo, useState, useTransition } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -12,8 +14,58 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { useCurrencyPreference } from '@/contexts/currency-context';
+import { useBudgetContext } from '@/contexts/budget-context';
+import type { CurrencyCode } from '@/types/budget';
+import { getCurrencyDisplayMeta } from '@/utils/format-currency';
 
 export default function SettingsForm() {
+  const { refetch } = useBudgetContext();
+  const {
+    preferredCurrency,
+    supportedCurrencies,
+    updatePreferredCurrency,
+    isSaving,
+  } = useCurrencyPreference();
+  const [selectedCurrency, setSelectedCurrency] =
+    useState<CurrencyCode>(preferredCurrency);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setSelectedCurrency(preferredCurrency);
+  }, [preferredCurrency]);
+
+  const currencyOptions = useMemo(() => {
+    return supportedCurrencies.map((code) => {
+      const meta = getCurrencyDisplayMeta(code);
+      return {
+        code,
+        label:
+          meta.position === 'before'
+            ? `${meta.symbol} - ${code}`
+            : `${code} - ${meta.symbol}`,
+      };
+    });
+  }, [supportedCurrencies]);
+
+  const handleCurrencyChange = (value: string) => {
+    const nextCurrency = value as CurrencyCode;
+    setSelectedCurrency(nextCurrency);
+    startTransition(async () => {
+      try {
+        await updatePreferredCurrency(nextCurrency);
+        await refetch();
+        toast.success('Preferred currency updated');
+      } catch (error) {
+        console.error(error);
+        toast.error('Failed to update preferred currency');
+        setSelectedCurrency(preferredCurrency);
+      }
+    });
+  };
+
+  const isUpdatingCurrency = isSaving || isPending;
+
   return (
     <Tabs defaultValue="general" className="w-full">
       <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
@@ -33,17 +85,20 @@ export default function SettingsForm() {
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="currency">Primary Currency</Label>
-            <Select defaultValue="bgn">
+            <Select
+              value={selectedCurrency}
+              onValueChange={handleCurrencyChange}
+              disabled={isUpdatingCurrency}
+            >
               <SelectTrigger id="currency">
                 <SelectValue placeholder="Select currency" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="bgn">BGN (лв)</SelectItem>
-                <SelectItem value="usd">USD ($)</SelectItem>
-                <SelectItem value="eur">EUR (€)</SelectItem>
-                <SelectItem value="gbp">GBP (£)</SelectItem>
-                <SelectItem value="jpy">JPY (¥)</SelectItem>
-                <SelectItem value="cad">CAD ($)</SelectItem>
+                {currencyOptions.map((option) => (
+                  <SelectItem key={option.code} value={option.code}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

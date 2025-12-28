@@ -6,15 +6,29 @@ const prevMonthKey = formatMonthKey(
   new Date(new Date().setMonth(new Date().getMonth() - 1)),
 );
 
+const createMonthlyData = (
+  limit: number,
+  spent: number,
+  currency: Category['currency'] = 'BGN',
+) => ({
+  limit,
+  spent,
+  baseLimit: limit,
+  baseSpent: spent,
+  currency,
+});
+
 const mockCategories: Category[] = [
   {
     id: '1',
     name: 'Food',
     color: '#ef4444',
     type: 'expense',
+    currency: 'BGN',
+    baseCurrency: 'EUR',
     monthlyData: {
-      [currentMonthKey]: { limit: 500, spent: 199.4 },
-      [prevMonthKey]: { limit: 500, spent: 450.75 },
+      [currentMonthKey]: createMonthlyData(500, 199.4),
+      [prevMonthKey]: createMonthlyData(500, 450.75),
     },
   },
   {
@@ -22,9 +36,11 @@ const mockCategories: Category[] = [
     name: 'Transport',
     color: '#f59e0b',
     type: 'expense',
+    currency: 'BGN',
+    baseCurrency: 'EUR',
     monthlyData: {
-      [currentMonthKey]: { limit: 200, spent: 45.75 },
-      [prevMonthKey]: { limit: 200, spent: 180.25 },
+      [currentMonthKey]: createMonthlyData(200, 45.75),
+      [prevMonthKey]: createMonthlyData(200, 180.25),
     },
   },
   {
@@ -32,9 +48,11 @@ const mockCategories: Category[] = [
     name: 'Salary',
     color: '#10b981',
     type: 'income',
+    currency: 'BGN',
+    baseCurrency: 'EUR',
     monthlyData: {
-      [currentMonthKey]: { limit: 0, spent: 3500 },
-      [prevMonthKey]: { limit: 0, spent: 3500 },
+      [currentMonthKey]: createMonthlyData(0, 3500),
+      [prevMonthKey]: createMonthlyData(0, 3500),
     },
   },
   {
@@ -42,9 +60,11 @@ const mockCategories: Category[] = [
     name: 'Freelance',
     color: '#3b82f6',
     type: 'income',
+    currency: 'BGN',
+    baseCurrency: 'EUR',
     monthlyData: {
-      [currentMonthKey]: { limit: 0, spent: 1200 },
-      [prevMonthKey]: { limit: 0, spent: 800 },
+      [currentMonthKey]: createMonthlyData(0, 1200),
+      [prevMonthKey]: createMonthlyData(0, 800),
     },
   },
   {
@@ -52,9 +72,11 @@ const mockCategories: Category[] = [
     name: 'Education',
     color: '#8b5cf6',
     type: 'expense',
+    currency: 'BGN',
+    baseCurrency: 'EUR',
     monthlyData: {
-      [currentMonthKey]: { limit: 0, spent: 200 },
-      [prevMonthKey]: { limit: 0, spent: 300 },
+      [currentMonthKey]: createMonthlyData(0, 200),
+      [prevMonthKey]: createMonthlyData(0, 300),
     },
   },
   {
@@ -62,9 +84,11 @@ const mockCategories: Category[] = [
     name: 'Shopping',
     color: '#ec4899',
     type: 'expense',
+    currency: 'BGN',
+    baseCurrency: 'EUR',
     monthlyData: {
-      [currentMonthKey]: { limit: 400, spent: 200 },
-      [prevMonthKey]: { limit: 400, spent: 300 },
+      [currentMonthKey]: createMonthlyData(400, 200),
+      [prevMonthKey]: createMonthlyData(400, 300),
     },
   },
 ];

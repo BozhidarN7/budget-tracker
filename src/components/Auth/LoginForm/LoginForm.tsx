@@ -101,6 +101,9 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       await signIn(username.trim(), password);
       if (!requiresPasswordChange) {
         onSuccess();
+        setUsername('');
+        setPassword('');
+        setShowPassword(false);
       }
     } catch (err) {
       const errorMessage =
@@ -118,7 +121,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
     <Card className="w-full max-w-md border-0 bg-white/80 shadow-2xl backdrop-blur-sm dark:bg-gray-800/80">
       <CardHeader className="space-y-1 text-center">
         <div className="mb-4 flex justify-center lg:hidden">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-r from-blue-600 to-cyan-600">
             <TrendingUp className="h-6 w-6 text-white" />
           </div>
         </div>
@@ -185,7 +188,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
 
           <Button
             type="submit"
-            className="h-11 w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+            className="h-11 w-full bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
             disabled={isLoading}
           >
             {isLoading ? (

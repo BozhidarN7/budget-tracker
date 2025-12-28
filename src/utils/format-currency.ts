@@ -1,41 +1,105 @@
-type CurrencyCode = 'bgn' | 'usd' | 'eur' | 'gbp' | 'jpy' | 'cad';
+import type { CurrencyCode } from '@/types/budget';
 
-type CurrencySymbol = {
+type CurrencyDisplay = {
   code: CurrencyCode;
   symbol: string;
   position: 'before' | 'after';
+  minimumFractionDigits?: number;
+  maximumFractionDigits?: number;
+  locale?: string;
 };
 
-const currencySymbols: Record<CurrencyCode, CurrencySymbol> = {
-  bgn: { code: 'bgn', symbol: 'лв', position: 'after' },
-  usd: { code: 'usd', symbol: '$', position: 'before' },
-  eur: { code: 'eur', symbol: '€', position: 'before' },
-  gbp: { code: 'gbp', symbol: '£', position: 'before' },
-  jpy: { code: 'jpy', symbol: '¥', position: 'before' },
-  cad: { code: 'cad', symbol: '$', position: 'before' },
+const CURRENCY_DISPLAY_MAP: Record<CurrencyCode, CurrencyDisplay> = {
+  EUR: {
+    code: 'EUR',
+    symbol: '€',
+    position: 'before',
+    locale: 'de-DE',
+  },
+  BGN: {
+    code: 'BGN',
+    symbol: 'лв',
+    position: 'after',
+    locale: 'bg-BG',
+  },
+  USD: {
+    code: 'USD',
+    symbol: '$',
+    position: 'before',
+    locale: 'en-US',
+  },
+  GBP: {
+    code: 'GBP',
+    symbol: '£',
+    position: 'before',
+    locale: 'en-GB',
+  },
 };
 
-/**
- * Format a number as currency
- * @param amount The amount to format
- * @param currencyCode The currency code (defaults to BGN)
- * @param options Formatting options
- * @returns Formatted currency string
- */
+export type FormatCurrencyOptions = {
+  currency?: CurrencyCode;
+  showSymbol?: boolean;
+  minimumFractionDigits?: number;
+  maximumFractionDigits?: number;
+};
+
+export function getCurrencyDisplayMeta(
+  currency: CurrencyCode = 'EUR',
+): CurrencyDisplay {
+  return CURRENCY_DISPLAY_MAP[currency] ?? CURRENCY_DISPLAY_MAP.EUR;
+}
+
+function getPreferredCurrencyFallback(): CurrencyCode | undefined {
+  if (typeof window !== 'undefined' && window.__BT_PREFERRED_CURRENCY__) {
+    return window.__BT_PREFERRED_CURRENCY__;
+  }
+
+  if (typeof globalThis !== 'undefined') {
+    const globalCurrency = (
+      globalThis as unknown as { __BT_PREFERRED_CURRENCY__?: CurrencyCode }
+    ).__BT_PREFERRED_CURRENCY__;
+    if (globalCurrency) {
+      return globalCurrency;
+    }
+  }
+
+  return undefined;
+}
+
 export default function formatCurrency(
   amount: number,
-  currencyCode: CurrencyCode = 'bgn',
-  options: { decimals?: number; showSymbol?: boolean } = {},
+  options: FormatCurrencyOptions = {},
 ): string {
-  const { decimals = 2, showSymbol = true } = options;
-  const currency = currencySymbols[currencyCode] || currencySymbols.bgn;
-  const formattedAmount = amount.toFixed(decimals);
+  const {
+    currency,
+    showSymbol = true,
+    minimumFractionDigits,
+    maximumFractionDigits,
+  } = options;
+
+  const resolvedCurrency = currency ?? getPreferredCurrencyFallback() ?? 'EUR';
+
+  const meta = getCurrencyDisplayMeta(resolvedCurrency);
+  const formatter = new Intl.NumberFormat(meta.locale ?? 'en-US', {
+    minimumFractionDigits:
+      minimumFractionDigits ?? meta.minimumFractionDigits ?? 2,
+    maximumFractionDigits:
+      maximumFractionDigits ?? meta.maximumFractionDigits ?? 2,
+  });
+
+  const formattedAmount = formatter.format(amount);
 
   if (!showSymbol) {
     return formattedAmount;
   }
 
-  return currency.position === 'before'
-    ? `${currency.symbol}${formattedAmount}`
-    : `${formattedAmount} ${currency.symbol}`;
+  return meta.position === 'before'
+    ? `${meta.symbol}${formattedAmount}`
+    : `${formattedAmount} ${meta.symbol}`;
+}
+
+declare global {
+  interface Window {
+    __BT_PREFERRED_CURRENCY__?: CurrencyCode;
+  }
 }

@@ -1,18 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import SpendingTrends from '../SpendingTrends';
 import CategoryAnalysis from '../CategoryAnalysis';
 import IncomeExpenseComparison from '../IncomeExpenseComparison';
 import SavingsAnalysis from '../SavingsAnalysis';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-export default function StatisticsView() {
-  const [activeTab, setActiveTab] = useState('trends');
+interface StatisticsViewProps {
+  initialTab?: string;
+}
+
+export default function StatisticsView({
+  initialTab = 'trends',
+}: StatisticsViewProps) {
+  const normalizedInitialTab = useMemo(() => {
+    const allowedTabs = new Set([
+      'trends',
+      'categories',
+      'comparison',
+      'savings',
+    ]);
+    if (allowedTabs.has(initialTab) === true) {
+      return initialTab;
+    }
+    return 'trends';
+  }, [initialTab]);
+
+  const [activeTab, setActiveTab] = useState(normalizedInitialTab);
 
   return (
     <Tabs
-      defaultValue="trends"
+      defaultValue={normalizedInitialTab}
       value={activeTab}
       onValueChange={setActiveTab}
       className="space-y-4"

@@ -1,17 +1,5 @@
-import formatMonthKey from './format-month-key';
+import getPreviousMonthKey from './get-previous-month-key';
 import type { Category } from '@/types/budget';
-
-/**
- * Get the previous month key from a given month key
- * @param currentMonth - Month key in YYYY-MM format
- * @returns Previous month key in YYYY-MM format
- */
-export function getPreviousMonthKey(currentMonth: string): string {
-  const [year, month] = currentMonth.split('-').map(Number);
-  const date = new Date(year, month - 1, 1); // month - 1 because JS months are 0-indexed
-  date.setMonth(date.getMonth() - 1); // Go back one month
-  return formatMonthKey(date);
-}
 
 /**
  * Get the most recent month with data (limit > 0) for a category

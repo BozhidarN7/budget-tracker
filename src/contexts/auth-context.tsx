@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import type React from 'react';
 import {
   createContext,
@@ -8,16 +9,11 @@ import {
   useEffect,
   useState,
 } from 'react';
-import {
-  type AuthChallenge,
-  AuthService,
-  type AuthTokens,
-  type User,
-} from '@/utils/auth';
+import { useAuthRefresh, useBackgroundTokenRefresh } from '@/hooks';
+import { type AuthChallenge, type SignInResult, type User } from '@/types/auth';
 
 interface AuthContextType {
   user: User | null;
-  tokens: AuthTokens | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -43,66 +39,99 @@ export function useAuth() {
 
 interface AuthProviderProps {
   children: React.ReactNode;
+  initialUser?: User | null;
 }
 
-export default function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [tokens, setTokens] = useState<AuthTokens | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export default function AuthProvider({
+  children,
+  initialUser = null,
+}: AuthProviderProps) {
+  const queryClient = useQueryClient();
+
+  const [user, setUser] = useState<User | null>(initialUser);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [challenge, setChallenge] = useState<AuthChallenge | null>(null);
   const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
 
-  const checkAuthStatus = useCallback(async () => {
+  const refreshTokens = async (): Promise<boolean> => {
     try {
-      setIsLoading(true);
-      const storedTokens = AuthService.getTokens();
-      const storedUser = AuthService.getUser();
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+      });
 
-      if (storedTokens && storedUser) {
-        const isValid = await AuthService.isAuthenticated();
-        if (isValid) {
-          setTokens(AuthService.getTokens()); // Get potentially refreshed tokens
-          setUser(storedUser);
-        } else {
-          // Clear invalid session
-          AuthService.signOut();
-          setTokens(null);
-          setUser(null);
-        }
+      const data = (await response.json().catch(() => ({}))) as {
+        user?: User;
+        error?: string;
+      };
+
+      if (!response.ok || !data.user) {
+        // Don't automatically sign out here - let the caller decide
+        return false;
       }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      AuthService.signOut();
-      setTokens(null);
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
-  useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
+      setUser(data.user);
+      setError(null); // Clear any previous errors
+      return true;
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      return false;
+    }
+  };
+
+  // Custom hooks for token refresh
+  const { refetch: checkAndRefreshTokens } = useAuthRefresh({
+    user,
+    refreshTokens,
+  });
+
+  useBackgroundTokenRefresh({
+    user,
+    refreshTokens,
+  });
 
   const signIn = async (username: string, password: string) => {
     try {
       setError(null);
       setIsLoading(true);
-      const result = await AuthService.signIn(username, password);
 
-      if (result.challenge) {
-        setChallenge(result.challenge);
-        setRequiresPasswordChange(result.requiresPasswordChange || false);
-      } else if (result.user && result.tokens) {
-        setUser(result.user);
-        setTokens(result.tokens);
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as
+        | (SignInResult & { error?: string })
+        | { error?: string };
+
+      if (!response.ok) {
+        const message = data.error || 'Sign in failed';
+        setError(message);
+        throw new Error(message);
+      }
+
+      if ('challenge' in data && data.challenge) {
+        setChallenge(data.challenge);
+        setRequiresPasswordChange(data.requiresPasswordChange || false);
+        return;
+      }
+
+      if ('user' in data && data.user) {
+        setUser(data.user);
         setChallenge(null);
         setRequiresPasswordChange(false);
       }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Sign in failed');
-      throw error;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Sign in failed';
+      setError(message);
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -116,49 +145,69 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     try {
       setError(null);
       setIsLoading(true);
-      const { user: authUser, tokens: authTokens } =
-        await AuthService.respondToNewPasswordChallenge(
-          challenge.username,
+
+      const response = await fetch('/api/auth/new-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: challenge.username,
           newPassword,
-          challenge.session,
-        );
-      setUser(authUser);
-      setTokens(authTokens);
+          session: challenge.session,
+        }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        user?: User;
+        error?: string;
+      };
+
+      if (!response.ok || !data.user) {
+        const message = data.error || 'Password change failed';
+        setError(message);
+        throw new Error(message);
+      }
+
+      setUser(data.user);
       setChallenge(null);
       setRequiresPasswordChange(false);
-    } catch (error) {
-      setError(
-        error instanceof Error ? error.message : 'Password change failed',
-      );
-      throw error;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Password change failed';
+      setError(message);
+      throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const refreshTokens = async (): Promise<boolean> => {
-    try {
-      const newTokens = await AuthService.refreshTokens();
-      if (newTokens) {
-        setTokens(newTokens);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error('Token refresh error:', error);
-      signOut();
-      return false;
+  // Effect to handle initial auth recovery when server returns null user
+  useEffect(() => {
+    if (!initialUser && !user && !isLoading) {
+      // Server didn't provide a user (probably expired tokens)
+      // Try to refresh tokens on the client side
+      checkAndRefreshTokens();
     }
-  };
+  }, [initialUser, user, isLoading, checkAndRefreshTokens]);
 
-  const signOut = useCallback(() => {
-    AuthService.signOut();
+  const signOut = useCallback(async () => {
+    // Fire-and-forget logout request to clear HttpOnly cookies
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+    }).catch((error) => {
+      console.error('Logout error:', error);
+    });
+
+    queryClient.removeQueries({ queryKey: ['auth'] });
+
     setUser(null);
-    setTokens(null);
     setError(null);
     setChallenge(null);
     setRequiresPasswordChange(false);
-  }, []);
+
+    window.location.href = '/login';
+  }, [queryClient]);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -171,8 +220,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
   const value: AuthContextType = {
     user,
-    tokens,
-    isAuthenticated: !!user && !!tokens,
+    isAuthenticated: !!user,
     isLoading,
     error,
     challenge,
@@ -185,5 +233,5 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     refreshTokens,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext value={value}>{children}</AuthContext>;
 }

@@ -1,41 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useBudgetData } from '@/hooks/';
+import { useBudgetData, useCurrencyFormatter } from '@/hooks/';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useBudgetContext } from '@/contexts/budget-context';
-import { formatCurrency } from '@/utils';
+import AddGoalButton from '@/components/Goals/AddGoalButton';
+import EditGoalDialog from '@/components/Goals/EditGoalDialog';
 
 export default function SavingsGoalCard() {
-  const { savingsGoal, currentSavings, isLoading } = useBudgetData();
-  const { updateGoal, goals } = useBudgetContext();
-  const [isUpdating, setIsUpdating] = useState(false);
-
-  // Find the main savings goal (assuming it's the first one with "Monthly" in the name)
-  const mainGoal =
-    goals.find((goal) => goal.name.includes('Monthly')) || goals[0];
-
-  const progressPercentage = (currentSavings / savingsGoal) * 100;
-
-  const handleUpdateProgress = async () => {
-    if (!mainGoal) return;
-
-    setIsUpdating(true);
-    try {
-      await updateGoal(mainGoal.id, {
-        current: currentSavings,
-      });
-      toast.success('Savings goal progress updated');
-    } catch (_error) {
-      toast.error('Failed to update savings goal');
-    } finally {
-      setIsUpdating(false);
-    }
+  const {
+    primaryGoal,
+    savingsGoal,
+    currentSavings,
+    savingsProgress,
+    savingsBreakdown,
+    isLoading,
+  } = useBudgetData();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const { formatCurrency } = useCurrencyFormatter();
+  const breakdown = savingsBreakdown ?? {
+    totalIncome: 0,
+    totalExpenses: 0,
+    availableForSavings: 0,
   };
 
   if (isLoading) {
@@ -77,52 +66,91 @@ export default function SavingsGoalCard() {
     );
   }
 
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xl">Monthly Savings Goal</CardTitle>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleUpdateProgress}
-          disabled={isUpdating || !mainGoal}
-        >
-          <Edit className="h-4 w-4" />
-          <span className="sr-only">Update Progress</span>
-        </Button>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">Progress</span>
-          <span className="text-sm font-medium">
-            {formatCurrency(currentSavings)} / {formatCurrency(savingsGoal)}
-          </span>
-        </div>
-        <Progress value={progressPercentage} className="h-2" />
-        <p className="text-muted-foreground text-sm">
-          {progressPercentage >= 100
-            ? 'Goal reached! 🎉'
-            : `${progressPercentage.toFixed(0)}% of your monthly savings goal`}
-        </p>
+  if (!primaryGoal) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-xl">Monthly Savings Goal</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground text-sm">
+            You have not configured a Monthly Savings Goal yet. Create one to
+            track how income and expenses translate into savings progress for
+            each month.
+          </p>
+          <AddGoalButton />
+        </CardContent>
+      </Card>
+    );
+  }
 
-        <div className="bg-muted rounded-lg p-4">
-          <h3 className="mb-2 font-medium">Savings Breakdown</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span>Total Income</span>
-              <span className="font-medium">{formatCurrency(5200)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Total Expenses</span>
-              <span className="font-medium">{formatCurrency(3750)}</span>
-            </div>
-            <div className="flex justify-between border-t pt-2">
-              <span>Available for Savings</span>
-              <span className="font-medium">{formatCurrency(1450)}</span>
+  return (
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <div>
+            <CardTitle className="text-xl">{primaryGoal.name}</CardTitle>
+            <p className="text-muted-foreground text-sm">
+              Target date: {primaryGoal.targetDate}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsEditDialogOpen(true)}
+            disabled={!primaryGoal}
+          >
+            <Edit className="h-4 w-4" />
+            <span className="sr-only">Edit savings goal</span>
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Progress</span>
+            <span className="text-sm font-medium">
+              {formatCurrency(currentSavings)} / {formatCurrency(savingsGoal)}
+            </span>
+          </div>
+          <Progress value={savingsProgress} className="h-2" />
+          <p className="text-muted-foreground text-sm">
+            {savingsProgress >= 100
+              ? 'Goal reached! 🎉'
+              : `${savingsProgress.toFixed(0)}% of your monthly savings goal`}
+          </p>
+
+          <div className="bg-muted rounded-lg p-4">
+            <h3 className="mb-2 font-medium">Monthly Breakdown</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Total Income</span>
+                <span className="font-medium">
+                  {formatCurrency(breakdown.totalIncome)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Total Expenses</span>
+                <span className="font-medium">
+                  {formatCurrency(breakdown.totalExpenses)}
+                </span>
+              </div>
+              <div className="flex justify-between border-t pt-2">
+                <span>Available for Savings</span>
+                <span className="font-medium">
+                  {formatCurrency(breakdown.availableForSavings)}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {primaryGoal && (
+        <EditGoalDialog
+          goal={primaryGoal}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+        />
+      )}
+    </>
   );
 }

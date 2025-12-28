@@ -112,7 +112,7 @@ export default function CalendarView() {
                       </div>
 
                       {hasTransactions && (
-                        <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 gap-0.5">
+                        <div className="absolute -bottom-1.5 left-1/2 flex -translate-x-1/2 gap-0.5">
                           <div
                             className={cn(
                               'h-1 w-1 rounded-full',

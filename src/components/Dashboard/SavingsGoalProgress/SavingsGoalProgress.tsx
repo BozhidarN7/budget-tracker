@@ -1,12 +1,11 @@
 'use client';
 
-import { useBudgetData } from '@/hooks/';
+import { useBudgetData, useCurrencyFormatter } from '@/hooks/';
 import { Progress } from '@/components/ui/progress';
-import { formatCurrency } from '@/utils';
 
 export default function SavingsGoalProgress() {
-  const { savingsGoal, currentSavings } = useBudgetData();
-  const progressPercentage = (currentSavings / savingsGoal) * 100;
+  const { savingsGoal, currentSavings, savingsProgress } = useBudgetData();
+  const { formatCurrency } = useCurrencyFormatter();
 
   return (
     <div className="space-y-4">
@@ -16,11 +15,11 @@ export default function SavingsGoalProgress() {
           {formatCurrency(currentSavings)} / {formatCurrency(savingsGoal)}
         </span>
       </div>
-      <Progress value={progressPercentage} className="h-2" />
+      <Progress value={savingsProgress} className="h-2" />
       <p className="text-muted-foreground text-sm">
-        {progressPercentage >= 100
+        {savingsProgress >= 100
           ? 'Goal reached! 🎉'
-          : `${progressPercentage.toFixed(0)}% of your monthly savings goal`}
+          : `${savingsProgress.toFixed(0)}% of your monthly savings goal`}
       </p>
     </div>
   );

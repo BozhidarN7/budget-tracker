@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useBudgetContext } from '@/contexts/budget-context';
+import { useCurrencyPreference } from '@/contexts/currency-context';
 
 const colorOptions = [
   { value: '#ef4444', label: 'Red' },
@@ -42,6 +43,7 @@ export default function AddCategoryDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { addCategory } = useBudgetContext();
+  const { preferredCurrency } = useCurrencyPreference();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +65,7 @@ export default function AddCategoryDialog({
       await addCategory({
         name,
         limit: Number.parseFloat(limit || '0'),
+        currency: preferredCurrency,
         color,
         type: activeTab, // Set the category type based on the active tab
       });

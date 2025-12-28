@@ -6,13 +6,12 @@ import {
   BarChart,
   CartesianGrid,
   Legend,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
+import TrendsLineChart from '@/components/Charts/TrendsLineChart';
 import {
   Card,
   CardContent,
@@ -27,13 +26,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useStatisticsData } from '@/hooks/';
-import { formatCurrency } from '@/utils';
+import { useCurrencyFormatter, useStatisticsData } from '@/hooks/';
 
 export default function SpendingTrends() {
   const { dailySpending, weeklySpending, monthlySpending } =
     useStatisticsData();
   const [timeframe, setTimeframe] = useState('monthly');
+  const { formatCurrency } = useCurrencyFormatter();
 
   const data = {
     daily: dailySpending,
@@ -109,41 +108,26 @@ export default function SpendingTrends() {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={data}
-                  margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                  }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="period" />
-                  <YAxis />
-                  <Tooltip
-                    formatter={(value) => [formatCurrency(Number(value)), '']}
-                  />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="expenses"
-                    stroke="#ef4444"
-                    activeDot={{ r: 8 }}
-                    name="Expenses"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="income"
-                    stroke="#10b981"
-                    activeDot={{ r: 8 }}
-                    name="Income"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            <TrendsLineChart
+              data={data ?? []}
+              xKey="period"
+              height={300}
+              tooltipFormatter={(value, name) => [formatCurrency(value), name]}
+              lines={[
+                {
+                  dataKey: 'expenses',
+                  label: 'Expenses',
+                  color: '#ef4444',
+                  activeDotRadius: 8,
+                },
+                {
+                  dataKey: 'income',
+                  label: 'Income',
+                  color: '#10b981',
+                  activeDotRadius: 8,
+                },
+              ]}
+            />
           </CardContent>
         </Card>
 

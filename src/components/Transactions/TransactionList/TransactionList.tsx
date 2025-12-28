@@ -32,7 +32,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useBudgetContext } from '@/contexts/budget-context';
-import { formatCurrency } from '@/utils';
+import { useCurrencyFormatter } from '@/hooks/';
 import { Transaction } from '@/types/budget';
 
 interface TransactionListProps {
@@ -45,6 +45,7 @@ export default function TransactionList({
   isLoading,
 }: TransactionListProps) {
   const { removeTransaction } = useBudgetContext();
+  const { formatCurrency } = useCurrencyFormatter();
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
   const [deletingTransactionId, setDeletingTransactionId] = useState<

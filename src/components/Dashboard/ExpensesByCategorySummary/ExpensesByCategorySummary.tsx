@@ -26,7 +26,7 @@ export default function ExpensesByCategorySummary() {
 
   const topCategories = useMemo<PieDatumChart[]>(() => {
     return expensesByCategory
-      .toSorted((a, b) => a.value - b.value)
+      .toSorted((a, b) => b.value - a.value)
       .slice(0, 5)
       .map((item, index) => ({
         ...item,

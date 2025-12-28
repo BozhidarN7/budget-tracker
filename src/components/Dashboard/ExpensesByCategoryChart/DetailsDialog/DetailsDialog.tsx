@@ -17,8 +17,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useCurrencyFormatter } from '@/hooks/';
 import { CategoryLegendItem } from '@/hooks/use-category-chart-controller';
-import { formatCurrency, formatPercentage } from '@/utils';
+import { formatPercentage } from '@/utils';
 
 interface DetailsDialogProps {
   open: boolean;
@@ -37,6 +38,7 @@ export default function DetailsDialog({
   onSelectAll,
   onSoloTopCategory,
 }: DetailsDialogProps) {
+  const { formatCurrency } = useCurrencyFormatter();
   const hasBulkActions = onSelectAll != null || onSoloTopCategory != null;
 
   return (

@@ -3,13 +3,13 @@
 import Link from 'next/link';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import RecentTransactionsSkeleton from '../RecentTransactionSkeleton';
-import { useBudgetData } from '@/hooks/';
+import { useBudgetData, useCurrencyFormatter } from '@/hooks/';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/utils';
 
 export default function RecentTransactions() {
   const { recentTransactions, isLoading } = useBudgetData();
+  const { formatCurrency } = useCurrencyFormatter();
 
   if (isLoading) {
     return <RecentTransactionsSkeleton />;

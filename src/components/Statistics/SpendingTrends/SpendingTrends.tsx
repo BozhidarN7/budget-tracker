@@ -26,13 +26,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useStatisticsData } from '@/hooks/';
-import { formatCurrency } from '@/utils';
+import { useCurrencyFormatter, useStatisticsData } from '@/hooks/';
 
 export default function SpendingTrends() {
   const { dailySpending, weeklySpending, monthlySpending } =
     useStatisticsData();
   const [timeframe, setTimeframe] = useState('monthly');
+  const { formatCurrency } = useCurrencyFormatter();
 
   const data = {
     daily: dailySpending,

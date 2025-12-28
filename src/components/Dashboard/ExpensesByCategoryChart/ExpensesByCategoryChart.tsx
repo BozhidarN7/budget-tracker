@@ -15,15 +15,11 @@ import DetailsDialog from './DetailsDialog';
 import LegendPanel from './LegendPanel';
 import ListView from './ListView';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useBudgetData } from '@/hooks/';
+import { useBudgetData, useCurrencyFormatter } from '@/hooks/';
 import useCategoryChartController, {
   CategoryChartSlice,
 } from '@/hooks/use-category-chart-controller';
-import {
-  formatCurrency,
-  formatMonthKeyToReadable,
-  formatPercentage,
-} from '@/utils';
+import { formatMonthKeyToReadable, formatPercentage } from '@/utils';
 
 const VIEW_OPTIONS: ChartViewToggleOption[] = [
   { value: 'pie', label: 'Chart' },
@@ -36,6 +32,7 @@ type PieChartDatum = CategoryChartSlice & Record<string, unknown>;
 
 export default function ExpensesByCategoryChart() {
   const { expensesByCategory, isLoading, selectedMonth } = useBudgetData();
+  const { formatCurrency } = useCurrencyFormatter();
   const controller = useCategoryChartController(expensesByCategory, {
     primaryCount: 7,
     overflowLabel: 'Other categories',
@@ -157,7 +154,11 @@ export default function ExpensesByCategoryChart() {
                           <Cell key={slice.name} fill={slice.color} />
                         ))}
                       </Pie>
-                      <Tooltip content={<CategoryTooltipContent />} />
+                      <Tooltip
+                        content={
+                          <CategoryTooltipContent formatter={formatCurrency} />
+                        }
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -204,8 +205,10 @@ export default function ExpensesByCategoryChart() {
 function CategoryTooltipContent({
   active,
   payload,
+  formatter,
 }: TooltipProps<number, string> & {
   payload?: Array<{ payload: CategoryChartSlice }>;
+  formatter: (value: number) => string;
 }) {
   const datum = payload?.[0]?.payload;
   if (active !== true || datum == null) {
@@ -216,7 +219,7 @@ function CategoryTooltipContent({
     <div className="bg-popover text-popover-foreground border-border rounded-md border px-3 py-2 shadow-md">
       <p className="text-sm font-semibold">{datum.name}</p>
       <p className="text-muted-foreground text-xs">
-        {formatCurrency(datum.value)} · {formatPercentage(datum.percentage)}
+        {formatter(datum.value)} · {formatPercentage(datum.percentage)}
       </p>
     </div>
   );

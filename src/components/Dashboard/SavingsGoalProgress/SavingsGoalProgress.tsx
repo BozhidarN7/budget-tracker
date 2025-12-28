@@ -1,11 +1,11 @@
 'use client';
 
-import { useBudgetData } from '@/hooks/';
+import { useBudgetData, useCurrencyFormatter } from '@/hooks/';
 import { Progress } from '@/components/ui/progress';
-import { formatCurrency } from '@/utils';
 
 export default function SavingsGoalProgress() {
   const { savingsGoal, currentSavings } = useBudgetData();
+  const { formatCurrency } = useCurrencyFormatter();
   const progressPercentage = (currentSavings / savingsGoal) * 100;
 
   return (

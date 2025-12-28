@@ -3,13 +3,14 @@
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import type { Transaction } from '@/types/budget';
 import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/utils';
+import { useCurrencyFormatter } from '@/hooks/';
 
 export default function DailyTransactions({
   transactions,
 }: {
   transactions: Transaction[];
 }) {
+  const { formatCurrency } = useCurrencyFormatter();
   if (transactions.length === 0) {
     return (
       <div className="flex h-[300px] items-center justify-center rounded-lg border border-dashed">

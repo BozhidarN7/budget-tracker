@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
-import { useBudgetData } from '@/hooks/';
+import { useBudgetData, useCurrencyFormatter } from '@/hooks/';
 import { useBudgetContext } from '@/contexts/budget-context';
 import {
   AlertDialog,
@@ -26,7 +26,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Goal } from '@/types/budget';
-import { formatCurrency } from '@/utils';
 
 export default function GoalsList() {
   const { goals, isLoading } = useBudgetData();
@@ -34,6 +33,7 @@ export default function GoalsList() {
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [deletingGoalId, setDeletingGoalId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { formatCurrency } = useCurrencyFormatter();
 
   const handleDelete = async () => {
     if (!deletingGoalId) return;

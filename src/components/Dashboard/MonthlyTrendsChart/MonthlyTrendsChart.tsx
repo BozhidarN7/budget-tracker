@@ -3,11 +3,11 @@
 import { useMemo } from 'react';
 import { format } from 'date-fns';
 import TrendsLineChart from '@/components/Charts/TrendsLineChart';
-import { useBudgetData } from '@/hooks/';
-import { formatCurrency } from '@/utils';
+import { useBudgetData, useCurrencyFormatter } from '@/hooks/';
 
 export default function MonthlyTrendsChart() {
   const { monthlyTrends } = useBudgetData();
+  const { formatCurrency } = useCurrencyFormatter();
 
   const chartData = useMemo(() => {
     return monthlyTrends.map((entry) => {

@@ -6,15 +6,15 @@ import { Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useBudgetData } from '@/hooks/';
+import { useBudgetData, useCurrencyFormatter } from '@/hooks/';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBudgetContext } from '@/contexts/budget-context';
-import { formatCurrency } from '@/utils';
 
 export default function SavingsGoalCard() {
   const { savingsGoal, currentSavings, isLoading } = useBudgetData();
   const { updateGoal, goals } = useBudgetContext();
   const [isUpdating, setIsUpdating] = useState(false);
+  const { formatCurrency } = useCurrencyFormatter();
 
   // Find the main savings goal (assuming it's the first one with "Monthly" in the name)
   const mainGoal =

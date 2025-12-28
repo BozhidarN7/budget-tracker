@@ -4,9 +4,13 @@ import { ArrowDown, ArrowUp, DollarSign } from 'lucide-react';
 import DashboardCardsSkeleton from '../DashboardCardsSkeleton';
 import { calculateTrend } from './utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useBudgetData } from '@/hooks/';
-import { formatCurrency, formatMonthKey, parseDate } from '@/utils';
-import { getPreviousMonthKey, getToneColorClass } from '@/utils';
+import { useBudgetData, useCurrencyFormatter } from '@/hooks/';
+import {
+  formatMonthKey,
+  getPreviousMonthKey,
+  getToneColorClass,
+  parseDate,
+} from '@/utils';
 
 export default function DashboardCards() {
   const {
@@ -17,6 +21,7 @@ export default function DashboardCards() {
     selectedMonth,
     isLoading,
   } = useBudgetData();
+  const { formatCurrency } = useCurrencyFormatter();
 
   const previousMonthKey = getPreviousMonthKey(selectedMonth);
 

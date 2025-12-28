@@ -20,12 +20,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useStatisticsData } from '@/hooks/';
-import { formatCurrency } from '@/utils';
+import { useCurrencyFormatter, useStatisticsData } from '@/hooks/';
 
 export default function IncomeExpenseComparison() {
   const { monthlyComparison, incomeSourceBreakdown, incomeVsExpenseRatio } =
     useStatisticsData();
+  const { formatCurrency } = useCurrencyFormatter();
 
   const hasMonthlyData = monthlyComparison.some(
     (month) => month.income > 0 || month.expenses > 0,

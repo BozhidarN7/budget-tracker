@@ -23,8 +23,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { formatCurrency, getPreviousMonthKey } from '@/utils';
-import { formatMonthKeyToReadable } from '@/utils';
+import { useCurrencyFormatter } from '@/hooks/';
+import { formatMonthKeyToReadable, getPreviousMonthKey } from '@/utils';
 import type { Category } from '@/types/budget';
 import { useBudgetContext } from '@/contexts/budget-context';
 import { getMostRecentMonthWithData } from '@/utils/category-utils';
@@ -44,6 +44,7 @@ export default function CategoryCard({
     null,
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  const { formatCurrency } = useCurrencyFormatter();
 
   // Get month data with inheritance logic
   const getMonthDataWithInheritance = (

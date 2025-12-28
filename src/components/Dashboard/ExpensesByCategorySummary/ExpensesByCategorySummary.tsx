@@ -7,8 +7,8 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useBudgetData } from '@/hooks/';
-import { formatCurrency, formatMonthKeyToReadable } from '@/utils';
+import { useBudgetData, useCurrencyFormatter } from '@/hooks/';
+import { formatMonthKeyToReadable } from '@/utils';
 
 const SUMMARY_COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'];
 
@@ -22,6 +22,7 @@ type PieDatumChart = PieDatum & Record<string, unknown>;
 
 export default function ExpensesByCategorySummary() {
   const { expensesByCategory, isLoading, selectedMonth } = useBudgetData();
+  const { formatCurrency } = useCurrencyFormatter();
 
   const topCategories = useMemo<PieDatumChart[]>(() => {
     return expensesByCategory

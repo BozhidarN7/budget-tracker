@@ -24,8 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useStatisticsData } from '@/hooks/';
-import { formatCurrency } from '@/utils';
+import { useCurrencyFormatter, useStatisticsData } from '@/hooks/';
 
 export default function SavingsAnalysis() {
   const {
@@ -34,6 +33,7 @@ export default function SavingsAnalysis() {
     savingsProjection,
     savingsDistribution,
   } = useStatisticsData();
+  const { formatCurrency } = useCurrencyFormatter();
 
   const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
 

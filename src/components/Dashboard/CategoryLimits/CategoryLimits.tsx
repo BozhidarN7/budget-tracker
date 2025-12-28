@@ -1,12 +1,12 @@
 'use client';
 
-import { useBudgetData } from '@/hooks/';
+import { useBudgetData, useCurrencyFormatter } from '@/hooks/';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/utils';
 
 export default function CategoryLimits() {
   const { categoryLimits } = useBudgetData();
+  const { formatCurrency } = useCurrencyFormatter();
 
   return (
     <div className="space-y-4">

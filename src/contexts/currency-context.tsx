@@ -53,6 +53,7 @@ export default function CurrencyProvider({
     : DEFAULT_SUPPORTED;
 
   const preferredCurrency = preference?.preferredCurrency ?? DEFAULT_CURRENCY;
+  console.log('budget:preferredCurrency', preferredCurrency);
 
   const refreshPreference = useCallback(async () => {
     try {

@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useCurrencyFormatter } from '@/hooks/';
 import { CategoryLegendItem } from '@/hooks/use-category-chart-controller';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { formatCurrency, formatPercentage } from '@/utils';
+import { formatPercentage } from '@/utils';
 
 interface LegendPanelProps {
   items: CategoryLegendItem[];
@@ -27,6 +28,7 @@ export default function LegendPanel({
   onOpenDetails,
   emptyText = 'No categories match your search.',
 }: LegendPanelProps) {
+  const { formatCurrency } = useCurrencyFormatter();
   const summaryLabel = useMemo(() => {
     if (totalItems === 0) {
       return 'No categories available';
@@ -73,6 +75,7 @@ export default function LegendPanel({
                   key={item.name}
                   item={item}
                   onToggle={onToggle}
+                  formatCurrency={formatCurrency}
                 />
               ))}
             </ul>
@@ -86,9 +89,14 @@ export default function LegendPanel({
 interface LegendPanelItemProps {
   item: CategoryLegendItem;
   onToggle: (name: string) => void;
+  formatCurrency: (value: number) => string;
 }
 
-function LegendPanelItem({ item, onToggle }: LegendPanelItemProps) {
+function LegendPanelItem({
+  item,
+  onToggle,
+  formatCurrency,
+}: LegendPanelItemProps) {
   const handleToggle = () => {
     onToggle(item.name);
   };

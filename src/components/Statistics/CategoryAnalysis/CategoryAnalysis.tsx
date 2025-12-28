@@ -19,13 +19,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { useStatisticsData } from '@/hooks/';
+import { useCurrencyFormatter, useStatisticsData } from '@/hooks/';
 import { cn } from '@/lib/utils';
-import { formatCurrency } from '@/utils';
 
 export default function CategoryAnalysis() {
   const { categoryBreakdown, categoryTrends, categoryLimits } =
     useStatisticsData();
+  const { formatCurrency } = useCurrencyFormatter();
 
   const COLORS = [
     '#ef4444', // red-500
@@ -210,7 +210,14 @@ export default function CategoryAnalysis() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
-                  <Tooltip formatter={(value, name) => [`$${value}`, name]} />
+                  <Tooltip
+                    formatter={(value, name) => [
+                      formatCurrency(
+                        typeof value === 'number' ? value : Number(value),
+                      ),
+                      name,
+                    ]}
+                  />
                   <Legend />
                   {Object.keys(categoryTrends[0] || {})
                     .filter((key) => key !== 'month')

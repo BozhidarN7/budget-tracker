@@ -1,7 +1,8 @@
 'use client';
 
+import { useCurrencyFormatter } from '@/hooks/';
 import { CategoryLegendItem } from '@/hooks/use-category-chart-controller';
-import { formatCurrency, formatPercentage } from '@/utils';
+import { formatPercentage } from '@/utils';
 
 interface ListViewProps {
   items: CategoryLegendItem[];
@@ -12,6 +13,7 @@ export default function ListView({
   items,
   emptyText = 'No data available.',
 }: ListViewProps) {
+  const { formatCurrency } = useCurrencyFormatter();
   if (items.length === 0) {
     return <p className="text-muted-foreground text-sm">{emptyText}</p>;
   }

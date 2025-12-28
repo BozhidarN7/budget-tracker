@@ -146,9 +146,32 @@ export default function useBudgetData() {
     .sort((a, b) => b.spent / b.limit - a.spent / a.limit)
     .slice(0, 3);
 
-  // Savings goal data
-  const savingsGoal = 1500;
-  const currentSavings = netBalance;
+  const primaryGoal = useMemo(() => {
+    if (data.goalsData.length === 0) {
+      return null;
+    }
+
+    const monthlyGoal = data.goalsData.find((goal) =>
+      goal.name.toLowerCase().includes('monthly'),
+    );
+
+    return monthlyGoal ?? data.goalsData[0];
+  }, [data.goalsData]);
+
+  const derivedTarget = primaryGoal
+    ? (primaryGoal.displayTarget ?? primaryGoal.target ?? 0)
+    : 0;
+  const derivedCurrent = primaryGoal
+    ? (primaryGoal.displayCurrent ?? primaryGoal.current ?? 0)
+    : 0;
+  const savingsProgress =
+    derivedTarget > 0 ? (derivedCurrent / derivedTarget) * 100 : 0;
+
+  const savingsBreakdown = {
+    totalIncome,
+    totalExpenses,
+    availableForSavings: netBalance,
+  };
 
   return {
     transactions: filteredTransactions,
@@ -162,8 +185,11 @@ export default function useBudgetData() {
     expensesByCategory,
     monthlyTrends,
     categoryLimits,
-    savingsGoal,
-    currentSavings,
+    savingsGoal: derivedTarget,
+    currentSavings: derivedCurrent,
+    primaryGoal,
+    savingsProgress,
+    savingsBreakdown,
     isLoading: data.isLoading,
     selectedMonth,
   };

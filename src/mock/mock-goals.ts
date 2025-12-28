@@ -1,6 +1,29 @@
+import { format } from 'date-fns';
 import { Goal } from '@/types/budget';
+import { formatMonthKeyToReadable, getCurrentMonthKey } from '@/utils';
+
+const currentMonthKey = getCurrentMonthKey();
+const [currentYearStr, currentMonthStr] = currentMonthKey.split('-');
+const currentYear = Number.parseInt(currentYearStr, 10);
+const currentMonthIndex = Number.parseInt(currentMonthStr, 10);
+const monthlyGoalTargetDate = format(
+  new Date(currentYear, currentMonthIndex, 0),
+  'MMM d, yyyy',
+);
 
 const mockGoals: Goal[] = [
+  {
+    id: `monthly-${currentMonthKey}`,
+    name: `Monthly Savings Goal - ${formatMonthKeyToReadable(currentMonthKey)}`,
+    target: 1500,
+    current: 600,
+    currency: 'EUR',
+    baseCurrency: 'EUR',
+    displayTarget: 1500,
+    displayCurrent: 600,
+    targetDate: monthlyGoalTargetDate,
+    description: 'Demo monthly savings benchmark',
+  },
   {
     id: '1',
     name: 'Emergency Fund',

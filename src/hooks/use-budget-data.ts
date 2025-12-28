@@ -1,16 +1,38 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import { useMemo } from 'react';
+import type { Goal } from '@/types/budget';
 import { useBudgetContext } from '@/contexts/budget-context';
 import { mockCategories, mockGoals, mockTransactions } from '@/mock';
-import { formatMonthKey, formatMonthKeyToReadable, parseDate } from '@/utils';
+import {
+  formatMonthKey,
+  formatMonthKeyToReadable,
+  getCurrentMonthKey,
+  getPreviousMonthKey,
+  parseDate,
+} from '@/utils';
 import { ensureCategoriesMonthData } from '@/utils/category-utils';
 
 const MONTHLY_TRENDS_LIMIT = 6;
+const MONTHLY_GOAL_TOKEN = 'monthly';
+
+const isMonthlyGoal = (goal: Goal): boolean =>
+  goal.name.toLowerCase().includes(MONTHLY_GOAL_TOKEN);
+
+const getGoalMonthKey = (goal: Goal): string =>
+  formatMonthKey(parseDate(goal.targetDate));
+
+const findMonthlyGoalForMonth = (
+  goals: Goal[],
+  monthKey: string,
+): Goal | undefined => goals.find((goal) => getGoalMonthKey(goal) === monthKey);
 
 export default function useBudgetData() {
-  const { transactions, categories, goals, isLoading, selectedMonth } =
+  const { transactions, categories, goals, isLoading, selectedMonth, addGoal } =
     useBudgetContext();
+  const isUsingMockGoals = goals.length === 0;
 
   // Use real data if available, otherwise fall back to mock data
   const data = useMemo(() => {
@@ -32,6 +54,20 @@ export default function useBudgetData() {
       isLoading,
     };
   }, [transactions, categories, goals, isLoading, selectedMonth]);
+  const actualMonthlyGoals = useMemo(
+    () => goals.filter(isMonthlyGoal),
+    [goals],
+  );
+  const monthlyGoalsForView = useMemo(
+    () => data.goalsData.filter(isMonthlyGoal),
+    [data.goalsData],
+  );
+  const monthlyGoalForSelectedMonth = useMemo(() => {
+    return findMonthlyGoalForMonth(monthlyGoalsForView, selectedMonth) ?? null;
+  }, [monthlyGoalsForView, selectedMonth]);
+  const existingMonthlyGoalForSelectedMonth = useMemo(() => {
+    return findMonthlyGoalForMonth(actualMonthlyGoals, selectedMonth) ?? null;
+  }, [actualMonthlyGoals, selectedMonth]);
   // Filter transactions for the selected month
   const filteredTransactions = useMemo(() => {
     return data.transactionsData.filter((transaction) => {
@@ -146,17 +182,7 @@ export default function useBudgetData() {
     .sort((a, b) => b.spent / b.limit - a.spent / a.limit)
     .slice(0, 3);
 
-  const primaryGoal = useMemo(() => {
-    if (data.goalsData.length === 0) {
-      return null;
-    }
-
-    const monthlyGoal = data.goalsData.find((goal) =>
-      goal.name.toLowerCase().includes('monthly'),
-    );
-
-    return monthlyGoal ?? data.goalsData[0];
-  }, [data.goalsData]);
+  const primaryGoal = monthlyGoalForSelectedMonth;
 
   const derivedTarget = primaryGoal
     ? (primaryGoal.displayTarget ?? primaryGoal.target ?? 0)
@@ -172,6 +198,75 @@ export default function useBudgetData() {
     totalExpenses,
     availableForSavings: netBalance,
   };
+  const autoCreationPlan = useMemo(() => {
+    const currentMonthKey = getCurrentMonthKey();
+
+    if (
+      isUsingMockGoals ||
+      isLoading ||
+      selectedMonth !== currentMonthKey ||
+      existingMonthlyGoalForSelectedMonth
+    ) {
+      return null;
+    }
+
+    const previousMonthKey = getPreviousMonthKey(selectedMonth);
+    const exactPreviousGoal = findMonthlyGoalForMonth(
+      actualMonthlyGoals,
+      previousMonthKey,
+    );
+
+    const fallbackPreviousGoal = actualMonthlyGoals
+      .filter((goal) => getGoalMonthKey(goal) < selectedMonth)
+      .sort((a, b) => getGoalMonthKey(b).localeCompare(getGoalMonthKey(a)))[0];
+
+    const sourceGoal = exactPreviousGoal ?? fallbackPreviousGoal;
+
+    if (!sourceGoal) {
+      return null;
+    }
+
+    const targetAmount = sourceGoal.displayTarget ?? sourceGoal.target ?? 0;
+    const [yearStr, monthStr] = selectedMonth.split('-');
+    const year = Number.parseInt(yearStr, 10);
+    const month = Number.parseInt(monthStr, 10);
+    const targetDateLabel = format(new Date(year, month, 0), 'MMM d, yyyy');
+
+    const goalPayload: Omit<Goal, 'id'> = {
+      name: `Monthly Savings Goal - ${formatMonthKeyToReadable(selectedMonth)}`,
+      target: targetAmount,
+      current: 0,
+      targetDate: targetDateLabel,
+      description: sourceGoal.description ?? 'Monthly savings goal',
+    };
+
+    return {
+      monthKey: selectedMonth,
+      goal: goalPayload,
+    };
+  }, [
+    actualMonthlyGoals,
+    existingMonthlyGoalForSelectedMonth,
+    isLoading,
+    isUsingMockGoals,
+    selectedMonth,
+  ]);
+
+  useQuery({
+    queryKey: ['goals', 'auto-monthly', autoCreationPlan?.monthKey ?? 'idle'],
+    queryFn: async () => {
+      if (!autoCreationPlan) {
+        return null;
+      }
+      addGoal(autoCreationPlan.goal);
+      return null;
+    },
+    enabled: Boolean(autoCreationPlan),
+    retry: 1,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
 
   return {
     transactions: filteredTransactions,

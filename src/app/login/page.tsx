@@ -8,7 +8,7 @@ export default async function LoginPage() {
 
   // If the user already has a valid session (cookies), redirect from the server
   if (result?.user) {
-    redirect('/');
+    redirect('/dashboard');
   }
 
   // No valid session: render the client-side login experience

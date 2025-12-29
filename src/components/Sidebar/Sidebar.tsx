@@ -43,7 +43,7 @@ export default function Sidebar() {
         <div className="flex items-center">
           <Image
             src={logo}
-            alt="Budget Tracker"
+            alt="Financemore"
             className="h-auto w-full"
             fetchPriority="high"
           />

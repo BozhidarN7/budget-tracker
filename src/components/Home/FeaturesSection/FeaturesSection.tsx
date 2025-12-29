@@ -9,7 +9,7 @@ type FeaturesSectionProps = {
 export default function FeaturesSection({ features }: FeaturesSectionProps) {
   return (
     <section id="features" className="space-y-10">
-      <div className="flex items-start justify-between gap-6">
+      <div className="flex flex-col items-start justify-between gap-6 lg:flex-row">
         <div className="max-w-2xl space-y-3">
           <p className="text-primary text-sm font-semibold tracking-[0.3em] uppercase">
             Feature suite

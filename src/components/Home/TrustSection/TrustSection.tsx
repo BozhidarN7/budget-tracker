@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import type { TrustSignal } from '@/components/Home/home-data';
+import { faqs } from '@/components/Home';
 
 type TrustSectionProps = {
   signals: TrustSignal[];
@@ -48,6 +49,20 @@ export default function TrustSection({ signals }: TrustSectionProps) {
             </div>
           );
         })}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {faqs.map((faq) => (
+          <details
+            key={faq.question}
+            className="group rounded-2xl border border-white/10 bg-white/70 p-4 shadow dark:bg-white/5"
+          >
+            <summary className="text-foreground cursor-pointer text-base font-semibold">
+              {faq.question}
+            </summary>
+            <p className="text-muted-foreground mt-2 text-sm">{faq.answer}</p>
+          </details>
+        ))}
       </div>
     </section>
   );

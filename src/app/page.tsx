@@ -1,13 +1,23 @@
 import {
+  BeforeAfterSection,
   CtaSection,
   FeaturesSection,
   HeroSection,
+  HomeFooter,
   HomeHeader,
+  InterfaceTourSection,
+  SHOW_TESTIMONIALS,
+  TestimonialsSection,
   TrustSection,
   WorkflowSection,
+  beforeAfterMeta,
+  beforeAfterStats,
   deepLinks,
   featureHighlights,
+  interfaceSlides,
   navLinks,
+  partnerLogos,
+  testimonials,
   trustSignals,
   workflowBeats,
 } from '@/components/Home';
@@ -24,9 +34,18 @@ export default function HomePage() {
         <HomeHeader links={navLinks} />
         <HeroSection />
         <FeaturesSection features={featureHighlights} />
+        <InterfaceTourSection slides={interfaceSlides} />
+        <BeforeAfterSection meta={beforeAfterMeta} stats={beforeAfterStats} />
         <WorkflowSection beats={workflowBeats} links={deepLinks} />
+        {SHOW_TESTIMONIALS ? (
+          <TestimonialsSection
+            logos={partnerLogos}
+            testimonials={testimonials}
+          />
+        ) : null}
         <TrustSection signals={trustSignals} />
         <CtaSection />
+        <HomeFooter />
       </div>
     </main>
   );

@@ -20,13 +20,13 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Transactions', href: '/transactions', icon: CreditCard },
-  { name: 'Categories', href: '/categories', icon: PieChart },
-  { name: 'Goals', href: '/goals', icon: Target },
-  { name: 'Calendar', href: '/calendar', icon: Calendar },
-  { name: 'Statistics', href: '/statistics', icon: BarChart3 },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Dashboard', href: '/dashboard', icon: Home },
+  { name: 'Transactions', href: '/dashboard/transactions', icon: CreditCard },
+  { name: 'Categories', href: '/dashboard/categories', icon: PieChart },
+  { name: 'Goals', href: '/dashboard/goals', icon: Target },
+  { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
+  { name: 'Statistics', href: '/dashboard/statistics', icon: BarChart3 },
+  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
 export default function Sidebar() {
@@ -43,7 +43,7 @@ export default function Sidebar() {
         <div className="flex items-center">
           <Image
             src={logo}
-            alt="Budget Tracker"
+            alt="Financemore"
             className="h-auto w-full"
             fetchPriority="high"
           />
@@ -76,7 +76,7 @@ export default function Sidebar() {
       >
         <div className="hidden h-16 items-center border-b pr-2 md:flex">
           <Link
-            href="/"
+            href="/dashboard"
             className="flex items-center"
             onClick={() => setIsOpen(false)}
           >

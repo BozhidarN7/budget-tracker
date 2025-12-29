@@ -13,7 +13,7 @@ export default function LoginHero() {
             <TrendingUp className="h-6 w-6 text-white" />
           </div>
           <h1 className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-3xl font-bold text-transparent">
-            Budget Tracker
+            Financemore
           </h1>
         </div>
         <p className="text-xl text-gray-600 dark:text-gray-300">

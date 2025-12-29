@@ -8,8 +8,9 @@ import QueryProvider from '@/components/QueryProvider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Budget Tracker',
-  description: 'Track your income, expenses, and savings goals',
+  title: 'Financemore',
+  description:
+    'Plan spending, stay within your limits, and track savings progress with Financemore.',
 };
 
 export default function RootLayout({

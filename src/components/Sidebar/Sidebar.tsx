@@ -41,12 +41,18 @@ export default function Sidebar() {
         }
       >
         <div className="flex items-center">
-          <Image
-            src={logo}
-            alt="Financemore"
-            className="h-auto w-full"
-            fetchPriority="high"
-          />
+          <Link
+            href="/dashboard"
+            className="flex items-center"
+            onClick={() => setIsOpen(false)}
+          >
+            <Image
+              src={logo}
+              alt="Financemore"
+              className="h-auto w-full"
+              fetchPriority="high"
+            />
+          </Link>
         </div>
         <Button
           variant="outline"

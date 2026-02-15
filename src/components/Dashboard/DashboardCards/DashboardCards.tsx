@@ -5,6 +5,7 @@ import DashboardCardsSkeleton from '../DashboardCardsSkeleton';
 import { calculateTrend } from './utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useBudgetData, useCurrencyFormatter } from '@/hooks/';
+import type { Transaction } from '@/types/budget';
 import {
   formatMonthKey,
   getPreviousMonthKey,
@@ -25,8 +26,11 @@ export default function DashboardCards() {
 
   const previousMonthKey = getPreviousMonthKey(selectedMonth);
 
-  const previousMonthTotals = allTransactions.reduce(
-    (acc, transaction) => {
+  const previousMonthTotals = allTransactions.reduce<{
+    income: number;
+    expenses: number;
+  }>(
+    (acc, transaction: Transaction) => {
       const transactionMonth = formatMonthKey(parseDate(transaction.date));
       if (transactionMonth !== previousMonthKey) {
         return acc;

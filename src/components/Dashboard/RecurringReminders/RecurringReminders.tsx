@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useBudgetData, useCurrencyFormatter } from '@/hooks/';
+import type { RecurringReminder } from '@/hooks/use-budget-data/use-recurring-reminders';
 import { cn } from '@/lib/utils';
 
 export default function RecurringReminders() {
@@ -29,7 +30,7 @@ export default function RecurringReminders() {
         <CardDescription>Next 7 days of recurring payments</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {upcomingRecurringReminders.map((reminder) => (
+        {upcomingRecurringReminders.map((reminder: RecurringReminder) => (
           <div
             key={reminder.id}
             className="flex items-center justify-between rounded-lg border p-3"

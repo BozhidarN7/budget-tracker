@@ -15,6 +15,7 @@ import type {
   BudgetState,
 } from './budget/types';
 import { createTransactionOperations } from './budget/transaction-operations';
+import { createRecurringTransactionOperations } from './budget/recurring-transaction-operations';
 import { createCategoryOperations } from './budget/category-operations';
 import { createGoalOperations } from './budget/goal-operations';
 import { fetchBudgetData } from './budget/data-fetching';
@@ -23,6 +24,7 @@ import { getCurrentMonthKey } from '@/utils';
 // Default values
 const defaultContext: BudgetContextType = {
   transactions: [],
+  recurringTransactions: [],
   categories: [],
   goals: [],
   isLoading: true,
@@ -40,6 +42,21 @@ const defaultContext: BudgetContextType = {
   },
   removeTransaction: async (_id) => {
     throw new Error('BudgetContext not initialized: removeTransaction');
+  },
+
+  // Recurring transaction operations
+  addRecurringTransaction: async (_transaction) => {
+    throw new Error('BudgetContext not initialized: addRecurringTransaction');
+  },
+  updateRecurringTransaction: async (_id, _transaction) => {
+    throw new Error(
+      'BudgetContext not initialized: updateRecurringTransaction',
+    );
+  },
+  removeRecurringTransaction: async (_id) => {
+    throw new Error(
+      'BudgetContext not initialized: removeRecurringTransaction',
+    );
   },
 
   // Category operations
@@ -70,22 +87,35 @@ const BudgetContext = createContext<BudgetContextType>(defaultContext);
 export default function BudgetProvider({
   children,
   initialTransactions,
+  initialRecurringTransactions,
   initialCategories,
   initialGoals,
 }: BudgetProviderProps) {
   // State
   const [state, setState] = useState<BudgetState>({
     transactions: initialTransactions || [],
+    recurringTransactions: initialRecurringTransactions || [],
     categories: initialCategories || [],
     goals: initialGoals || [],
-    isLoading: !initialTransactions || !initialCategories || !initialGoals,
+    isLoading:
+      !initialTransactions ||
+      !initialRecurringTransactions ||
+      !initialCategories ||
+      !initialGoals,
     error: null,
     selectedMonth: getCurrentMonthKey(),
   });
 
   // Destructure state for easier access
-  const { transactions, categories, goals, isLoading, error, selectedMonth } =
-    state;
+  const {
+    transactions,
+    recurringTransactions,
+    categories,
+    goals,
+    isLoading,
+    error,
+    selectedMonth,
+  } = state;
 
   // State setters
   const setTransactions = useCallback(
@@ -94,6 +124,19 @@ export default function BudgetProvider({
         ...prev,
         transactions:
           typeof value === 'function' ? value(prev.transactions) : value,
+      }));
+    },
+    [],
+  );
+
+  const setRecurringTransactions = useCallback(
+    (value: React.SetStateAction<typeof recurringTransactions>) => {
+      setState((prev) => ({
+        ...prev,
+        recurringTransactions:
+          typeof value === 'function'
+            ? value(prev.recurringTransactions)
+            : value,
       }));
     },
     [],
@@ -137,6 +180,7 @@ export default function BudgetProvider({
     try {
       const data = await fetchBudgetData();
       setTransactions(data.transactions);
+      setRecurringTransactions(data.recurringTransactions);
       setCategories(data.categories);
       setGoals(data.goals);
     } catch (err) {
@@ -145,14 +189,32 @@ export default function BudgetProvider({
     } finally {
       setIsLoading(false);
     }
-  }, [setIsLoading, setError, setTransactions, setCategories, setGoals]);
+  }, [
+    setIsLoading,
+    setError,
+    setTransactions,
+    setRecurringTransactions,
+    setCategories,
+    setGoals,
+  ]);
 
   // Fetch data if no initial data was provided
   useEffect(() => {
-    if (!initialTransactions || !initialCategories || !initialGoals) {
+    if (
+      !initialTransactions ||
+      !initialRecurringTransactions ||
+      !initialCategories ||
+      !initialGoals
+    ) {
       refetch();
     }
-  }, [initialTransactions, initialCategories, initialGoals, refetch]);
+  }, [
+    initialTransactions,
+    initialRecurringTransactions,
+    initialCategories,
+    initialGoals,
+    refetch,
+  ]);
 
   // Create operations
   const transactionOps = createTransactionOperations(
@@ -160,6 +222,12 @@ export default function BudgetProvider({
     categories,
     setTransactions,
     setCategories,
+    setError,
+  );
+
+  const recurringTransactionOps = createRecurringTransactionOperations(
+    recurringTransactions,
+    setRecurringTransactions,
     setError,
   );
 
@@ -176,6 +244,7 @@ export default function BudgetProvider({
     <BudgetContext.Provider
       value={{
         transactions,
+        recurringTransactions,
         categories,
         goals,
         isLoading,
@@ -185,6 +254,8 @@ export default function BudgetProvider({
         refetch,
         // Transaction operations
         ...transactionOps,
+        // Recurring transaction operations
+        ...recurringTransactionOps,
         // Category operations
         ...categoryOps,
         // Goal operations

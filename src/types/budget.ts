@@ -23,6 +23,35 @@ export interface Transaction {
   date: string;
   category: string;
   type: 'income' | 'expense';
+  recurrenceId?: string;
+  recurrenceInstanceId?: string;
+  recurrenceStatus?: 'scheduled' | 'due' | 'overdue' | 'skipped' | 'paid';
+  recurrenceGeneratedAt?: string;
+}
+
+export type RecurrenceFrequency = 'weekly' | 'biweekly' | 'monthly';
+
+export interface RecurrenceRule {
+  frequency: RecurrenceFrequency;
+  interval?: number;
+  startDate: string;
+  endDate?: string;
+  dayOfMonth?: number;
+}
+
+export interface RecurringTransaction {
+  id: string;
+  description: string;
+  amount: number;
+  currency: CurrencyCode;
+  category: string;
+  type: 'income' | 'expense';
+  rule: RecurrenceRule;
+  nextOccurrence: string;
+  lastGeneratedAt?: string;
+  status?: 'active' | 'paused' | 'completed';
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Category {

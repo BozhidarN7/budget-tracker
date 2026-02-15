@@ -1,10 +1,16 @@
 import type React from 'react';
-import type { Category, Goal, Transaction } from '@/types/budget';
+import type {
+  Category,
+  Goal,
+  RecurringTransaction,
+  Transaction,
+} from '@/types/budget';
 
 // Define the context types
 export type BudgetContextType = {
   // State
   transactions: Transaction[];
+  recurringTransactions: RecurringTransaction[];
   categories: Category[];
   goals: Goal[];
   isLoading: boolean;
@@ -22,6 +28,16 @@ export type BudgetContextType = {
     transaction: Partial<Transaction>,
   ) => Promise<Transaction>;
   removeTransaction: (id: string) => Promise<boolean>;
+
+  // Recurring transaction operations
+  addRecurringTransaction: (
+    transaction: Omit<RecurringTransaction, 'id'>,
+  ) => Promise<RecurringTransaction>;
+  updateRecurringTransaction: (
+    id: string,
+    transaction: Partial<RecurringTransaction>,
+  ) => Promise<RecurringTransaction>;
+  removeRecurringTransaction: (id: string) => Promise<boolean>;
 
   // Category operations
   addCategory: (
@@ -43,6 +59,7 @@ export type BudgetContextType = {
 export type BudgetProviderProps = {
   children: React.ReactNode;
   initialTransactions?: Transaction[];
+  initialRecurringTransactions?: RecurringTransaction[];
   initialCategories?: Category[];
   initialGoals?: Goal[];
 };
@@ -50,6 +67,7 @@ export type BudgetProviderProps = {
 // Define the state type
 export type BudgetState = {
   transactions: Transaction[];
+  recurringTransactions: RecurringTransaction[];
   categories: Category[];
   goals: Goal[];
   isLoading: boolean;

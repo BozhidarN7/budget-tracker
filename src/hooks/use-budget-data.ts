@@ -1,12 +1,27 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { useMemo } from 'react';
-import type { Goal } from '@/types/budget';
-import { useBudgetContext } from '@/contexts/budget-context';
-import { mockCategories, mockGoals, mockTransactions } from '@/mock';
 import {
+  addDays,
+  endOfMonth,
+  format,
+  isAfter,
+  isBefore,
+  isEqual,
+  parseISO,
+  startOfMonth,
+} from 'date-fns';
+import { useMemo } from 'react';
+import type { Goal, Transaction } from '@/types/budget';
+import { useBudgetContext } from '@/contexts/budget-context';
+import {
+  mockCategories,
+  mockGoals,
+  mockRecurringTransactions,
+  mockTransactions,
+} from '@/mock';
+import {
+  buildRecurrenceInstances,
   formatMonthKey,
   formatMonthKeyToReadable,
   getCurrentMonthKey,
@@ -30,8 +45,15 @@ const findMonthlyGoalForMonth = (
 ): Goal | undefined => goals.find((goal) => getGoalMonthKey(goal) === monthKey);
 
 export default function useBudgetData() {
-  const { transactions, categories, goals, isLoading, selectedMonth, addGoal } =
-    useBudgetContext();
+  const {
+    transactions,
+    recurringTransactions,
+    categories,
+    goals,
+    isLoading,
+    selectedMonth,
+    addGoal,
+  } = useBudgetContext();
   const isUsingMockGoals = goals.length === 0;
 
   // Use real data if available, otherwise fall back to mock data
@@ -40,6 +62,10 @@ export default function useBudgetData() {
       transactions.length > 0 ? transactions : mockTransactions;
     const categoriesData = categories.length > 0 ? categories : mockCategories;
     const goalsData = goals.length > 0 ? goals : mockGoals;
+    const recurringData =
+      recurringTransactions.length > 0
+        ? recurringTransactions
+        : mockRecurringTransactions;
 
     // Ensure all categories have data for the selected month with inherited limits
     const categoriesWithMonthData = ensureCategoriesMonthData(
@@ -51,9 +77,17 @@ export default function useBudgetData() {
       transactionsData,
       categoriesData: categoriesWithMonthData,
       goalsData,
+      recurringData,
       isLoading,
     };
-  }, [transactions, categories, goals, isLoading, selectedMonth]);
+  }, [
+    transactions,
+    recurringTransactions,
+    categories,
+    goals,
+    isLoading,
+    selectedMonth,
+  ]);
   const actualMonthlyGoals = useMemo(
     () => goals.filter(isMonthlyGoal),
     [goals],
@@ -68,17 +102,120 @@ export default function useBudgetData() {
   const existingMonthlyGoalForSelectedMonth = useMemo(() => {
     return findMonthlyGoalForMonth(actualMonthlyGoals, selectedMonth) ?? null;
   }, [actualMonthlyGoals, selectedMonth]);
+  const recurringInstances = useMemo(() => {
+    const [yearStr, monthStr] = selectedMonth.split('-');
+    const monthStart = startOfMonth(
+      new Date(
+        Number.parseInt(yearStr, 10),
+        Number.parseInt(monthStr, 10) - 1,
+        1,
+      ),
+    );
+    const monthEnd = endOfMonth(monthStart);
+    const windowStart = format(monthStart, 'yyyy-MM-dd');
+    const windowEnd = format(monthEnd, 'yyyy-MM-dd');
+
+    return data.recurringData.flatMap((recurring) => {
+      if (recurring.status && recurring.status !== 'active') {
+        return [];
+      }
+
+      const occurrences = buildRecurrenceInstances(
+        recurring,
+        windowStart,
+        windowEnd,
+      );
+
+      return occurrences.map((occurrence) => {
+        const occurrenceDate = parseISO(occurrence);
+        const today = parseISO(format(new Date(), 'yyyy-MM-dd'));
+        const status = isEqual(occurrenceDate, today)
+          ? 'due'
+          : isBefore(occurrenceDate, today)
+            ? 'overdue'
+            : 'scheduled';
+
+        return {
+          id: `${recurring.id}-${occurrence}`,
+          description: recurring.description,
+          amount: recurring.amount,
+          currency: recurring.currency,
+          date: occurrence,
+          category: recurring.category,
+          type: recurring.type,
+          recurrenceId: recurring.id,
+          recurrenceInstanceId: `${recurring.id}-${occurrence}`,
+          recurrenceStatus: status,
+          recurrenceGeneratedAt: format(new Date(), 'yyyy-MM-dd'),
+        } as Transaction;
+      });
+    });
+  }, [data.recurringData, selectedMonth]);
+
+  const combinedTransactions = useMemo(() => {
+    return [...data.transactionsData, ...recurringInstances];
+  }, [data.transactionsData, recurringInstances]);
+
+  const upcomingRecurringReminders = useMemo(() => {
+    const today = parseISO(format(new Date(), 'yyyy-MM-dd'));
+    const reminderEnd = addDays(today, 7);
+    const windowStart = format(today, 'yyyy-MM-dd');
+    const windowEnd = format(reminderEnd, 'yyyy-MM-dd');
+
+    return data.recurringData.flatMap((recurring) => {
+      if (recurring.status && recurring.status !== 'active') {
+        return [];
+      }
+
+      const occurrences = buildRecurrenceInstances(
+        recurring,
+        windowStart,
+        windowEnd,
+      );
+
+      return occurrences
+        .map((occurrence) => {
+          const occurrenceDate = parseISO(occurrence);
+          const status = isEqual(occurrenceDate, today)
+            ? 'due'
+            : isBefore(occurrenceDate, today)
+              ? 'overdue'
+              : 'scheduled';
+
+          return {
+            id: `${recurring.id}-${occurrence}`,
+            title: recurring.description,
+            amount: recurring.amount,
+            currency: recurring.currency,
+            category: recurring.category,
+            date: occurrence,
+            type: recurring.type,
+            status,
+            recurrenceId: recurring.id,
+          };
+        })
+        .filter((reminder) => {
+          const reminderDate = parseISO(reminder.date);
+          return (
+            isEqual(reminderDate, today) ||
+            (isAfter(reminderDate, today) &&
+              !isAfter(reminderDate, reminderEnd))
+          );
+        });
+    });
+  }, [data.recurringData]);
+
   // Filter transactions for the selected month
   const filteredTransactions = useMemo(() => {
-    return data.transactionsData.filter((transaction) => {
+    return combinedTransactions.filter((transaction) => {
       const transactionDate = parseDate(transaction.date);
       const transactionMonth = formatMonthKey(transactionDate);
       return transactionMonth === selectedMonth;
     });
-  }, [data.transactionsData, selectedMonth]);
+  }, [combinedTransactions, selectedMonth]);
 
   // All transactions (unfiltered) for statistics
-  const allTransactions = data.transactionsData;
+  const allTransactions = combinedTransactions;
 
   // Calculate total income for the selected month
   const totalIncome = filteredTransactions
@@ -271,6 +408,9 @@ export default function useBudgetData() {
   return {
     transactions: filteredTransactions,
     allTransactions,
+    recurringTransactions: data.recurringData,
+    recurringInstances,
+    upcomingRecurringReminders,
     categories: data.categoriesData,
     goals: data.goalsData,
     totalIncome,

@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { parseDate } from '@/utils';
 
 export default function CalendarView() {
-  const { transactions } = useBudgetData();
+  const { recurringInstances, transactions } = useBudgetData();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   const onDateSelect = useEffectEvent((latestDateStr: string) => {
@@ -35,6 +35,18 @@ export default function CalendarView() {
       return acc;
     },
     {} as Record<string, typeof transactions>,
+  );
+
+  const recurringByDate = recurringInstances.reduce(
+    (acc, transaction) => {
+      const date = format(parseDate(transaction.date), 'yyyy-MM-dd');
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(transaction);
+      return acc;
+    },
+    {} as Record<string, typeof recurringInstances>,
   );
 
   // Find the latest date with transactions
@@ -93,6 +105,7 @@ export default function CalendarView() {
 
                 const dateStr = format(day.date, 'yyyy-MM-dd');
                 const hasTransactions = !!transactionsByDate[dateStr];
+                const hasRecurring = !!recurringByDate[dateStr];
                 const dayTotal = dailyTotals[dateStr];
 
                 const mergedButtonClass = cn(
@@ -111,16 +124,21 @@ export default function CalendarView() {
                         {day.date.getDate()}
                       </div>
 
-                      {hasTransactions && (
+                      {(hasTransactions || hasRecurring) && (
                         <div className="absolute -bottom-1.5 left-1/2 flex -translate-x-1/2 gap-0.5">
-                          <div
-                            className={cn(
-                              'h-1 w-1 rounded-full',
-                              dayTotal?.net >= 0
-                                ? 'bg-emerald-500'
-                                : 'bg-rose-500',
-                            )}
-                          />
+                          {hasTransactions && (
+                            <div
+                              className={cn(
+                                'h-1 w-1 rounded-full',
+                                dayTotal?.net >= 0
+                                  ? 'bg-emerald-500'
+                                  : 'bg-rose-500',
+                              )}
+                            />
+                          )}
+                          {hasRecurring && (
+                            <div className="h-1 w-1 rounded-full bg-amber-500" />
+                          )}
                         </div>
                       )}
                     </div>

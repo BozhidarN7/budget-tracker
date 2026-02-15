@@ -1,6 +1,7 @@
 const CACHE_TAGS = {
   budget: {
     transactions: 'budget-transactions',
+    recurringTransactions: 'budget-recurring-transactions',
     categories: 'budget-categories',
     goals: 'budget-goals',
   },

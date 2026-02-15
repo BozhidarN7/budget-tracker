@@ -1,10 +1,16 @@
 import { getTokensFromCookies } from '@/server/auth';
 import { API_BASE_URL } from '@/constants/api';
-import type { Category, Goal, Transaction } from '@/types/budget';
+import type {
+  Category,
+  Goal,
+  RecurringTransaction,
+  Transaction,
+} from '@/types/budget';
 import { CACHE_TAGS } from '@/constants';
 
 export interface BudgetData {
   transactions: Transaction[];
+  recurringTransactions: RecurringTransaction[];
   categories: Category[];
   goals: Goal[];
 }
@@ -52,30 +58,43 @@ export async function getInitialBudgetData(): Promise<BudgetDataResult> {
       Authorization: `Bearer ${tokens.idToken}`,
     } as const;
 
-    const [transactionsRes, categoriesRes, goalsRes] = await Promise.all([
-      fetch(`${API_BASE_URL}/transactions`, {
-        method: 'GET',
-        headers,
-        cache: 'force-cache',
-        next: { tags: [CACHE_TAGS.budget.transactions] },
-      }),
-      fetch(`${API_BASE_URL}/categorys`, {
-        method: 'GET',
-        headers,
-        cache: 'force-cache',
-        next: { tags: [CACHE_TAGS.budget.categories] },
-      }),
-      fetch(`${API_BASE_URL}/goals`, {
-        method: 'GET',
-        headers,
-        cache: 'force-cache',
-        next: { tags: [CACHE_TAGS.budget.goals] },
-      }),
-    ]);
+    const [transactionsRes, recurringRes, categoriesRes, goalsRes] =
+      await Promise.all([
+        fetch(`${API_BASE_URL}/transactions`, {
+          method: 'GET',
+          headers,
+          cache: 'force-cache',
+          next: { tags: [CACHE_TAGS.budget.transactions] },
+        }),
+        fetch(`${API_BASE_URL}/recurring-transactions`, {
+          method: 'GET',
+          headers,
+          cache: 'force-cache',
+          next: { tags: [CACHE_TAGS.budget.recurringTransactions] },
+        }),
+        fetch(`${API_BASE_URL}/categorys`, {
+          method: 'GET',
+          headers,
+          cache: 'force-cache',
+          next: { tags: [CACHE_TAGS.budget.categories] },
+        }),
+        fetch(`${API_BASE_URL}/goals`, {
+          method: 'GET',
+          headers,
+          cache: 'force-cache',
+          next: { tags: [CACHE_TAGS.budget.goals] },
+        }),
+      ]);
 
-    if (!transactionsRes.ok || !categoriesRes.ok || !goalsRes.ok) {
+    if (
+      !transactionsRes.ok ||
+      !recurringRes.ok ||
+      !categoriesRes.ok ||
+      !goalsRes.ok
+    ) {
       const errors = [
         !transactionsRes.ok && `transactions: ${transactionsRes.status}`,
+        !recurringRes.ok && `recurring: ${recurringRes.status}`,
         !categoriesRes.ok && `categories: ${categoriesRes.status}`,
         !goalsRes.ok && `goals: ${goalsRes.status}`,
       ]
@@ -88,15 +107,17 @@ export async function getInitialBudgetData(): Promise<BudgetDataResult> {
       };
     }
 
-    const [transactions, categories, goals] = (await Promise.all([
-      transactionsRes.json(),
-      categoriesRes.json(),
-      goalsRes.json(),
-    ])) as [Transaction[], Category[], Goal[]];
+    const [transactions, recurringTransactions, categories, goals] =
+      (await Promise.all([
+        transactionsRes.json(),
+        recurringRes.json(),
+        categoriesRes.json(),
+        goalsRes.json(),
+      ])) as [Transaction[], RecurringTransaction[], Category[], Goal[]];
 
     return {
       ok: true,
-      data: { transactions, categories, goals },
+      data: { transactions, recurringTransactions, categories, goals },
     };
   } catch (error) {
     const message =

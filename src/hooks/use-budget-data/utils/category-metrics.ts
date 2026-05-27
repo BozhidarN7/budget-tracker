@@ -1,7 +1,7 @@
 import type { Category, Transaction } from '@/types/budget';
 import { formatMonthKey, parseDate } from '@/utils';
 
-const computeSpentByCategory = (
+export const computeSpentByCategory = (
   transactions: Transaction[],
   selectedMonth: string,
 ) => {

@@ -75,10 +75,15 @@ export default function useBudgetData() {
     });
 
   const expensesByCategory = getExpensesByCategory(
+    eligibleCombinedTransactions,
     data.categoriesData,
     selectedMonth,
   );
-  const categoryLimits = getCategoryLimits(data.categoriesData, selectedMonth);
+  const categoryLimits = getCategoryLimits(
+    eligibleCombinedTransactions,
+    data.categoriesData,
+    selectedMonth,
+  );
 
   const savingsBreakdown = {
     totalIncome,

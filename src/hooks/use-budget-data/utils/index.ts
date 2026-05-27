@@ -1,4 +1,8 @@
-export { getCategoryLimits, getExpensesByCategory } from './category-metrics';
+export {
+  computeSpentByCategory,
+  getCategoryLimits,
+  getExpensesByCategory,
+} from './category-metrics';
 export {
   findMonthlyGoalForMonth,
   getGoalMonthKey,

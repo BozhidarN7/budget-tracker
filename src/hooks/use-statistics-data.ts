@@ -3,14 +3,15 @@
 import { useMemo } from 'react';
 import { format, startOfDay, startOfWeek, subDays, subWeeks } from 'date-fns';
 import useBudgetData from './use-budget-data';
+import { computeSpentByCategory } from './use-budget-data/utils/category-metrics';
 import { formatMonthKey, getLastNMonthKeys, parseDate } from '@/utils';
 
 export default function useStatisticsData() {
-  // Get ALL transaction data, not filtered by selected month
-  const { allTransactions, categories, goals } = useBudgetData();
+  const { eligibleTransactions, categories, goals } = useBudgetData();
 
-  // Use allTransactions instead of transactions throughout the hook
-  const transactions = useMemo(() => allTransactions || [], [allTransactions]);
+  const transactions = useMemo(() => {
+    return eligibleTransactions || [];
+  }, [eligibleTransactions]);
 
   // Helper function to group transactions by time period
   const groupTransactionsByPeriod = useMemo(() => {
@@ -144,27 +145,33 @@ export default function useStatisticsData() {
     });
   }, [transactions]);
 
-  // Category limits (from categories data for current month)
   const categoryLimits = useMemo(() => {
     const currentMonth = formatMonthKey(new Date());
+    const spentByCat = computeSpentByCategory(transactions, currentMonth);
 
     return categories
-      .filter((category) => category.type === 'expense')
+      .filter((category) => {
+        return category.type === 'expense';
+      })
       .map((category) => {
         const monthData = category.monthlyData[currentMonth] || {
           limit: 0,
           spent: 0,
         };
         return {
-          name: category.name,
-          spent: monthData.spent,
-          limit: monthData.limit,
           color: category.color,
+          limit: monthData.limit,
+          name: category.name,
+          spent: spentByCat.get(category.name) || 0,
         };
       })
-      .filter((category) => category.limit > 0)
-      .sort((a, b) => b.spent / b.limit - a.spent / a.limit);
-  }, [categories]);
+      .filter((category) => {
+        return category.limit > 0;
+      })
+      .sort((a, b) => {
+        return b.spent / b.limit - a.spent / a.limit;
+      });
+  }, [categories, transactions]);
 
   // Monthly income vs expenses comparison (last 6 months)
   const monthlyComparison = useMemo(() => {

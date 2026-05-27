@@ -9,8 +9,9 @@ type RecurringInstancesInput = {
 };
 
 type RecurringInstancesResult = {
-  recurringInstances: Transaction[];
   combinedTransactions: Transaction[];
+  eligibleRecurringInstances: Transaction[];
+  recurringInstances: Transaction[];
 };
 
 export const useRecurringInstances = (
@@ -47,8 +48,15 @@ export const useRecurringInstances = (
     return [...transactions, ...recurringInstances];
   }, [recurringInstances, transactions]);
 
+  const eligibleRecurringInstances = useMemo(() => {
+    return recurringInstances.filter((instance) => {
+      return instance.recurrenceStatus !== 'scheduled';
+    });
+  }, [recurringInstances]);
+
   return {
-    recurringInstances,
     combinedTransactions,
+    eligibleRecurringInstances,
+    recurringInstances,
   };
 };

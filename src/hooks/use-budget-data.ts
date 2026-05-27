@@ -32,25 +32,34 @@ export default function useBudgetData() {
     selectedMonth,
   });
 
-  const { recurringInstances, combinedTransactions } = useRecurringInstances(
-    {
-      recurringTransactions: data.recurringData,
-      selectedMonth,
-    },
-    data.transactionsData,
-  );
+  const { recurringInstances, combinedTransactions, eligibleRecurringInstances } =
+    useRecurringInstances(
+      {
+        recurringTransactions: data.recurringData,
+        selectedMonth,
+      },
+      data.transactionsData,
+    );
 
   const upcomingRecurringReminders = useRecurringReminders({
     recurringTransactions: data.recurringData,
   });
 
+  const eligibleCombinedTransactions = [
+    ...data.transactionsData,
+    ...eligibleRecurringInstances,
+  ];
+
   const {
     filteredTransactions,
+    recentTransactions,
+  } = useTransactionMetrics(combinedTransactions, selectedMonth);
+
+  const {
     totalIncome,
     totalExpenses,
     netBalance,
-    recentTransactions,
-  } = useTransactionMetrics(combinedTransactions, selectedMonth);
+  } = useTransactionMetrics(eligibleCombinedTransactions, selectedMonth);
 
   const { monthlyTrends } = useMonthlyTrends(
     data.transactionsData,
@@ -78,26 +87,28 @@ export default function useBudgetData() {
   };
 
   return {
-    transactions: filteredTransactions,
-    allTransactions: combinedTransactions,
-    recurringTransactions: data.recurringData,
-    recurringInstances,
-    upcomingRecurringReminders,
     categories: data.categoriesData,
-    goals: data.goalsData,
-    totalIncome,
-    totalExpenses,
-    netBalance,
-    recentTransactions,
-    expensesByCategory,
-    monthlyTrends,
-    categoryLimits,
-    savingsGoal: derivedTarget,
     currentSavings: derivedCurrent,
-    primaryGoal,
-    savingsProgress,
-    savingsBreakdown,
+    eligibleRecurringInstances,
+    eligibleTransactions: eligibleCombinedTransactions,
+    goals: data.goalsData,
     isLoading: data.isLoading,
+    monthlyTrends,
+    netBalance,
+    primaryGoal,
+    recentTransactions,
+    recurringInstances,
+    recurringTransactions: data.recurringData,
+    savingsBreakdown,
+    savingsGoal: derivedTarget,
+    savingsProgress,
     selectedMonth,
+    totalExpenses,
+    totalIncome,
+    transactions: filteredTransactions,
+    upcomingRecurringReminders,
+    allTransactions: combinedTransactions,
+    categoryLimits,
+    expensesByCategory,
   };
 }

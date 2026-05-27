@@ -66,7 +66,7 @@ export const getCategoryLimits = (
       };
     })
     .filter((category) => {
-      return category.spent > 0;
+      return category.spent > 0 && category.limit > 0;
     })
     .sort((a, b) => {
       return b.spent / b.limit - a.spent / a.limit;

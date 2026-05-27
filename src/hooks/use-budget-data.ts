@@ -32,14 +32,17 @@ export default function useBudgetData() {
     selectedMonth,
   });
 
-  const { recurringInstances, combinedTransactions, eligibleRecurringInstances } =
-    useRecurringInstances(
-      {
-        recurringTransactions: data.recurringData,
-        selectedMonth,
-      },
-      data.transactionsData,
-    );
+  const {
+    recurringInstances,
+    combinedTransactions,
+    eligibleRecurringInstances,
+  } = useRecurringInstances(
+    {
+      recurringTransactions: data.recurringData,
+      selectedMonth,
+    },
+    data.transactionsData,
+  );
 
   const upcomingRecurringReminders = useRecurringReminders({
     recurringTransactions: data.recurringData,
@@ -50,16 +53,15 @@ export default function useBudgetData() {
     ...eligibleRecurringInstances,
   ];
 
-  const {
-    filteredTransactions,
-    recentTransactions,
-  } = useTransactionMetrics(combinedTransactions, selectedMonth);
+  const { filteredTransactions, recentTransactions } = useTransactionMetrics(
+    combinedTransactions,
+    selectedMonth,
+  );
 
-  const {
-    totalIncome,
-    totalExpenses,
-    netBalance,
-  } = useTransactionMetrics(eligibleCombinedTransactions, selectedMonth);
+  const { totalIncome, totalExpenses, netBalance } = useTransactionMetrics(
+    eligibleCombinedTransactions,
+    selectedMonth,
+  );
 
   const { monthlyTrends } = useMonthlyTrends(
     data.transactionsData,

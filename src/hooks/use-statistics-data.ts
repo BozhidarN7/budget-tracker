@@ -166,7 +166,7 @@ export default function useStatisticsData() {
         };
       })
       .filter((category) => {
-        return category.limit > 0;
+        return category.limit > 0 && category.limit > 0;
       })
       .sort((a, b) => {
         return b.spent / b.limit - a.spent / a.limit;

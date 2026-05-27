@@ -19,7 +19,7 @@ The purpose of this reconciliation is to compare the frontend-derived values aga
 
 1. Choose a representative month (preferably one with active recurring transactions that straddle "today").
 2. Capture the raw categories payload from the Budget API (or via the client `BudgetContext` / `useBudgetData().categories` before any derivation).
-3. For the same month, obtain the full list of normal transactions + *all* generated recurring instances for the month (use the generator or inspect network).
+3. For the same month, obtain the full list of normal transactions + _all_ generated recurring instances for the month (use the generator or inspect network).
 4. Compute the **eligible subset** using the same rule: keep only recurring instances with scheduled date <= the "as of" date used by the UI (today in local time at render/generation).
 5. Sum `amount` for expense transactions (normal + eligible recurring) grouped by `category` name, restricted to the target month.
 6. For each expense category that has `monthlyData[month]`:
@@ -42,8 +42,9 @@ Therefore, when the app runs on mocks:
 - The `monthlyData.spent` values present in mocks (e.g. Food current month backend 199.4) are populated independently of the recurring generator and do not include any contribution from the Housing/Health recurring items.
 
 **Concrete observation (no mismatch possible to compute here):**
+
 - For the current month key, the backend `monthlyData` values for the defined categories (Food, Transport, etc.) are hardcoded in the mock factory and do not incorporate the recurring generator at all.
-- After #7/#8 the *displayed* category spend for Food etc. will still match the mock values (since no eligible recurring transactions target "Food" or "Transport" in the mocks). Thus, for the categories that *do* exist, frontend-derived == backend value by construction of the mocks.
+- After #7/#8 the _displayed_ category spend for Food etc. will still match the mock values (since no eligible recurring transactions target "Food" or "Transport" in the mocks). Thus, for the categories that _do_ exist, frontend-derived == backend value by construction of the mocks.
 - Any real recurring in Housing etc. that a user creates via the UI would, before these fixes, have caused totals to include future occurrences and category lists to under-report (missing categories) or over-report depending on backend population.
 
 **Recommendation from this run:**
@@ -54,13 +55,14 @@ The mock data set should be extended (in a follow-up) with matching categories f
 **Month under test:** `2026-05` (or replace with actual `yyyy-MM`)
 **"As of" / today used for eligibility:** `2026-05-27` (the date the analysis was performed)
 
-| Category   | Backend `monthlyData['2026-05'].spent` | Frontend-derived (eligible tx + eligible recurring) | Diff | Contributing normal tx (ids + amounts) | Contributing eligible recurring instances (id-date-amount) | Explainable? |
-|------------|---------------------------------------|-----------------------------------------------------|------|---------------------------------------|-------------------------------------------------------------|--------------|
-| Housing    | (fill from API response)             | (sum from eligible stream)                          |      |                                       | Rent rec-1 on 2026-05-05 @1200 (eligible since 5 <= 27)    | ?            |
-| Health     | (fill)                               | (sum)                                               |      |                                       | Gym rec-2 on 2026-05-10 @45                                 | ?            |
+| Category | Backend `monthlyData['2026-05'].spent` | Frontend-derived (eligible tx + eligible recurring) | Diff | Contributing normal tx (ids + amounts) | Contributing eligible recurring instances (id-date-amount) | Explainable? |
+| -------- | -------------------------------------- | --------------------------------------------------- | ---- | -------------------------------------- | ---------------------------------------------------------- | ------------ |
+| Housing  | (fill from API response)               | (sum from eligible stream)                          |      |                                        | Rent rec-1 on 2026-05-05 @1200 (eligible since 5 <= 27)    | ?            |
+| Health   | (fill)                                 | (sum)                                               |      |                                        | Gym rec-2 on 2026-05-10 @45                                | ?            |
 
 **Notes from human verifier:**
-- (Add any observations about whether backend appears to be summing *all* generated instances for the month regardless of scheduled date, or using a different cutoff such as month end, or including paused items, etc.)
+
+- (Add any observations about whether backend appears to be summing _all_ generated instances for the month regardless of scheduled date, or using a different cutoff such as month end, or including paused items, etc.)
 - If diff != 0 and not explainable by currency/baseAmount or rounding, file a backend defect referencing this report and the eligible rule from #7.
 
 ## Conclusion & Recommendations
@@ -81,7 +83,8 @@ This document (or its content) can be copied into a GitHub issue comment or the 
 **Related PRs:** #11 (7), #12 (8), #13 (9)
 
 **References:**
-- `src/hooks/use-budget-data/utils/category-metrics.ts` (computeSpentByCategory + get* functions)
+
+- `src/hooks/use-budget-data/utils/category-metrics.ts` (computeSpentByCategory + get\* functions)
 - `src/hooks/use-budget-data/use-recurring-instances.ts` (eligible filtering)
 - `src/utils/recurrence.ts` + `recurrence-utils.ts` (instance generation + status)
 - `docs/expenses-by-category-chart-plan.md` (prior large-dataset work)

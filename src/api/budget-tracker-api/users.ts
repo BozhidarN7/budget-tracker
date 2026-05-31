@@ -2,7 +2,10 @@ import type { CurrencyCode, UserPreference } from '@/types/budget';
 
 type PreferencePayload = {
   preferredCurrency: CurrencyCode;
+  timezone?: string;
 };
+
+export type { PreferencePayload };
 
 export async function fetchUserPreference(): Promise<UserPreference | null> {
   try {

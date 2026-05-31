@@ -1,83 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState, useTransition } from 'react';
-import { toast } from 'sonner';
-import { RefreshCw } from 'lucide-react';
+import GeneralSettingsTab from './GeneralSettingsTab';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { useCurrencyPreference } from '@/contexts/currency-context';
-import { useBudgetContext } from '@/contexts/budget-context';
-import type { CurrencyCode } from '@/types/budget';
-import { getCurrencyDisplayMeta } from '@/utils/format-currency';
 
 export default function SettingsForm() {
-  const { refetch, materializeRecurringTransactions } = useBudgetContext();
-  const {
-    preferredCurrency,
-    supportedCurrencies,
-    updatePreferredCurrency,
-    isSaving,
-  } = useCurrencyPreference();
-  const [selectedCurrency, setSelectedCurrency] =
-    useState<CurrencyCode>(preferredCurrency);
-  const [isPending, startTransition] = useTransition();
-  const [isSyncPending, startSyncTransition] = useTransition();
-
-  useEffect(() => {
-    setSelectedCurrency(preferredCurrency);
-  }, [preferredCurrency]);
-
-  const currencyOptions = useMemo(() => {
-    return supportedCurrencies.map((code) => {
-      const meta = getCurrencyDisplayMeta(code);
-      return {
-        code,
-        label:
-          meta.position === 'before'
-            ? `${meta.symbol} - ${code}`
-            : `${code} - ${meta.symbol}`,
-      };
-    });
-  }, [supportedCurrencies]);
-
-  const handleCurrencyChange = (value: string) => {
-    const nextCurrency = value as CurrencyCode;
-    setSelectedCurrency(nextCurrency);
-    startTransition(async () => {
-      try {
-        await updatePreferredCurrency(nextCurrency);
-        await refetch();
-        toast.success('Preferred currency updated');
-      } catch (error) {
-        console.error(error);
-        toast.error('Failed to update preferred currency');
-        setSelectedCurrency(preferredCurrency);
-      }
-    });
-  };
-
-  const handleSyncRecurring = () => {
-    startSyncTransition(async () => {
-      try {
-        await materializeRecurringTransactions();
-      } catch (error) {
-        console.error(error);
-      }
-    });
-  };
-
-  const isUpdatingCurrency = isSaving || isPending;
-
   return (
     <Tabs defaultValue="general" className="w-full">
       <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
@@ -86,121 +16,8 @@ export default function SettingsForm() {
         <TabsTrigger value="appearance">Appearance</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="general" className="mt-6 space-y-6">
-        <div className="space-y-2">
-          <h3 className="text-lg font-medium">Currency Settings</h3>
-          <p className="text-muted-foreground text-sm">
-            Configure your preferred currency and format.
-          </p>
-        </div>
-        <Separator />
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="currency">Primary Currency</Label>
-            <Select
-              value={selectedCurrency}
-              onValueChange={handleCurrencyChange}
-              disabled={isUpdatingCurrency}
-            >
-              <SelectTrigger id="currency">
-                <SelectValue placeholder="Select currency" />
-              </SelectTrigger>
-              <SelectContent>
-                {currencyOptions.map((option) => (
-                  <SelectItem key={option.code} value={option.code}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="multi-currency">Multi-Currency Support</Label>
-              <p className="text-muted-foreground text-sm">
-                Track expenses in different currencies
-              </p>
-            </div>
-            <Switch id="multi-currency" />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <h3 className="text-lg font-medium">Budget Period</h3>
-          <p className="text-muted-foreground text-sm">
-            Set your preferred budget tracking period.
-          </p>
-        </div>
-        <Separator />
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="period">Budget Period</Label>
-            <Select defaultValue="monthly">
-              <SelectTrigger id="period">
-                <SelectValue placeholder="Select period" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="quarterly">Quarterly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="start-day">Start Day of Month</Label>
-            <Select defaultValue="1">
-              <SelectTrigger id="start-day">
-                <SelectValue placeholder="Select day" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 31 }, (_, i) => (
-                  <SelectItem key={i + 1} value={(i + 1).toString()}>
-                    {i + 1}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <h3 className="text-lg font-medium">Data Synchronization</h3>
-          <p className="text-muted-foreground text-sm">
-            Manually trigger catch-up of any due recurring transactions.
-          </p>
-        </div>
-        <Separator />
-        <div className="grid gap-4 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="space-y-0.5">
-              <p className="text-sm font-medium">Recurring transactions</p>
-              <p className="text-muted-foreground text-sm">
-                Generate transactions from active recurring rules
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              onClick={handleSyncRecurring}
-              disabled={isSyncPending}
-              aria-busy={isSyncPending}
-            >
-              <RefreshCw
-                aria-hidden="true"
-                className={`mr-2 h-4 w-4 ${isSyncPending ? 'animate-spin' : ''}`}
-              />
-              <span aria-live="polite">
-                {isSyncPending ? 'Syncing...' : 'Sync now'}
-              </span>
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex justify-end">
-          <Button>Save Changes</Button>
-        </div>
+      <TabsContent value="general">
+        <GeneralSettingsTab />
       </TabsContent>
 
       <TabsContent value="notifications" className="mt-6 space-y-6">
@@ -257,20 +74,6 @@ export default function SettingsForm() {
         </div>
         <Separator />
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="theme">Theme</Label>
-            <Select defaultValue="system">
-              <SelectTrigger id="theme">
-                <SelectValue placeholder="Select theme" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
-                <SelectItem value="system">System</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="color-blind">Color Blind Mode</Label>

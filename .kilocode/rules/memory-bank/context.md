@@ -7,6 +7,7 @@
 - Budget data loads server-side via [`getInitialBudgetData`](src/server/budget-data.ts:38) and flows into [`BudgetProvider`](src/contexts/budget-context.tsx:70), while client hooks (`useBudgetData`, `useStatisticsData`, `useCategoryChartController`) power visualizations and fallbacks.
 - The Expenses by Category drill-down plan from [`docs/expenses-by-category-chart-plan.md`](docs/expenses-by-category-chart-plan.md) has been implemented across dashboard and statistics views.
 - **Recurring transactions:** `useRecurringInstances` generates virtual `Transaction` objects from `RecurringTransaction` rules for the selected month. Dashboard and statistics calculations now read only canonical `materializedTransactions`, while calendar/reminder surfaces continue consuming `recurringInstances` for forward-looking recurring visibility.
+- **Category spend contract:** `monthlyData.spent` currently uses a split update model. Frontend transaction CRUD updates category spend for normal transactions in `src/contexts/budget/transaction-operations.ts`, while the backend updates category spend when recurring transactions are materialized. The contract is documented in `docs/backend-category-spend-reconciliation.md`.
 - Mock datasets under [`src/mock`](src/mock) guarantee the UI remains interactive if the AWS gateway or Cognito tokens fail.
 - **Settings preferences:** the General settings tab now uses an explicit submit flow for `preferredCurrency` and `timezone`, backed by a generalized user preference save API. The timezone control is a searchable popover picker sourced from browser-supported IANA zones with `UTC` fallback, and successful saves refresh both user preference state and budget data.
 - **Testing:** Vitest is configured (`vitest.config.ts` with `@/*` alias) and unit tests cover recurrence utilities (`src/utils/recurrence.test.ts`), recurring-instance deduplication (`src/hooks/use-budget-data/use-recurring-instances.test.ts`), transaction metrics (`src/hooks/use-budget-data/use-transaction-metrics.test.ts`), and statistics derivations (`src/hooks/use-statistics-data.test.ts`).
@@ -21,6 +22,7 @@
 6. **API resilience:** Client wrappers swallow errors by returning empty arrays; this prevents crashes but hides issues. Consider surfacing typed errors to the UI and differentiating offline states beyond the initial load.
 7. **Security reviews:** Cookies are HttpOnly+secure, but there is no CSRF mitigation for POST routes beyond default SameSite=Lax. Evaluate whether additional protection is needed.
 8. **Backend timezone persistence:** The frontend now sends `timezone` through `/api/users`, but full end-to-end behavior still depends on the deployed backend actually round-tripping that field.
+9. **Category spend consistency:** The current split ownership model is workable, but client category writes send full `monthlyData` objects, which creates a stale-overwrite risk if a backend recurring materialization updates the same category/month concurrently.
 
 ## Near-term priorities (suggested)
 
@@ -29,6 +31,7 @@
 - Extend the preference persistence pattern to additional settings from the chart plan (view toggles, default filters, overflow visibility).
 - Harden API error handling by distinguishing auth failures, network timeouts, and validation errors in the `/api/*` proxies and client wrappers.
 - Track product metrics (e.g., total income/expense accuracy, goal completion) once analytics requirements emerge.
+- Revisit category spend ownership and move toward a single-writer backend model if recurring and normal transaction flows need stronger consistency guarantees.
 
 ## References
 

@@ -9,7 +9,8 @@ import { updateCategory as apiUpdateCategory } from '@/api/budget-tracker-api/ca
 import { formatMonthKey, parseDate } from '@/utils';
 import { initializeCategoryMonthData } from '@/utils/category-utils';
 
-// Helper function to update category spending
+// Normal transaction CRUD owns client-side category spend updates.
+// Recurring materialization updates category spend on the backend.
 export const updateCategorySpending = async (
   categories: Category[],
   transaction: Transaction,

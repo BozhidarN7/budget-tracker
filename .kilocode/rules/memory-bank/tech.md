@@ -24,6 +24,7 @@
 - **External REST API:** `API_BASE_URL` points to an AWS API Gateway endpoint inside [`src/constants/api.ts`](src/constants/api.ts). App Router API routes forward authenticated requests and revalidate cache tags declared in [`src/constants/cache-tags.ts`](src/constants/cache-tags.ts).
 - **Authentication:** Cognito client ID and AWS region are read from `NEXT_PUBLIC_COGNITO_CLIENT_ID` and `NEXT_PUBLIC_AWS_REGION`. Tokens are stored in HttpOnly cookies (`bt_at`, `bt_id`, `bt_rt`) by the auth API routes.
 - **Mock data:** [`src/mock`](src/mock) supplies transactions, categories, and goals when the backend is unreachable, ensuring consistent demos/offline states.
+- **Category spend integration:** normal transaction CRUD uses separate `/api/transactions*` and `/api/categories*` writes to keep `monthlyData.spent` in sync on the frontend, while recurring materialization is expected to update category spend on the backend.
 
 ## Commands
 
@@ -45,6 +46,7 @@
 - **Formatting:** Prettier prefers single quotes, semicolons, 80-character width, and integrates the Tailwind plugin for class sorting.
 - **Package management:** `package-lock.json` is checked in; Vercel builds set `NPM_FLAGS=--legacy-peer-deps` via [`vercel.json`](vercel.json).
 - **Testing:** Vitest is configured (`vitest.config.ts` with `@/*` path alias). Unit tests exist for recurrence utilities (`src/utils/recurrence.test.ts`) and recurring-instance deduplication (`src/hooks/use-budget-data/use-recurring-instances.test.ts`). Playwright E2E coverage and broader hook/component tests remain to be added.
+- **Documentation:** the current category spend reconciliation contract is captured in [`docs/backend-category-spend-reconciliation.md`](docs/backend-category-spend-reconciliation.md) and should be updated alongside any transaction or recurring-materialization contract changes.
 
 ## Deployment & hosting
 

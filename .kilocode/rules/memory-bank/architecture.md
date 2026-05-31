@@ -48,8 +48,15 @@ Key ideas:
 4. **Hooks** — Client hooks assemble consumable slices:
    - [`useBudgetData`](src/hooks/use-budget-data.ts:11) merges context data with mock fallbacks, filters transactions by month, and produces derived metrics (totals, recent transactions, category limits, trends). It also orchestrates recurring instance generation via [`useRecurringInstances`](src/hooks/use-budget-data/use-recurring-instances.ts:16).
    - [`useRecurringInstances`](src/hooks/use-budget-data/use-recurring-instances.ts:16) builds virtual `Transaction` objects from active `RecurringTransaction` rules for the selected month. It deduplicates against real transactions by matching `recurrenceInstanceId` (`${recurring.id}-${occurrenceDate}`), ensuring `combinedTransactions` contains only a single representation per occurrence.
-   - [`useStatisticsData`](src/hooks/use-statistics-data.ts:8) keeps an unfiltered view, creating grouped datasets for charts, ratio cards, and projections.
-   - [`useCategoryChartController`](src/hooks/use-category-chart-controller.ts:61) powers the drill-down UX described in the charting plan.
+    - [`useStatisticsData`](src/hooks/use-statistics-data.ts:8) keeps an unfiltered view, creating grouped datasets for charts, ratio cards, and projections.
+    - [`useCategoryChartController`](src/hooks/use-category-chart-controller.ts:61) powers the drill-down UX described in the charting plan.
+
+### Category spend ownership
+
+- Category spend widgets currently read `category.monthlyData[month].spent` rather than deriving category totals from transactions on every render.
+- Normal transaction CRUD follows a split-write flow in [`src/contexts/budget/transaction-operations.ts`](src/contexts/budget/transaction-operations.ts): create/update/delete the transaction first, then persist an updated category `monthlyData` payload through the categories API.
+- Recurring materialization is assumed to update category spend on the backend, and the frontend expects fetched categories to already include those materialized amounts.
+- This split contract is documented in [`docs/backend-category-spend-reconciliation.md`](docs/backend-category-spend-reconciliation.md). The main architectural risk is stale client overwrites when the frontend sends a full `monthlyData` object after backend-side recurring changes.
 
 ## API layer & caching
 
@@ -62,6 +69,7 @@ Key ideas:
 - **Dashboard** stitches together cards, charts, and summaries. Client components read from `useBudgetData` and `useCategoryChartController` so interactions never trigger network calls unless CRUD is required.
 - **Transactions** use [`TransactionListWithFilters`](src/components/Transactions/TransactionListWithFilters/TransactionListWithFilters.tsx) plus [`useTransactionFilters`](src/hooks/use-transaction-filteres.ts:15) to perform purely client-side filtering on the selected month.
 - **Categories & goals** expose CRUD flows composed of Radix dialogs (add/edit) and call the `/api/*` wrappers before updating the budget context.
+- **Categories** currently act as both user-managed budget limits and persisted monthly spend aggregates, so transaction operations can trigger follow-up category writes in addition to transaction writes.
 - **Statistics** rely on [`StatisticsView`](src/components/Statistics/StatisticsView/StatisticsView.tsx) and Recharts-driven widgets that consume `useStatisticsData` for daily/weekly/monthly aggregations, ratios, savings projections, and category breakdowns.
 - **Calendar** renders grouped transactions per day, reusing the same budget hook to avoid duplicate fetching.
 - **Settings** centralizes personalization controls (currently theme, notifications placeholder, etc.).

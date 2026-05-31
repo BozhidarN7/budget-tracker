@@ -7,6 +7,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 import { useAuthRefresh, useBackgroundTokenRefresh } from '@/hooks';
@@ -16,6 +17,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isRecoveringSession: boolean;
   error: string | null;
   challenge: AuthChallenge | null;
   requiresPasswordChange: boolean;
@@ -80,16 +82,20 @@ export default function AuthProvider({
     }
   };
 
-  // Custom hooks for token refresh
-  const { refetch: checkAndRefreshTokens } = useAuthRefresh({
-    user,
-    refreshTokens,
-  });
+  const { isLoading: isAuthRefreshing, refetch: checkAndRefreshTokens } =
+    useAuthRefresh({
+      user,
+      refreshTokens,
+    });
 
   useBackgroundTokenRefresh({
     user,
     refreshTokens,
   });
+
+  const isRecoveringSession = useMemo(() => {
+    return !initialUser && !user && isAuthRefreshing;
+  }, [initialUser, user, isAuthRefreshing]);
 
   const signIn = async (username: string, password: string) => {
     try {
@@ -222,6 +228,7 @@ export default function AuthProvider({
     user,
     isAuthenticated: !!user,
     isLoading,
+    isRecoveringSession,
     error,
     challenge,
     requiresPasswordChange,

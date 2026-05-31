@@ -9,6 +9,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import type { PreferencePayload } from '@/api/budget-tracker-api/users';
 import type { CurrencyCode, UserPreference } from '@/types/budget';
 import {
   createUserPreference,
@@ -18,15 +19,17 @@ import {
 
 const DEFAULT_SUPPORTED: CurrencyCode[] = ['EUR', 'BGN', 'USD', 'GBP'];
 const DEFAULT_CURRENCY: CurrencyCode = 'EUR';
+const DEFAULT_TIMEZONE = 'UTC';
 
 type CurrencyContextValue = {
   preferredCurrency: CurrencyCode;
+  timezone: string;
   supportedCurrencies: CurrencyCode[];
   preference: UserPreference | null;
   isSaving: boolean;
   refreshPreference: () => Promise<UserPreference | null>;
-  updatePreferredCurrency: (
-    currency: CurrencyCode,
+  savePreference: (
+    payload: PreferencePayload,
   ) => Promise<UserPreference | null>;
 };
 
@@ -53,13 +56,12 @@ export default function CurrencyProvider({
     : DEFAULT_SUPPORTED;
 
   const preferredCurrency = preference?.preferredCurrency ?? DEFAULT_CURRENCY;
+  const timezone = preference?.timezone ?? DEFAULT_TIMEZONE;
 
   const refreshPreference = useCallback(async () => {
     try {
       const latest = await fetchUserPreference();
-      if (latest) {
-        setPreference(latest);
-      }
+      setPreference(latest);
       return latest;
     } catch (error) {
       console.error('Failed to refresh user preference:', error);
@@ -67,16 +69,16 @@ export default function CurrencyProvider({
     }
   }, []);
 
-  const updatePreferredCurrency = useCallback(
-    async (currency: CurrencyCode) => {
+  const savePreference = useCallback(
+    async (payload: PreferencePayload) => {
       setIsSaving(true);
       try {
         const mutate = preference ? updateUserPreference : createUserPreference;
-        const updated = await mutate({ preferredCurrency: currency });
+        const updated = await mutate(payload);
         setPreference(updated);
         return updated;
       } catch (error) {
-        console.error('Failed to update preferred currency:', error);
+        console.error('Failed to save user preference:', error);
         throw error;
       } finally {
         setIsSaving(false);
@@ -88,19 +90,21 @@ export default function CurrencyProvider({
   const value = useMemo<CurrencyContextValue>(
     () => ({
       preferredCurrency,
+      timezone,
       supportedCurrencies,
       preference,
       isSaving,
       refreshPreference,
-      updatePreferredCurrency,
+      savePreference,
     }),
     [
       preferredCurrency,
+      timezone,
       supportedCurrencies,
       preference,
       isSaving,
       refreshPreference,
-      updatePreferredCurrency,
+      savePreference,
     ],
   );
 

@@ -2,7 +2,7 @@
 
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
-import type { Category, RecurrenceFrequency } from '@/types/budget';
+import type { Category, RecurringFrequency } from '@/types/budget';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
-const FREQUENCY_LABELS: Record<RecurrenceFrequency, string> = {
+const FREQUENCY_LABELS: Record<RecurringFrequency, string> = {
   weekly: 'Weekly',
   biweekly: 'Biweekly',
   monthly: 'Monthly',
@@ -36,7 +36,7 @@ type RecurringTransactionFormFieldsProps = {
   startDate: Date;
   endDate?: Date;
   endDateLabel: string;
-  frequency: RecurrenceFrequency;
+  frequency: RecurringFrequency;
   dayOfMonth: number;
   status: 'active' | 'paused';
   filteredCategories: Category[];
@@ -46,7 +46,7 @@ type RecurringTransactionFormFieldsProps = {
   onCategoryChange: (value: string) => void;
   onStartDateChange: (value: Date) => void;
   onEndDateChange: (value: Date | undefined) => void;
-  onFrequencyChange: (value: RecurrenceFrequency) => void;
+  onFrequencyChange: (value: RecurringFrequency) => void;
   onDayOfMonthChange: (value: number) => void;
   onStatusChange: (value: 'active' | 'paused') => void;
 };
@@ -174,7 +174,7 @@ export default function RecurringTransactionFormFields({
         <Select
           value={frequency}
           onValueChange={(value) =>
-            onFrequencyChange(value as RecurrenceFrequency)
+            onFrequencyChange(value as RecurringFrequency)
           }
         >
           <SelectTrigger id="recurring-frequency">

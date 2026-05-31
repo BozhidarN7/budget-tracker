@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { RecurringTransaction } from '@/types/budget';
 import {
   buildInitialNextOccurrence,
   buildRecurrenceInstances,
   getNextOccurrence,
-} from '@/utils/recurrence';
+} from './recurrence';
+import type { RecurringTransaction } from '@/types/budget';
 
 const buildRecurring = (
   overrides: Partial<RecurringTransaction>,

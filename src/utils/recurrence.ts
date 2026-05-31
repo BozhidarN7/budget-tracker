@@ -1,5 +1,5 @@
 import { addDays, addMonths, format, isAfter, parseISO } from 'date-fns';
-import type { RecurrenceRule, RecurringTransaction } from '@/types/budget';
+import type { RecurringRule, RecurringTransaction } from '@/types/budget';
 
 const DATE_FORMAT = 'yyyy-MM-dd';
 
@@ -20,7 +20,7 @@ const alignMonthlyDay = (date: Date, dayOfMonth?: number) => {
   return aligned;
 };
 
-export const getNextOccurrence = (rule: RecurrenceRule, fromDate: string) => {
+export const getNextOccurrence = (rule: RecurringRule, fromDate: string) => {
   const baseDate = toDate(fromDate);
   switch (rule.frequency) {
     case 'weekly':
@@ -36,7 +36,7 @@ export const getNextOccurrence = (rule: RecurrenceRule, fromDate: string) => {
   }
 };
 
-export const buildInitialNextOccurrence = (rule: RecurrenceRule) => {
+export const buildInitialNextOccurrence = (rule: RecurringRule) => {
   const startDate = toDate(rule.startDate);
   if (rule.frequency === 'monthly') {
     return formatDate(alignMonthlyDay(startDate, rule.dayOfMonth));

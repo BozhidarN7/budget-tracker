@@ -8,31 +8,41 @@ export interface ExchangeRateSnapshot {
   capturedAt: string;
 }
 
+export type RecurringStatus =
+  | 'scheduled'
+  | 'due'
+  | 'overdue'
+  | 'skipped'
+  | 'paid';
+
 export interface Transaction {
   id: string;
   description: string;
   amount: number;
   currency: CurrencyCode;
-  baseAmount?: number;
-  baseCurrency?: CurrencyCode;
   originalAmount?: number;
   originalCurrency?: CurrencyCode;
+  baseAmount?: number;
+  baseCurrency?: CurrencyCode;
   displayAmount?: number;
   displayCurrency?: CurrencyCode;
   exchangeRateSnapshot?: ExchangeRateSnapshot;
   date: string;
   category: string;
   type: 'income' | 'expense';
+  userId?: string;
   recurrenceId?: string;
+  recurrenceInstanceDate?: string;
   recurrenceInstanceId?: string;
-  recurrenceStatus?: 'scheduled' | 'due' | 'overdue' | 'skipped' | 'paid';
+  materializedAt?: string;
   recurrenceGeneratedAt?: string;
+  recurrenceStatus?: RecurringStatus;
 }
 
-export type RecurrenceFrequency = 'weekly' | 'biweekly' | 'monthly';
+export type RecurringFrequency = 'weekly' | 'biweekly' | 'monthly';
 
-export interface RecurrenceRule {
-  frequency: RecurrenceFrequency;
+export interface RecurringRule {
+  frequency: RecurringFrequency;
   interval?: number;
   startDate: string;
   endDate?: string;
@@ -44,9 +54,16 @@ export interface RecurringTransaction {
   description: string;
   amount: number;
   currency: CurrencyCode;
+  originalAmount?: number;
+  originalCurrency?: CurrencyCode;
+  baseAmount?: number;
+  baseCurrency?: CurrencyCode;
+  displayAmount?: number;
+  displayCurrency?: CurrencyCode;
+  exchangeRateSnapshot?: ExchangeRateSnapshot;
   category: string;
   type: 'income' | 'expense';
-  rule: RecurrenceRule;
+  rule: RecurringRule;
   nextOccurrence: string;
   lastGeneratedAt?: string;
   status?: 'active' | 'paused' | 'completed';
@@ -87,6 +104,7 @@ export interface Goal {
 export interface UserPreference {
   userId: string;
   preferredCurrency: CurrencyCode;
+  timezone?: string;
   updatedAt: string;
   supportedCurrencies?: CurrencyCode[];
 }

@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { useBudgetContext } from '@/contexts/budget-context';
 import { useCurrencyPreference } from '@/contexts/currency-context';
-import type { RecurrenceFrequency } from '@/types/budget';
+import type { RecurringFrequency } from '@/types/budget';
 import { buildInitialNextOccurrence } from '@/utils';
 
 export default function AddRecurringTransactionDialog({
@@ -31,7 +31,7 @@ export default function AddRecurringTransactionDialog({
   const [category, setCategory] = useState('');
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [frequency, setFrequency] = useState<RecurrenceFrequency>('monthly');
+  const [frequency, setFrequency] = useState<RecurringFrequency>('monthly');
   const [dayOfMonth, setDayOfMonth] = useState<number>(new Date().getDate());
   const [status, setStatus] = useState<'active' | 'paused'>('active');
   const [isSubmitting, setIsSubmitting] = useState(false);

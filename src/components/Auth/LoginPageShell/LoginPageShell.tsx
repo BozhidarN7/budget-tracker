@@ -18,6 +18,7 @@ export default function LoginPageShell() {
     clearChallenge,
   } = useAuth();
   const router = useRouter();
+  const shouldShowRecoveryState = isRecoveringSession || isAuthenticated;
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -51,7 +52,7 @@ export default function LoginPageShell() {
 
         {/* Right Side - Forms */}
         <div className="flex items-center justify-center">
-          {isRecoveringSession ? (
+          {shouldShowRecoveryState ? (
             <LoginRecoveryState />
           ) : requiresPasswordChange && challenge ? (
             <PasswordChangeForm

@@ -122,8 +122,8 @@ describe('buildRecurringInstances dedupe', () => {
   });
 });
 
-describe('useRecurringInstances combinedTransactions dedupe', () => {
-  it('combinedTransactions contains real transaction but no duplicate when virtual is suppressed', () => {
+describe('buildRecurringInstances dedupe integration', () => {
+  it('keeps the real transaction as the single occurrence when a virtual duplicate is suppressed', () => {
     const recurring = buildRecurring();
     const realTransaction = buildRealTransaction({
       recurrenceInstanceId: 'rec-1-2025-06-15',

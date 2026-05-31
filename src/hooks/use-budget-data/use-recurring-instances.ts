@@ -10,7 +10,6 @@ type RecurringInstancesInput = {
 
 type RecurringInstancesResult = {
   recurringInstances: Transaction[];
-  combinedTransactions: Transaction[];
 };
 
 export const useRecurringInstances = (
@@ -56,12 +55,7 @@ export const useRecurringInstances = (
     });
   }, [recurringTransactions, selectedMonth, existingIds]);
 
-  const combinedTransactions = useMemo(() => {
-    return [...transactions, ...recurringInstances];
-  }, [recurringInstances, transactions]);
-
   return {
     recurringInstances,
-    combinedTransactions,
   };
 };

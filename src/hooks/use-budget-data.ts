@@ -32,7 +32,7 @@ export default function useBudgetData() {
     selectedMonth,
   });
 
-  const { recurringInstances, combinedTransactions } = useRecurringInstances(
+  const { recurringInstances } = useRecurringInstances(
     {
       recurringTransactions: data.recurringData,
       selectedMonth,
@@ -45,12 +45,13 @@ export default function useBudgetData() {
   });
 
   const {
-    filteredTransactions,
+    materializedTransactions,
+    selectedMonthTransactions,
     totalIncome,
     totalExpenses,
     netBalance,
     recentTransactions,
-  } = useTransactionMetrics(combinedTransactions, selectedMonth);
+  } = useTransactionMetrics(data.transactionsData, selectedMonth);
 
   const { monthlyTrends } = useMonthlyTrends(
     data.transactionsData,
@@ -78,8 +79,8 @@ export default function useBudgetData() {
   };
 
   return {
-    transactions: filteredTransactions,
-    allTransactions: combinedTransactions,
+    transactions: selectedMonthTransactions,
+    materializedTransactions,
     recurringTransactions: data.recurringData,
     recurringInstances,
     upcomingRecurringReminders,

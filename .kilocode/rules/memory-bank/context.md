@@ -6,9 +6,9 @@
 - Cognito-based authentication is wired end to end (login, refresh, logout, new-password challenge) through the API routes in `src/app/api/auth/*` and the client [`AuthProvider`](src/contexts/auth-context.tsx:45).
 - Budget data loads server-side via [`getInitialBudgetData`](src/server/budget-data.ts:38) and flows into [`BudgetProvider`](src/contexts/budget-context.tsx:70), while client hooks (`useBudgetData`, `useStatisticsData`, `useCategoryChartController`) power visualizations and fallbacks.
 - The Expenses by Category drill-down plan from [`docs/expenses-by-category-chart-plan.md`](docs/expenses-by-category-chart-plan.md) has been implemented across dashboard and statistics views.
-- **Recurring transactions:** `useRecurringInstances` generates virtual `Transaction` objects from `RecurringTransaction` rules for the selected month. A deduplication layer suppresses virtual instances when a real transaction with the matching `recurrenceInstanceId` already exists, so `combinedTransactions` never contains duplicates.
+- **Recurring transactions:** `useRecurringInstances` generates virtual `Transaction` objects from `RecurringTransaction` rules for the selected month. Dashboard and statistics calculations now read only canonical `materializedTransactions`, while calendar/reminder surfaces continue consuming `recurringInstances` for forward-looking recurring visibility.
 - Mock datasets under [`src/mock`](src/mock) guarantee the UI remains interactive if the AWS gateway or Cognito tokens fail.
-- **Testing:** Vitest is configured (`vitest.config.ts` with `@/*` alias) and unit tests exist for recurrence utilities (`src/utils/recurrence.test.ts`) and recurring-instance deduplication (`src/hooks/use-budget-data/use-recurring-instances.test.ts`).
+- **Testing:** Vitest is configured (`vitest.config.ts` with `@/*` alias) and unit tests cover recurrence utilities (`src/utils/recurrence.test.ts`), recurring-instance deduplication (`src/hooks/use-budget-data/use-recurring-instances.test.ts`), transaction metrics (`src/hooks/use-budget-data/use-transaction-metrics.test.ts`), and statistics derivations (`src/hooks/use-statistics-data.test.ts`).
 
 ## Open considerations
 

@@ -1,4 +1,7 @@
-import type { RecurringTransaction } from '@/types/budget';
+import type {
+  MaterializationSummary,
+  RecurringTransaction,
+} from '@/types/budget';
 
 export async function fetchRecurringTransactions(): Promise<
   RecurringTransaction[]
@@ -86,6 +89,23 @@ export async function deleteRecurringTransaction(id: string): Promise<boolean> {
     return true;
   } catch (error) {
     console.error('Error deleting recurring transaction:', error);
+    throw error;
+  }
+}
+
+export async function materializeRecurringTransactions(): Promise<MaterializationSummary> {
+  try {
+    const res = await fetch('/api/recurring-transactions/materialize', {
+      method: 'POST',
+    });
+
+    if (!res.ok) {
+      throw new Error(`Materialize failed: ${res.statusText}`);
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error('Error materializing recurring transaction:', error);
     throw error;
   }
 }

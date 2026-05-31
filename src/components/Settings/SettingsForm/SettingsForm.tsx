@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { toast } from 'sonner';
+import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -20,7 +21,7 @@ import type { CurrencyCode } from '@/types/budget';
 import { getCurrencyDisplayMeta } from '@/utils/format-currency';
 
 export default function SettingsForm() {
-  const { refetch } = useBudgetContext();
+  const { refetch, materializeRecurringTransactions } = useBudgetContext();
   const {
     preferredCurrency,
     supportedCurrencies,
@@ -30,6 +31,7 @@ export default function SettingsForm() {
   const [selectedCurrency, setSelectedCurrency] =
     useState<CurrencyCode>(preferredCurrency);
   const [isPending, startTransition] = useTransition();
+  const [isSyncPending, startSyncTransition] = useTransition();
 
   useEffect(() => {
     setSelectedCurrency(preferredCurrency);
@@ -60,6 +62,16 @@ export default function SettingsForm() {
         console.error(error);
         toast.error('Failed to update preferred currency');
         setSelectedCurrency(preferredCurrency);
+      }
+    });
+  };
+
+  const handleSyncRecurring = () => {
+    startSyncTransition(async () => {
+      try {
+        await materializeRecurringTransactions();
+      } catch (error) {
+        console.error(error);
       }
     });
   };
@@ -151,6 +163,38 @@ export default function SettingsForm() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="text-lg font-medium">Data Synchronization</h3>
+          <p className="text-muted-foreground text-sm">
+            Manually trigger catch-up of any due recurring transactions.
+          </p>
+        </div>
+        <Separator />
+        <div className="grid gap-4 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium">Recurring transactions</p>
+              <p className="text-muted-foreground text-sm">
+                Generate transactions from active recurring rules
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={handleSyncRecurring}
+              disabled={isSyncPending}
+              aria-busy={isSyncPending}
+            >
+              <RefreshCw
+                aria-hidden="true"
+                className={`mr-2 h-4 w-4 ${isSyncPending ? 'animate-spin' : ''}`}
+              />
+              <span aria-live="polite">
+                {isSyncPending ? 'Syncing...' : 'Sync now'}
+              </span>
+            </Button>
           </div>
         </div>
 

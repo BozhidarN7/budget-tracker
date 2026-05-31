@@ -1,6 +1,11 @@
 import type React from 'react';
-import type { RecurringTransaction } from '@/types/budget';
+import { toast } from 'sonner';
+import type {
+  MaterializationSummary,
+  RecurringTransaction,
+} from '@/types/budget';
 import {
+  materializeRecurringTransactions as apiMaterializeRecurringTransactions,
   updateRecurringTransaction as apiUpdateRecurringTransaction,
   createRecurringTransaction,
   deleteRecurringTransaction,
@@ -12,6 +17,7 @@ export const createRecurringTransactionOperations = (
     React.SetStateAction<RecurringTransaction[]>
   >,
   setError: (value: string | null) => void,
+  refetch: () => Promise<void>,
 ) => {
   const addRecurringTransaction = async (
     transaction: Omit<RecurringTransaction, 'id'>,
@@ -59,9 +65,26 @@ export const createRecurringTransactionOperations = (
     }
   };
 
+  const materializeRecurringTransactions =
+    async (): Promise<MaterializationSummary> => {
+      try {
+        const summary = await apiMaterializeRecurringTransactions();
+        toast.success(
+          `Sync complete: ${summary.processed} processed, ${summary.created} created, ${summary.skipped} skipped, ${summary.failures} failures`,
+        );
+        await refetch();
+        return summary;
+      } catch (err) {
+        setError('Failed to materialize recurring transactions');
+        toast.error('Failed to sync recurring transactions');
+        throw err;
+      }
+    };
+
   return {
     addRecurringTransaction,
     updateRecurringTransaction,
     removeRecurringTransaction,
+    materializeRecurringTransactions,
   };
 };

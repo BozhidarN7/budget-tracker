@@ -5,12 +5,18 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
 import LoginForm from '@/components/Auth/LoginForm';
+import LoginRecoveryState from '@/components/Auth/LoginRecoveryState';
 import PasswordChangeForm from '@/components/Auth/PasswordChangeForm';
 import LoginHero from '@/components/Auth/LoginHero';
 
 export default function LoginPageShell() {
-  const { isAuthenticated, requiresPasswordChange, challenge, clearChallenge } =
-    useAuth();
+  const {
+    isAuthenticated,
+    isRecoveringSession,
+    requiresPasswordChange,
+    challenge,
+    clearChallenge,
+  } = useAuth();
   const router = useRouter();
 
   // Redirect if already authenticated
@@ -45,7 +51,9 @@ export default function LoginPageShell() {
 
         {/* Right Side - Forms */}
         <div className="flex items-center justify-center">
-          {requiresPasswordChange && challenge ? (
+          {isRecoveringSession ? (
+            <LoginRecoveryState />
+          ) : requiresPasswordChange && challenge ? (
             <PasswordChangeForm
               onSuccess={handlePasswordChangeSuccess}
               onBack={handleBackToLogin}

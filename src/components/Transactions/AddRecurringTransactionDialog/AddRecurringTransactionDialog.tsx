@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import InfoCallout from '@/components/ui/InfoCallout';
 import { useBudgetContext } from '@/contexts/budget-context';
 import { useCurrencyPreference } from '@/contexts/currency-context';
 import type { RecurringFrequency } from '@/types/budget';
@@ -114,6 +115,10 @@ export default function AddRecurringTransactionDialog({
           <DialogDescription>
             Set up a recurring income or expense.
           </DialogDescription>
+          <InfoCallout className="mt-2">
+            The system checks your recurring series daily. When due, it
+            auto-creates a real transaction linked back to this series.
+          </InfoCallout>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <RecurringTransactionFormFields

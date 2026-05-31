@@ -18,7 +18,7 @@ export default function DashboardCards() {
     totalIncome,
     totalExpenses,
     netBalance,
-    allTransactions,
+    materializedTransactions,
     selectedMonth,
     isLoading,
   } = useBudgetData();
@@ -26,7 +26,7 @@ export default function DashboardCards() {
 
   const previousMonthKey = getPreviousMonthKey(selectedMonth);
 
-  const previousMonthTotals = allTransactions.reduce<{
+  const previousMonthTotals = materializedTransactions.reduce<{
     income: number;
     expenses: number;
   }>(

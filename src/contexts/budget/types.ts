@@ -2,6 +2,7 @@ import type React from 'react';
 import type {
   Category,
   Goal,
+  MaterializationSummary,
   RecurringTransaction,
   Transaction,
 } from '@/types/budget';
@@ -38,6 +39,7 @@ export type BudgetContextType = {
     transaction: Partial<RecurringTransaction>,
   ) => Promise<RecurringTransaction>;
   removeRecurringTransaction: (id: string) => Promise<boolean>;
+  materializeRecurringTransactions: () => Promise<MaterializationSummary>;
 
   // Category operations
   addCategory: (

@@ -101,6 +101,13 @@ export interface Goal {
   description: string;
 }
 
+export interface MaterializationSummary {
+  processed: number;
+  created: number;
+  skipped: number;
+  failures: number;
+}
+
 export interface UserPreference {
   userId: string;
   preferredCurrency: CurrencyCode;

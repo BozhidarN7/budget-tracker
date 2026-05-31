@@ -58,6 +58,11 @@ const defaultContext: BudgetContextType = {
       'BudgetContext not initialized: removeRecurringTransaction',
     );
   },
+  materializeRecurringTransactions: async () => {
+    throw new Error(
+      'BudgetContext not initialized: materializeRecurringTransactions',
+    );
+  },
 
   // Category operations
   addCategory: async (_category) => {
@@ -229,6 +234,7 @@ export default function BudgetProvider({
     recurringTransactions,
     setRecurringTransactions,
     setError,
+    refetch,
   );
 
   const categoryOps = createCategoryOperations(

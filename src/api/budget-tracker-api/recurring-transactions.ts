@@ -103,7 +103,7 @@ export async function materializeRecurringTransactions(): Promise<Materializatio
       throw new Error(`Materialize failed: ${res.statusText}`);
     }
 
-    return res.json();
+    return await res.json();
   } catch (error) {
     console.error('Error materializing recurring transaction:', error);
     throw error;

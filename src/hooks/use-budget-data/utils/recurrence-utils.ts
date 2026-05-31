@@ -18,6 +18,7 @@ export const buildRecurringInstances = (
   windowEnd: string,
   today: Date,
   generatedAt: string,
+  existingIds: Set<string>,
 ): Transaction[] => {
   if (recurring.status && recurring.status !== 'active') {
     return [];
@@ -29,24 +30,26 @@ export const buildRecurringInstances = (
     windowEnd,
   );
 
-  return occurrences.map((occurrence) => {
-    const occurrenceDate = new Date(occurrence);
-    const status = mapRecurrenceStatus(occurrenceDate, today);
+  return occurrences
+    .filter((occurrence) => !existingIds.has(`${recurring.id}-${occurrence}`))
+    .map((occurrence) => {
+      const occurrenceDate = new Date(occurrence);
+      const status = mapRecurrenceStatus(occurrenceDate, today);
 
-    return {
-      id: `${recurring.id}-${occurrence}`,
-      description: recurring.description,
-      amount: recurring.amount,
-      currency: recurring.currency,
-      date: occurrence,
-      category: recurring.category,
-      type: recurring.type,
-      recurrenceId: recurring.id,
-      recurrenceInstanceId: `${recurring.id}-${occurrence}`,
-      recurrenceStatus: status,
-      recurrenceGeneratedAt: generatedAt,
-    } satisfies Transaction;
-  });
+      return {
+        id: `${recurring.id}-${occurrence}`,
+        description: recurring.description,
+        amount: recurring.amount,
+        currency: recurring.currency,
+        date: occurrence,
+        category: recurring.category,
+        type: recurring.type,
+        recurrenceId: recurring.id,
+        recurrenceInstanceId: `${recurring.id}-${occurrence}`,
+        recurrenceStatus: status,
+        recurrenceGeneratedAt: generatedAt,
+      } satisfies Transaction;
+    });
 };
 
 export const buildRecurringReminders = (

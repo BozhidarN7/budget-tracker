@@ -17,6 +17,18 @@ export const useRecurringInstances = (
   { recurringTransactions, selectedMonth }: RecurringInstancesInput,
   transactions: Transaction[],
 ): RecurringInstancesResult => {
+  const existingIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    for (const t of transactions) {
+      if (t.recurrenceInstanceId) {
+        ids.add(t.recurrenceInstanceId);
+      }
+    }
+
+    return ids;
+  }, [transactions]);
+
   const recurringInstances = useMemo(() => {
     const [yearStr, monthStr] = selectedMonth.split('-');
     const monthStart = startOfMonth(
@@ -39,9 +51,10 @@ export const useRecurringInstances = (
         windowEnd,
         today,
         generatedAt,
+        existingIds,
       );
     });
-  }, [recurringTransactions, selectedMonth]);
+  }, [recurringTransactions, selectedMonth, existingIds]);
 
   const combinedTransactions = useMemo(() => {
     return [...transactions, ...recurringInstances];

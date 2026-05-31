@@ -46,7 +46,8 @@ Key ideas:
 2. **Provider** — [`BudgetDataProvider`](src/components/BudgetDatatProvider/BudgetDataProvider.tsx:18) calls the server loader and either hydrates [`BudgetProvider`](src/contexts/budget-context.tsx:70) with transactions/categories/goals or renders [`BudgetDataError`](src/components/Budget/BudgetDataError.tsx:25) (retry + offline fallback) if fetching fails.
 3. **Context** — [`BudgetProvider`](src/contexts/budget-context.tsx:70) stores canonical lists, exposes CRUD operations (transactions/categories/goals), tracks the selected month, and a `refetch` helper that pulls from client-side `/api/*` wrappers.
 4. **Hooks** — Client hooks assemble consumable slices:
-   - [`useBudgetData`](src/hooks/use-budget-data.ts:11) merges context data with mock fallbacks, filters transactions by month, and produces derived metrics (totals, recent transactions, category limits, trends).
+   - [`useBudgetData`](src/hooks/use-budget-data.ts:11) merges context data with mock fallbacks, filters transactions by month, and produces derived metrics (totals, recent transactions, category limits, trends). It also orchestrates recurring instance generation via [`useRecurringInstances`](src/hooks/use-budget-data/use-recurring-instances.ts:16).
+   - [`useRecurringInstances`](src/hooks/use-budget-data/use-recurring-instances.ts:16) builds virtual `Transaction` objects from active `RecurringTransaction` rules for the selected month. It deduplicates against real transactions by matching `recurrenceInstanceId` (`${recurring.id}-${occurrenceDate}`), ensuring `combinedTransactions` contains only a single representation per occurrence.
    - [`useStatisticsData`](src/hooks/use-statistics-data.ts:8) keeps an unfiltered view, creating grouped datasets for charts, ratio cards, and projections.
    - [`useCategoryChartController`](src/hooks/use-category-chart-controller.ts:61) powers the drill-down UX described in the charting plan.
 

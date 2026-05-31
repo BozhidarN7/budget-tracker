@@ -36,6 +36,7 @@
 | `npm run prettier:fix` | Format via `.prettierrc` (Tailwind plugin enabled).                                                                        |
 | `npm run format`       | Runs Prettier then ESLint fix.                                                                                             |
 | `npm run ts:check`     | Type-check only.                                                                                                           |
+| `npm run test`         | Runs Vitest unit tests.                                                                                                    |
 | `npm run prepare`      | Installs Husky Git hooks (commit hooks are stored under [`.husky`](.husky)).                                               |
 
 ## Tooling notes
@@ -43,7 +44,7 @@
 - **Linting:** Extends `eslint-config-next` (core web vitals + TypeScript). Custom rules enforce max lines, import ordering, and unused-var suppression for `_` prefixes.
 - **Formatting:** Prettier prefers single quotes, semicolons, 80-character width, and integrates the Tailwind plugin for class sorting.
 - **Package management:** `package-lock.json` is checked in; Vercel builds set `NPM_FLAGS=--legacy-peer-deps` via [`vercel.json`](vercel.json).
-- **Testing:** No automated test suite yet; add Vitest/Playwright before expanding coverage-sensitive features.
+- **Testing:** Vitest is configured (`vitest.config.ts` with `@/*` path alias). Unit tests exist for recurrence utilities (`src/utils/recurrence.test.ts`) and recurring-instance deduplication (`src/hooks/use-budget-data/use-recurring-instances.test.ts`). Playwright E2E coverage and broader hook/component tests remain to be added.
 
 ## Deployment & hosting
 

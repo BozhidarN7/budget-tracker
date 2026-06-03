@@ -133,7 +133,7 @@ function SummaryHeader({ selectedMonth }: { selectedMonth: string }) {
       </div>
       <Button variant="ghost" size="sm" asChild>
         <Link
-          href="/statistics?tab=categories"
+          href="/dashboard/statistics?tab=categories"
           className="inline-flex items-center gap-1"
         >
           View detailed analysis

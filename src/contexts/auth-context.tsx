@@ -139,7 +139,7 @@ export default function AuthProvider({
         setChallenge(null);
         setRequiresPasswordChange(false);
       }
-      return { requiresPasswordChange };
+      return { requiresPasswordChange: false };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Sign in failed';
       setError(message);

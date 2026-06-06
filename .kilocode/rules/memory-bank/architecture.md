@@ -35,7 +35,7 @@ Key ideas:
 
 ## Authentication flow
 
-- Server helpers in [`src/server/auth.ts`](src/server/auth.ts) wrap Cognito: reading cookies, refreshing tokens, and resolving the current user.
+- Server helpers in [`src/server/auth.ts`](src/server/auth.ts) wrap Cognito: reading cookies, refreshing tokens, and resolving the current user. Cognito client selection is environment-aware through `getCognitoClientId()` in [`src/constants/api.ts`](src/constants/api.ts), allowing local development to target either the prod or dev CloudFormation stack.
 - API routes under `src/app/api/auth/*` perform Cognito mutations (`InitiateAuth`, `RespondToAuthChallenge`, refresh, logout) and set cookies with consistent security attributes.
 - The login route [`src/app/login/page.tsx`](src/app/login/page.tsx) re-checks cookies server-side; if a session exists it redirects home, otherwise it hydrates [`AuthProvider`](src/contexts/auth-context.tsx:45) so that login, challenge handling, and token refresh happen client-side.
 - [`AuthProvider`](src/contexts/auth-context.tsx:45) uses custom hooks (`useAuthRefresh`, `useBackgroundTokenRefresh`) to monitor expiry, call `/api/auth/refresh`, and fan out state to consumers like [`Header`](src/components/Header/Header.tsx:19).
@@ -63,6 +63,7 @@ Key ideas:
 - `src/api/budget-tracker-api/*` contains client-side wrappers (`fetchTransactions`, `createGoal`, etc.) that talk to `/api/*` endpoints. They centralize JSON parsing and error handling for optimistic UI flows.
 - App Router API routes (e.g., [`src/app/api/transactions/route.ts`](src/app/api/transactions/route.ts)) forward requests to the external REST API. They inject Cognito ID tokens into the Authorization header, proxy status codes, and trigger cache invalidation via `revalidateTag` when mutations succeed.
 - Cache tag constants live in [`src/constants/cache-tags.ts`](src/constants/cache-tags.ts); the server loader and API routes share them to keep SSR data synchronized with client writes.
+- [`src/constants/api.ts`](src/constants/api.ts) is the environment switchboard for AWS integrations. `NEXT_PUBLIC_AWS_ENVIRONMENT=dev` selects the dev API Gateway and dev Cognito identifiers for local runtime; any other value, including the default build path, resolves to prod.
 
 ## Feature surfaces
 

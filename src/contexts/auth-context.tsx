@@ -21,7 +21,10 @@ interface AuthContextType {
   error: string | null;
   challenge: AuthChallenge | null;
   requiresPasswordChange: boolean;
-  signIn: (username: string, password: string) => Promise<void>;
+  signIn: (
+    username: string,
+    password: string,
+  ) => Promise<{ requiresPasswordChange: boolean }>;
   setNewPassword: (newPassword: string) => Promise<void>;
   signOut: () => void;
   clearError: () => void;
@@ -124,9 +127,11 @@ export default function AuthProvider({
       }
 
       if ('challenge' in data && data.challenge) {
+        const requiresPasswordChange = data.requiresPasswordChange || false;
         setChallenge(data.challenge);
-        setRequiresPasswordChange(data.requiresPasswordChange || false);
-        return;
+        setRequiresPasswordChange(requiresPasswordChange);
+
+        return { requiresPasswordChange };
       }
 
       if ('user' in data && data.user) {
@@ -134,6 +139,7 @@ export default function AuthProvider({
         setChallenge(null);
         setRequiresPasswordChange(false);
       }
+      return { requiresPasswordChange };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Sign in failed';
       setError(message);

@@ -27,12 +27,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const {
-    signIn,
-    error: authError,
-    requiresPasswordChange,
-    clearError,
-  } = useAuth();
+  const { signIn, error: authError, clearError } = useAuth();
 
   // Clear errors when component mounts or when inputs change
   useEffect(() => {
@@ -86,7 +81,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
     return 'Sign in failed. Please try again or contact support if the problem persists.';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
 
     if (!username.trim() || !password.trim()) {
@@ -98,8 +93,8 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
     setError('');
 
     try {
-      await signIn(username.trim(), password);
-      if (!requiresPasswordChange) {
+      const res = await signIn(username.trim(), password);
+      if (!res.requiresPasswordChange) {
         onSuccess();
         setUsername('');
         setPassword('');

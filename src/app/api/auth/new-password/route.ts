@@ -5,6 +5,7 @@ import {
   RespondToAuthChallengeCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 
+import { getCognitoClientId } from '@/constants/api';
 import {
   ACCESS_TOKEN_COOKIE,
   ID_TOKEN_COOKIE,
@@ -17,7 +18,7 @@ const cognitoClient = new CognitoIdentityProviderClient({
   region: process.env.NEXT_PUBLIC_AWS_REGION || 'us-east-1',
 });
 
-const CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID!;
+const CLIENT_ID = getCognitoClientId();
 
 function mapNewPasswordError(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'name' in error) {

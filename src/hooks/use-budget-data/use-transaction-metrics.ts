@@ -3,7 +3,7 @@ import type { Transaction } from '@/types/budget';
 import { formatMonthKey, parseDate } from '@/utils';
 
 type TransactionMetricsResult = {
-  materializedTransactions: Transaction[];
+  loadedTransactions: Transaction[];
   selectedMonthTransactions: Transaction[];
   totalIncome: number;
   totalExpenses: number;
@@ -12,16 +12,17 @@ type TransactionMetricsResult = {
 };
 
 export const getTransactionMetrics = (
-  materializedTransactions: Transaction[],
+  loadedTransactions: Transaction[],
   selectedMonth: string,
 ): TransactionMetricsResult => {
-  const selectedMonthTransactions = materializedTransactions.filter(
-    (transaction) => {
-      const transactionDate = parseDate(transaction.date);
-      const transactionMonth = formatMonthKey(transactionDate);
-      return transactionMonth === selectedMonth;
-    },
-  );
+  // The canonical transaction list is already selected-month scoped.
+  // Keep a defensive filter in place so mock fallbacks or stale data do not
+  // leak rows from other months into derived metrics.
+  const selectedMonthTransactions = loadedTransactions.filter((transaction) => {
+    const transactionDate = parseDate(transaction.date);
+    const transactionMonth = formatMonthKey(transactionDate);
+    return transactionMonth === selectedMonth;
+  });
 
   const totalIncome = selectedMonthTransactions
     .filter((transaction) => transaction.type === 'income')
@@ -38,7 +39,7 @@ export const getTransactionMetrics = (
     .slice(0, 5);
 
   return {
-    materializedTransactions,
+    loadedTransactions,
     selectedMonthTransactions,
     totalIncome,
     totalExpenses,
@@ -48,10 +49,10 @@ export const getTransactionMetrics = (
 };
 
 export const useTransactionMetrics = (
-  materializedTransactions: Transaction[],
+  loadedTransactions: Transaction[],
   selectedMonth: string,
 ): TransactionMetricsResult => {
   return useMemo(() => {
-    return getTransactionMetrics(materializedTransactions, selectedMonth);
-  }, [materializedTransactions, selectedMonth]);
+    return getTransactionMetrics(loadedTransactions, selectedMonth);
+  }, [loadedTransactions, selectedMonth]);
 };

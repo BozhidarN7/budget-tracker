@@ -3,6 +3,7 @@ import type {
   Category,
   Goal,
   MaterializationSummary,
+  PaginatedTransactionsResponse,
   RecurringTransaction,
   Transaction,
 } from '@/types/budget';
@@ -10,6 +11,7 @@ import type {
 // Define the context types
 export type BudgetContextType = {
   // State
+  // Loaded transactions for the currently selected month.
   transactions: Transaction[];
   recurringTransactions: RecurringTransaction[];
   categories: Category[];
@@ -17,8 +19,17 @@ export type BudgetContextType = {
   isLoading: boolean;
   error: string | null;
   selectedMonth: string;
+  transactionPagination: {
+    hasMore: boolean;
+    isLoadingMore: boolean;
+    isLoadingInitial: boolean;
+    error: string | null;
+  };
   setSelectedMonth: (month: string) => void;
   refetch: () => Promise<void>;
+  loadMoreTransactions: () => Promise<void>;
+  ensureMonthTransactionsLoaded: (month: string) => Promise<void>;
+  refreshSelectedMonthTransactions: () => Promise<void>;
 
   // Transaction operations
   addTransaction: (
@@ -60,7 +71,8 @@ export type BudgetContextType = {
 // Define the provider props
 export type BudgetProviderProps = {
   children: React.ReactNode;
-  initialTransactions?: Transaction[];
+  initialCurrentMonth?: string;
+  initialTransactionsPage?: PaginatedTransactionsResponse;
   initialRecurringTransactions?: RecurringTransaction[];
   initialCategories?: Category[];
   initialGoals?: Goal[];
@@ -68,7 +80,6 @@ export type BudgetProviderProps = {
 
 // Define the state type
 export type BudgetState = {
-  transactions: Transaction[];
   recurringTransactions: RecurringTransaction[];
   categories: Category[];
   goals: Goal[];

@@ -15,10 +15,14 @@ import { useBudgetContext } from '@/contexts/budget-context';
 export default function useBudgetData() {
   const {
     transactions,
+    transactionPagination,
     recurringTransactions,
     categories,
     goals,
     isLoading,
+    loadMoreTransactions,
+    refreshSelectedMonthTransactions,
+    ensureMonthTransactionsLoaded,
     selectedMonth,
     addGoal,
   } = useBudgetContext();
@@ -45,7 +49,7 @@ export default function useBudgetData() {
   });
 
   const {
-    materializedTransactions,
+    loadedTransactions,
     selectedMonthTransactions,
     totalIncome,
     totalExpenses,
@@ -80,7 +84,7 @@ export default function useBudgetData() {
 
   return {
     transactions: selectedMonthTransactions,
-    materializedTransactions,
+    loadedTransactions,
     recurringTransactions: data.recurringData,
     recurringInstances,
     upcomingRecurringReminders,
@@ -99,6 +103,10 @@ export default function useBudgetData() {
     savingsProgress,
     savingsBreakdown,
     isLoading: data.isLoading,
+    loadMoreTransactions,
+    refreshSelectedMonthTransactions,
+    ensureMonthTransactionsLoaded,
     selectedMonth,
+    transactionPagination,
   };
 }

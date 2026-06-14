@@ -1,15 +1,18 @@
 import { getTokensFromCookies } from '@/server/auth';
 import { API_BASE_URL } from '@/constants/api';
+import { TRANSACTIONS_PAGE_SIZE } from '@/api/budget-tracker-api/transactions';
 import type {
   Category,
   Goal,
+  PaginatedTransactionsResponse,
   RecurringTransaction,
-  Transaction,
 } from '@/types/budget';
 import { CACHE_TAGS } from '@/constants';
+import { getCurrentMonthKey, splitMonthKey } from '@/utils';
 
 export interface BudgetData {
-  transactions: Transaction[];
+  currentMonth: string;
+  transactionsPage: PaginatedTransactionsResponse;
   recurringTransactions: RecurringTransaction[];
   categories: Category[];
   goals: Goal[];
@@ -57,10 +60,17 @@ export async function getInitialBudgetData(): Promise<BudgetDataResult> {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${tokens.idToken}`,
     } as const;
+    const currentMonth = getCurrentMonthKey();
+    const { year, month } = splitMonthKey(currentMonth);
+    const transactionsParams = new URLSearchParams({
+      yaer: year.toString(),
+      month: month.toString(),
+      limit: TRANSACTIONS_PAGE_SIZE.toString(),
+    });
 
     const [transactionsRes, recurringRes, categoriesRes, goalsRes] =
       await Promise.all([
-        fetch(`${API_BASE_URL}/transactions`, {
+        fetch(`${API_BASE_URL}/transactions?${transactionsParams.toString()}`, {
           method: 'GET',
           headers,
           cache: 'force-cache',
@@ -107,17 +117,28 @@ export async function getInitialBudgetData(): Promise<BudgetDataResult> {
       };
     }
 
-    const [transactions, recurringTransactions, categories, goals] =
+    const [transactionsPage, recurringTransactions, categories, goals] =
       (await Promise.all([
         transactionsRes.json(),
         recurringRes.json(),
         categoriesRes.json(),
         goalsRes.json(),
-      ])) as [Transaction[], RecurringTransaction[], Category[], Goal[]];
+      ])) as [
+        PaginatedTransactionsResponse,
+        RecurringTransaction[],
+        Category[],
+        Goal[],
+      ];
 
     return {
       ok: true,
-      data: { transactions, recurringTransactions, categories, goals },
+      data: {
+        currentMonth,
+        transactionsPage,
+        recurringTransactions,
+        categories,
+        goals,
+      },
     };
   } catch (error) {
     const message =

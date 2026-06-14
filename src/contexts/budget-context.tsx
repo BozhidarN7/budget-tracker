@@ -2,118 +2,53 @@
 
 import type React from 'react';
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
-import type {
-  BudgetContextType,
-  BudgetProviderProps,
-  BudgetState,
-} from './budget/types';
+import { useQueryClient } from '@tanstack/react-query';
+import { createContext, useCallback, useContext, useState } from 'react';
+import type { BudgetProviderProps, BudgetState } from './budget/types';
+import { defaultBudgetContext } from './budget/default-context';
 import { createTransactionOperations } from './budget/transaction-operations';
 import { createRecurringTransactionOperations } from './budget/recurring-transaction-operations';
 import { createCategoryOperations } from './budget/category-operations';
 import { createGoalOperations } from './budget/goal-operations';
-import { fetchBudgetData } from './budget/data-fetching';
+import {
+  budgetQueryKeys,
+  createEmptyMonthState,
+  fetchMonthTransactions,
+  sortTransactionsByDateDesc,
+} from './budget/month-transactions';
+import { useMonthTransactions } from './budget/use-month-transactions';
 import { getCurrentMonthKey } from '@/utils';
+import type { PaginatedTransactionsResponse } from '@/types/budget';
 
-// Default values
-const defaultContext: BudgetContextType = {
-  transactions: [],
-  recurringTransactions: [],
-  categories: [],
-  goals: [],
-  isLoading: true,
-  error: null,
-  selectedMonth: getCurrentMonthKey(),
-  setSelectedMonth: () => {},
-  refetch: async () => {},
-
-  // Transaction operations
-  addTransaction: async (_transaction) => {
-    throw new Error('BudgetContext not initialized: addTransaction');
-  },
-  updateTransaction: async (_id, _transaction) => {
-    throw new Error('BudgetContext not initialized: updateTransaction');
-  },
-  removeTransaction: async (_id) => {
-    throw new Error('BudgetContext not initialized: removeTransaction');
-  },
-
-  // Recurring transaction operations
-  addRecurringTransaction: async (_transaction) => {
-    throw new Error('BudgetContext not initialized: addRecurringTransaction');
-  },
-  updateRecurringTransaction: async (_id, _transaction) => {
-    throw new Error(
-      'BudgetContext not initialized: updateRecurringTransaction',
-    );
-  },
-  removeRecurringTransaction: async (_id) => {
-    throw new Error(
-      'BudgetContext not initialized: removeRecurringTransaction',
-    );
-  },
-  materializeRecurringTransactions: async () => {
-    throw new Error(
-      'BudgetContext not initialized: materializeRecurringTransactions',
-    );
-  },
-
-  // Category operations
-  addCategory: async (_category) => {
-    throw new Error('BudgetContext not initialized: addCategory');
-  },
-  updateCategory: async (_id, _category) => {
-    throw new Error('BudgetContext not initialized: updateCategory');
-  },
-  removeCategory: async (_id) => {
-    throw new Error('BudgetContext not initialized: removeCategory');
-  },
-
-  // Goal operations
-  addGoal: async (_goal) => {
-    throw new Error('BudgetContext not initialized: addGoal');
-  },
-  updateGoal: async (_id, _goal) => {
-    throw new Error('BudgetContext not initialized: updateGoal');
-  },
-  removeGoal: async (_id) => {
-    throw new Error('BudgetContext not initialized: removeGoal');
-  },
-};
-
-const BudgetContext = createContext<BudgetContextType>(defaultContext);
+const BudgetContext = createContext(defaultBudgetContext);
 
 export default function BudgetProvider({
   children,
-  initialTransactions,
+  initialCurrentMonth,
+  initialTransactionsPage,
   initialRecurringTransactions,
   initialCategories,
   initialGoals,
 }: BudgetProviderProps) {
+  const queryClient = useQueryClient();
+  const currentMonth = initialCurrentMonth ?? getCurrentMonthKey();
+
   // State
   const [state, setState] = useState<BudgetState>({
-    transactions: initialTransactions || [],
     recurringTransactions: initialRecurringTransactions || [],
     categories: initialCategories || [],
     goals: initialGoals || [],
     isLoading:
-      !initialTransactions ||
+      !initialTransactionsPage ||
       !initialRecurringTransactions ||
       !initialCategories ||
       !initialGoals,
     error: null,
-    selectedMonth: getCurrentMonthKey(),
+    selectedMonth: currentMonth,
   });
 
   // Destructure state for easier access
   const {
-    transactions,
     recurringTransactions,
     categories,
     goals,
@@ -123,17 +58,6 @@ export default function BudgetProvider({
   } = state;
 
   // State setters
-  const setTransactions = useCallback(
-    (value: React.SetStateAction<typeof transactions>) => {
-      setState((prev) => ({
-        ...prev,
-        transactions:
-          typeof value === 'function' ? value(prev.transactions) : value,
-      }));
-    },
-    [],
-  );
-
   const setRecurringTransactions = useCallback(
     (value: React.SetStateAction<typeof recurringTransactions>) => {
       setState((prev) => ({
@@ -177,57 +101,114 @@ export default function BudgetProvider({
     setState((prev) => ({ ...prev, selectedMonth: value }));
   }, []);
 
-  // Data fetching
-  const refetch = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const data = await fetchBudgetData();
-      setTransactions(data.transactions);
-      setRecurringTransactions(data.recurringTransactions);
-      setCategories(data.categories);
-      setGoals(data.goals);
-    } catch (err) {
-      setError('Failed to fetch budget data');
-      console.error('Error fetching budget data:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [
-    setIsLoading,
-    setError,
-    setTransactions,
-    setRecurringTransactions,
-    setCategories,
-    setGoals,
-  ]);
-
-  // Fetch data if no initial data was provided
-  useEffect(() => {
-    if (
-      !initialTransactions ||
-      !initialRecurringTransactions ||
-      !initialCategories ||
-      !initialGoals
-    ) {
-      refetch();
-    }
-  }, [
-    initialTransactions,
+  const {
+    bootstrapQuery,
+    ensureMonthTransactionsLoaded,
+    refetch,
+    transactionsByMonth,
+    updateMonthState,
+  } = useMonthTransactions({
+    initialCurrentMonth,
+    initialTransactionsPage,
     initialRecurringTransactions,
     initialCategories,
     initialGoals,
-    refetch,
+    setState,
+    setRecurringTransactions,
+    setCategories,
+    setGoals,
+    setIsLoading,
+    setError,
+    setSelectedMonth,
+  });
+
+  const selectedMonthState =
+    transactionsByMonth[selectedMonth] ?? createEmptyMonthState();
+
+  const loadMoreTransactions = useCallback(async () => {
+    const monthState =
+      transactionsByMonth[selectedMonth] ?? createEmptyMonthState();
+
+    if (!monthState.nextCursor || monthState.isLoadingMore) {
+      return;
+    }
+
+    updateMonthState(selectedMonth, (prev) => ({
+      ...prev,
+      isLoadingMore: true,
+      error: null,
+    }));
+
+    try {
+      const response = await fetchMonthTransactions(
+        selectedMonth,
+        monthState.nextCursor,
+      );
+      queryClient.setQueryData(
+        budgetQueryKeys.transactions(selectedMonth),
+        (prev?: PaginatedTransactionsResponse) => ({
+          items: sortTransactionsByDateDesc([
+            ...(prev?.items ?? monthState.items),
+            ...response.items,
+          ]),
+          nextCursor: response.nextCursor ?? null,
+        }),
+      );
+      updateMonthState(selectedMonth, (prev) => ({
+        ...prev,
+        items: sortTransactionsByDateDesc([...prev.items, ...response.items]),
+        nextCursor: response.nextCursor ?? null,
+        isLoadingMore: false,
+        error: null,
+      }));
+    } catch (error) {
+      console.error('Failed to load more transactions:', error);
+      updateMonthState(selectedMonth, (prev) => ({
+        ...prev,
+        isLoadingMore: false,
+        error: 'Failed to load more transactions',
+      }));
+    }
+  }, [queryClient, selectedMonth, transactionsByMonth, updateMonthState]);
+
+  const refreshSelectedMonthTransactions = useCallback(async () => {
+    updateMonthState(selectedMonth, () => ({
+      ...createEmptyMonthState(),
+      isStale: true,
+    }));
+
+    await queryClient.invalidateQueries({
+      queryKey: budgetQueryKeys.transactions(selectedMonth),
+    });
+    await ensureMonthTransactionsLoaded(selectedMonth);
+  }, [
+    ensureMonthTransactionsLoaded,
+    queryClient,
+    selectedMonth,
+    updateMonthState,
   ]);
+
+  const currentTransactions = selectedMonthState.items;
+
+  const markMonthStale = useCallback(
+    (month: string) => {
+      updateMonthState(month, (prev) => ({
+        ...prev,
+        isStale: true,
+      }));
+    },
+    [updateMonthState],
+  );
 
   // Create operations
   const transactionOps = createTransactionOperations(
-    transactions,
+    currentTransactions,
     categories,
-    setTransactions,
     setCategories,
     setError,
+    selectedMonth,
+    updateMonthState,
+    markMonthStale,
   );
 
   const recurringTransactionOps = createRecurringTransactionOperations(
@@ -249,15 +230,27 @@ export default function BudgetProvider({
   return (
     <BudgetContext.Provider
       value={{
-        transactions,
+        transactions: currentTransactions,
         recurringTransactions,
         categories,
         goals,
-        isLoading,
-        error,
+        isLoading:
+          isLoading ||
+          bootstrapQuery.isFetching ||
+          selectedMonthState.isLoadingInitial,
+        error: error ?? bootstrapQuery.error?.message ?? null,
         selectedMonth,
+        transactionPagination: {
+          hasMore: selectedMonthState.nextCursor !== null,
+          isLoadingMore: selectedMonthState.isLoadingMore,
+          isLoadingInitial: selectedMonthState.isLoadingInitial,
+          error: selectedMonthState.error,
+        },
         setSelectedMonth,
         refetch,
+        loadMoreTransactions,
+        ensureMonthTransactionsLoaded,
+        refreshSelectedMonthTransactions,
         // Transaction operations
         ...transactionOps,
         // Recurring transaction operations

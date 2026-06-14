@@ -37,13 +37,19 @@ export default async function BudgetDataProvider({
     );
   }
 
-  const { transactions, recurringTransactions, categories, goals } =
-    result.data;
+  const {
+    currentMonth,
+    transactionsPage,
+    recurringTransactions,
+    categories,
+    goals,
+  } = result.data;
 
   return (
     <CurrencyProvider initialPreference={userPreference}>
       <BudgetProvider
-        initialTransactions={transactions}
+        initialCurrentMonth={currentMonth}
+        initialTransactionsPage={transactionsPage}
         initialRecurringTransactions={recurringTransactions}
         initialCategories={categories}
         initialGoals={goals}

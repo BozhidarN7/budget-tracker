@@ -11,7 +11,8 @@ import {
 import { formatMonthKeyToReadable, getLastNMonthKeys } from '@/utils';
 
 export default function MonthSelector() {
-  const { selectedMonth, setSelectedMonth } = useBudgetContext();
+  const { ensureMonthTransactionsLoaded, selectedMonth, setSelectedMonth } =
+    useBudgetContext();
 
   // Get the last 12 months for the dropdown
   const availableMonths = getLastNMonthKeys(12);
@@ -19,7 +20,13 @@ export default function MonthSelector() {
   return (
     <div className="flex items-center gap-2">
       <span className="text-sm font-medium">Month:</span>
-      <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+      <Select
+        value={selectedMonth}
+        onValueChange={(month) => {
+          setSelectedMonth(month);
+          void ensureMonthTransactionsLoaded(month);
+        }}
+      >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Select month" />
         </SelectTrigger>

@@ -18,8 +18,8 @@ const buildTransaction = (
 };
 
 describe('useTransactionMetrics', () => {
-  it('calculates dashboard totals from materialized transactions only', () => {
-    const materializedTransactions = [
+  it('calculates dashboard totals from loaded selected-month transactions only', () => {
+    const loadedTransactions = [
       buildTransaction(),
       buildTransaction({
         id: 'txn-2',
@@ -31,10 +31,10 @@ describe('useTransactionMetrics', () => {
       }),
     ];
 
-    const result = getTransactionMetrics(materializedTransactions, '2025-06');
+    const result = getTransactionMetrics(loadedTransactions, '2025-06');
 
-    expect(result.materializedTransactions).toEqual(materializedTransactions);
-    expect(result.selectedMonthTransactions).toEqual(materializedTransactions);
+    expect(result.loadedTransactions).toEqual(loadedTransactions);
+    expect(result.selectedMonthTransactions).toEqual(loadedTransactions);
     expect(result.totalIncome).toBe(1000);
     expect(result.totalExpenses).toBe(200);
     expect(result.netBalance).toBe(800);
@@ -43,8 +43,8 @@ describe('useTransactionMetrics', () => {
     ).toEqual(['txn-2', 'txn-1']);
   });
 
-  it('does not include virtual recurring instances unless they are materialized', () => {
-    const materializedTransactions = [
+  it('does not include virtual recurring instances unless they are loaded', () => {
+    const loadedTransactions = [
       buildTransaction({
         id: 'txn-1',
         description: 'Rent',
@@ -65,7 +65,7 @@ describe('useTransactionMetrics', () => {
       recurrenceInstanceId: 'rec-1-2025-06-15',
     });
 
-    const result = getTransactionMetrics(materializedTransactions, '2025-06');
+    const result = getTransactionMetrics(loadedTransactions, '2025-06');
 
     expect(result.totalExpenses).toBe(1200);
     expect(result.selectedMonthTransactions).not.toContain(

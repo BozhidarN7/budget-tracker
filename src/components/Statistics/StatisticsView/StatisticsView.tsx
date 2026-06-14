@@ -5,15 +5,21 @@ import SpendingTrends from '../SpendingTrends';
 import CategoryAnalysis from '../CategoryAnalysis';
 import IncomeExpenseComparison from '../IncomeExpenseComparison';
 import SavingsAnalysis from '../SavingsAnalysis';
+import { useStatisticsData } from '@/hooks';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { Transaction } from '@/types/budget';
 
 interface StatisticsViewProps {
   initialTab?: string;
+  initialTransactions?: Transaction[];
 }
 
 export default function StatisticsView({
   initialTab = 'trends',
+  initialTransactions = [],
 }: StatisticsViewProps) {
+  useStatisticsData({ initialTransactions });
+
   const normalizedInitialTab = useMemo(() => {
     const allowedTabs = new Set([
       'trends',

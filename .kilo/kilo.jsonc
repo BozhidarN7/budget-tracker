@@ -1,0 +1,12 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "indexing": {
+    "enabled": true,
+    "provider": "ollama",
+    "ollama": {
+      "baseUrl": "http://localhost:11434",
+    },
+    "model": "nomic-embed-text:latest",
+    "dimension": 768,
+  },
+}

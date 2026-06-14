@@ -16,6 +16,7 @@
 - **Settings preferences:** the General settings tab now uses an explicit submit flow for `preferredCurrency` and `timezone`, backed by a generalized user preference save API. The timezone control is a searchable popover picker sourced from browser-supported IANA zones with `UTC` fallback, and successful saves refresh both user preference state and budget data.
 - **Testing:** Vitest is configured (`vitest.config.ts` with `@/*` alias) and unit tests cover recurrence utilities (`src/utils/recurrence.test.ts`), recurring-instance deduplication (`src/hooks/use-budget-data/use-recurring-instances.test.ts`), transaction metrics (`src/hooks/use-budget-data/use-transaction-metrics.test.ts`), and statistics derivations (`src/hooks/use-statistics-data.test.ts`).
 - **Statistics data source:** the statistics route now preloads `/transactions/all` on the server via `src/server/statistics-data.ts`, hydrates `StatisticsView`, and uses a dedicated React Query hook (`src/hooks/use-statistics-transactions.ts`) for background refetch while open. `useStatisticsData()` no longer reads the paginated selected-month transaction cache.
+- **Statistics category chart UX:** `ExpensesByCategoryChart` now exposes an in-card month selector that reuses the shared budget `selectedMonth` state and month-loading flow, so users can switch chart months directly from the statistics card without leaving the current view.
 
 ## Open considerations
 

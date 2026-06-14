@@ -1,32 +1,42 @@
+import {
+  TRANSACTIONS_PAGE_SIZE,
+  fetchTransactions,
+} from '@/api/budget-tracker-api/transactions';
 import { fetchCategories } from '@/api/budget-tracker-api/categories';
 import { fetchGoals } from '@/api/budget-tracker-api/goals';
-import { fetchTransactions } from '@/api/budget-tracker-api/transactions';
 import { fetchRecurringTransactions } from '@/api/budget-tracker-api/recurring-transactions';
+import { getCurrentMonthKey } from '@/utils';
 import type {
   Category,
   Goal,
+  PaginatedTransactionsResponse,
   RecurringTransaction,
-  Transaction,
 } from '@/types/budget';
 
-// Create data fetching function
 export const fetchBudgetData = async (): Promise<{
-  transactions: Transaction[];
+  currentMonth: string;
+  transactionsPage: PaginatedTransactionsResponse;
   recurringTransactions: RecurringTransaction[];
   categories: Category[];
   goals: Goal[];
 }> => {
+  const currentMonth = getCurrentMonthKey();
+
   try {
-    const [transactionsData, recurringData, categoriesData, goalsData] =
+    const [transactionsPage, recurringData, categoriesData, goalsData] =
       await Promise.all([
-        fetchTransactions(),
+        fetchTransactions({
+          monthKey: currentMonth,
+          limit: TRANSACTIONS_PAGE_SIZE,
+        }),
         fetchRecurringTransactions(),
         fetchCategories(),
         fetchGoals(),
       ]);
 
     return {
-      transactions: transactionsData,
+      currentMonth,
+      transactionsPage,
       recurringTransactions: recurringData,
       categories: categoriesData,
       goals: goalsData,
@@ -34,7 +44,8 @@ export const fetchBudgetData = async (): Promise<{
   } catch (err) {
     console.error('Error fetching budget data:', err);
     return {
-      transactions: [],
+      currentMonth,
+      transactionsPage: { items: [] },
       recurringTransactions: [],
       categories: [],
       goals: [],

@@ -38,11 +38,23 @@ import { Transaction } from '@/types/budget';
 interface TransactionListProps {
   transactions: Transaction[];
   isLoading: boolean;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  isFilteredEmpty: boolean;
+  loadMoreError: string | null;
+  onLoadMore: () => Promise<void>;
+  showLoadedFilterNote: boolean;
 }
 
 export default function TransactionList({
   transactions,
   isLoading,
+  hasMore,
+  isLoadingMore,
+  isFilteredEmpty,
+  loadMoreError,
+  onLoadMore,
+  showLoadedFilterNote,
 }: TransactionListProps) {
   const { removeTransaction } = useBudgetContext();
   const { formatCurrency } = useCurrencyFormatter();
@@ -78,7 +90,7 @@ export default function TransactionList({
               <TableHead>Category</TableHead>
               <TableHead>Date</TableHead>
               <TableHead className="text-right">Amount</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
+              <TableHead className="w-20"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -115,18 +127,47 @@ export default function TransactionList({
       <div className="rounded-lg border shadow-sm">
         <div className="flex h-40 items-center justify-center">
           <div className="text-center">
-            <p className="text-muted-foreground">No transactions found</p>
+            <p className="text-muted-foreground">
+              {isFilteredEmpty
+                ? 'No loaded transactions match these filters'
+                : 'No transactions found'}
+            </p>
             <p className="text-muted-foreground mt-1 text-sm">
-              Try adjusting your filters or add some transactions
+              {isFilteredEmpty
+                ? 'Try loading more transactions or adjusting your filters'
+                : 'Try adjusting your filters or add some transactions'}
             </p>
           </div>
         </div>
+
+        {(hasMore || loadMoreError) && (
+          <div className="border-t px-4 py-4">
+            {loadMoreError ? (
+              <p className="mb-3 text-sm text-rose-600">{loadMoreError}</p>
+            ) : null}
+            {hasMore ? (
+              <Button
+                variant="outline"
+                onClick={() => void onLoadMore()}
+                disabled={isLoadingMore}
+              >
+                {isLoadingMore ? 'Loading...' : 'Load more'}
+              </Button>
+            ) : null}
+          </div>
+        )}
       </div>
     );
   }
 
   return (
     <div className="rounded-lg border shadow-sm">
+      {showLoadedFilterNote ? (
+        <div className="text-muted-foreground border-b px-4 py-3 text-sm">
+          Filtering loaded transactions
+        </div>
+      ) : null}
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -134,7 +175,7 @@ export default function TransactionList({
             <TableHead>Category</TableHead>
             <TableHead>Date</TableHead>
             <TableHead className="text-right">Amount</TableHead>
-            <TableHead className="w-[80px]"></TableHead>
+            <TableHead className="w-20"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -201,6 +242,26 @@ export default function TransactionList({
           ))}
         </TableBody>
       </Table>
+
+      <div className="border-t px-4 py-4">
+        {loadMoreError ? (
+          <p className="mb-3 text-sm text-rose-600">{loadMoreError}</p>
+        ) : null}
+
+        {hasMore ? (
+          <Button
+            variant="outline"
+            onClick={() => void onLoadMore()}
+            disabled={isLoadingMore}
+          >
+            {isLoadingMore ? 'Loading...' : 'Load more'}
+          </Button>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            All transactions loaded
+          </p>
+        )}
+      </div>
 
       {editingTransaction && (
         <EditTransactionDialog

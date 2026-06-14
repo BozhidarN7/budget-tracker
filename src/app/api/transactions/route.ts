@@ -16,13 +16,18 @@ async function buildAuthHeaders() {
   };
 }
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   const headers = await buildAuthHeaders();
   if (!headers) {
     return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
   }
 
-  const res = await fetch(`${API_BASE_URL}/transactions`, {
+  const query = request.nextUrl.searchParams.toString();
+  const url = query
+    ? `${API_BASE_URL}/transactions?${query}`
+    : `${API_BASE_URL}/transactions`;
+
+  const res = await fetch(url, {
     method: 'GET',
     headers,
   });

@@ -18,8 +18,8 @@ const buildTransaction = (
 };
 
 describe('useStatisticsData', () => {
-  it('derives charts and ratios from materialized transactions only', () => {
-    const materializedTransactions: Transaction[] = [
+  it('derives charts and ratios from loaded selected-month transactions only', () => {
+    const loadedTransactions: Transaction[] = [
       buildTransaction(),
       buildTransaction({
         id: 'txn-2',
@@ -35,7 +35,7 @@ describe('useStatisticsData', () => {
     const goals: Goal[] = [];
 
     const result = getStatisticsData({
-      materializedTransactions,
+      loadedTransactions,
       categories,
       goals,
     });
@@ -48,8 +48,8 @@ describe('useStatisticsData', () => {
     ]);
   });
 
-  it('ignores future recurring instances that are not part of the materialized stream', () => {
-    const materializedTransactions: Transaction[] = [
+  it('ignores future recurring instances that are not part of the loaded stream', () => {
+    const loadedTransactions: Transaction[] = [
       buildTransaction({
         id: 'txn-1',
         amount: 400,
@@ -59,7 +59,7 @@ describe('useStatisticsData', () => {
     ];
 
     const result = getStatisticsData({
-      materializedTransactions,
+      loadedTransactions,
       categories: [],
       goals: [],
     });

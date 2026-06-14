@@ -1,12 +1,14 @@
 # Current Context
 
-## Snapshot (May 2026)
+## Snapshot (June 2026)
 
 - Authenticated shell, dashboard, transactions, categories, goals, statistics, calendar, and settings routes are live under `src/app/(dashboard)`.
 - Cognito-based authentication is wired end to end (login, refresh, logout, new-password challenge) through the API routes in `src/app/api/auth/*` and the client [`AuthProvider`](src/contexts/auth-context.tsx:45).
 - Budget data loads server-side via [`getInitialBudgetData`](src/server/budget-data.ts:38) and flows into [`BudgetProvider`](src/contexts/budget-context.tsx:70), while client hooks (`useBudgetData`, `useStatisticsData`, `useCategoryChartController`) power visualizations and fallbacks.
 - The Expenses by Category drill-down plan from [`docs/expenses-by-category-chart-plan.md`](docs/expenses-by-category-chart-plan.md) has been implemented across dashboard and statistics views.
-- **Recurring transactions:** `useRecurringInstances` generates virtual `Transaction` objects from `RecurringTransaction` rules for the selected month. Dashboard and statistics calculations now read only canonical `materializedTransactions`, while calendar/reminder surfaces continue consuming `recurringInstances` for forward-looking recurring visibility.
+- **Recurring transactions:** `useRecurringInstances` generates virtual `Transaction` objects from `RecurringTransaction` rules for the selected month. Dashboard/statistics calculations now stay scoped to the loaded selected-month transaction rows, while calendar/reminder surfaces continue consuming `recurringInstances` for forward-looking recurring visibility.
+- **Transactions pagination/bootstrap:** the server bootstrap path fetches the current month's first paginated `/transactions` page in [`getInitialBudgetData`](src/server/budget-data.ts:44) and hydrates [`BudgetProvider`](src/contexts/budget-context.tsx:157). The public budget contract now exposes a single `transactions` list backed directly by the month-scoped cache (`transactionsByMonth[selectedMonth].items`), and `transactionPagination` remains the paired selected-month `Load more` metadata.
+- **Recent refactor:** the duplicate selected-month transaction store and public `transactionList` alias were removed. `loadMoreTransactions`, month switching, calendar rendering, and transaction CRUD now all read or update the same canonical month-scoped list, fixing the stale `Load more` UI bug caused by divergent state.
 - **Category spend contract:** `monthlyData.spent` currently uses a split update model. Frontend transaction CRUD updates category spend for normal transactions in `src/contexts/budget/transaction-operations.ts`, while the backend updates category spend when recurring transactions are materialized. The contract is documented in `docs/backend-category-spend-reconciliation.md`.
 - Mock datasets under [`src/mock`](src/mock) guarantee the UI remains interactive if the AWS gateway or Cognito tokens fail.
 - Local environment targeting now supports both AWS stacks: `NEXT_PUBLIC_AWS_ENVIRONMENT=dev` switches API Gateway and Cognito client selection to the dev CloudFormation stack, while the default remains prod so `npm run build` still points at production resources.
@@ -17,7 +19,7 @@
 
 1. **Environment drift:** `.nvmrc` targets Node 24 while `package.json` enforces Node 22. Choose a single version before onboarding more contributors or wiring CI.
 2. **Observability & error reporting:** Failures currently surface via toasts and console output (e.g., API wrappers log errors). There is no structured logging or monitoring.
-3. **Testing gap:** Unit tests exist for recurrence logic, but most of the UI, API routes, and CRUD flows remain untested. Expand Vitest coverage and add Playwright E2E before CI wiring.
+3. **Testing gap:** Unit tests exist for recurrence logic, but most of the UI, API routes, CRUD flows, and the new transaction pagination states remain untested. Expand Vitest coverage and add Playwright E2E before CI wiring.
 4. **User preferences:** Theme still persists separately through `next-themes`, while newer server-backed preferences now include timezone alongside preferred currency. Additional persisted personalization items from the roadmap remain open.
 5. **Data import/export & recurring transactions CRUD:** Recurring instance generation is implemented, but users cannot yet create or edit recurring rules in the UI. Current CRUD flows are single-entry only.
 6. **API resilience:** Client wrappers swallow errors by returning empty arrays; this prevents crashes but hides issues. Consider surfacing typed errors to the UI and differentiating offline states beyond the initial load.

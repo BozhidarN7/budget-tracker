@@ -1,22 +1,60 @@
-import { Transaction } from '@/types/budget';
+import type {
+  PaginatedTransactionsResponse,
+  Transaction,
+} from '@/types/budget';
+import { getCurrentMonthKey, splitMonthKey } from '@/utils';
 
-export async function fetchTransactions(): Promise<Transaction[]> {
+export const TRANSACTIONS_PAGE_SIZE = 50;
+
+type FetchTransactionsParams = {
+  monthKey?: string;
+  limit?: number;
+  cursor?: string;
+};
+
+function buildTransactionsQuery({
+  monthKey = getCurrentMonthKey(),
+  limit = TRANSACTIONS_PAGE_SIZE,
+  cursor,
+}: FetchTransactionsParams): string {
+  const { year, month } = splitMonthKey(monthKey);
+  const params = new URLSearchParams({
+    year: year.toString(),
+    month: month.toString(),
+    limit: limit.toString(),
+  });
+
+  if (cursor) {
+    params.set('cursor', cursor);
+  }
+
+  return params.toString();
+}
+
+export async function fetchTransactions({
+  monthKey = getCurrentMonthKey(),
+  limit = TRANSACTIONS_PAGE_SIZE,
+  cursor,
+}: FetchTransactionsParams): Promise<PaginatedTransactionsResponse> {
   try {
-    const res = await fetch('/api/transactions', {
+    const query = buildTransactionsQuery({ monthKey, limit, cursor });
+    const res = await fetch(`/api/transactions?${query}`, {
       method: 'GET',
     });
 
     if (!res.ok) {
       console.error('Error fetching transactions:', await res.text());
-      return [];
+      return { items: [] };
     }
 
-    return (await res.json()) as Transaction[];
+    return (await res.json()) as PaginatedTransactionsResponse;
   } catch (error) {
     console.error('Error fetching transactions:', error);
-    return [];
+    return { items: [] };
   }
 }
+
+export { buildTransactionsQuery };
 
 export async function createTransaction(
   transaction: Omit<Transaction, 'id'>,

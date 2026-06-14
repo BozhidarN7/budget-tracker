@@ -7,17 +7,17 @@ import type { Category, Goal, Transaction } from '@/types/budget';
 import { formatMonthKey, getLastNMonthKeys, parseDate } from '@/utils';
 
 type StatisticsInput = {
-  materializedTransactions: Transaction[];
+  loadedTransactions: Transaction[];
   categories: Category[];
   goals: Goal[];
 };
 
 export const getStatisticsData = ({
-  materializedTransactions,
+  loadedTransactions,
   categories,
   goals,
 }: StatisticsInput) => {
-  const transactions = materializedTransactions;
+  const transactions = loadedTransactions;
 
   const groupTransactionsByPeriod = (
     periodType: 'daily' | 'weekly' | 'monthly',
@@ -236,13 +236,13 @@ export const getStatisticsData = ({
 };
 
 export default function useStatisticsData() {
-  const { materializedTransactions, categories, goals } = useBudgetData();
+  const { loadedTransactions, categories, goals } = useBudgetData();
 
   return useMemo(() => {
     return getStatisticsData({
-      materializedTransactions,
+      loadedTransactions,
       categories,
       goals,
     });
-  }, [categories, goals, materializedTransactions]);
+  }, [categories, goals, loadedTransactions]);
 }

@@ -42,13 +42,13 @@ Key ideas:
 
 ## Budget data layer
 
-1. **Server fetch** — [`getInitialBudgetData`](src/server/budget-data.ts:38) reads Cognito tokens, performs three parallel fetches against the remote Budget API, and returns a discriminated union to avoid route-level crashes. Responses are cached with `next: { tags: [...] }` so that invalidations from API routes instantly refresh server-rendered data.
-2. **Provider** — [`BudgetDataProvider`](src/components/BudgetDatatProvider/BudgetDataProvider.tsx:18) calls the server loader and either hydrates [`BudgetProvider`](src/contexts/budget-context.tsx:70) with transactions/categories/goals or renders [`BudgetDataError`](src/components/Budget/BudgetDataError.tsx:25) (retry + offline fallback) if fetching fails.
-3. **Context** — [`BudgetProvider`](src/contexts/budget-context.tsx:70) stores canonical lists, exposes CRUD operations (transactions/categories/goals), tracks the selected month, and a `refetch` helper that pulls from client-side `/api/*` wrappers.
+1. **Server fetch** — [`getInitialBudgetData`](src/server/budget-data.ts:47) reads Cognito tokens, fetches the current month's first paginated `/transactions` page alongside recurring transactions, categories, and goals, and returns a discriminated union to avoid route-level crashes. Responses are cached with `next: { tags: [...] }` so that invalidations from API routes instantly refresh server-rendered data.
+2. **Provider** — [`BudgetDataProvider`](src/components/BudgetDatatProvider/BudgetDataProvider.tsx:20) calls the server loader and either hydrates [`BudgetProvider`](src/contexts/budget-context.tsx:159) with `currentMonth`, `transactionsPage`, categories, recurring transactions, and goals or renders [`BudgetDataError`](src/components/Budget/BudgetDataError.tsx:25) (retry + offline fallback) if fetching fails.
+3. **Context** — [`BudgetProvider`](src/contexts/budget-context.tsx:159) seeds `transactionsByMonth[currentMonth]` from the server page and exposes a single public `transactions` list derived from `transactionsByMonth[selectedMonth].items`. CRUD operations mutate that month-scoped cache directly for selected-month rows, while `refetch`, `ensureMonthTransactionsLoaded`, and `loadMoreTransactions` manage month-scoped pagination and stale refreshes.
 4. **Hooks** — Client hooks assemble consumable slices:
-   - [`useBudgetData`](src/hooks/use-budget-data.ts:11) merges context data with mock fallbacks, filters transactions by month, and produces derived metrics (totals, recent transactions, category limits, trends). It also orchestrates recurring instance generation via [`useRecurringInstances`](src/hooks/use-budget-data/use-recurring-instances.ts:16).
+   - [`useBudgetData`](src/hooks/use-budget-data.ts:15) merges context data with mock fallbacks and produces selected-month derived metrics (totals, recent transactions, category limits, trends) from the loaded transaction rows. It also orchestrates recurring instance generation via [`useRecurringInstances`](src/hooks/use-budget-data/use-recurring-instances.ts:16).
    - [`useRecurringInstances`](src/hooks/use-budget-data/use-recurring-instances.ts:16) builds virtual `Transaction` objects from active `RecurringTransaction` rules for the selected month. It deduplicates against real transactions by matching `recurrenceInstanceId` (`${recurring.id}-${occurrenceDate}`), ensuring `combinedTransactions` contains only a single representation per occurrence.
-    - [`useStatisticsData`](src/hooks/use-statistics-data.ts:8) keeps an unfiltered view, creating grouped datasets for charts, ratio cards, and projections.
+    - [`useStatisticsData`](src/hooks/use-statistics-data.ts:9) now builds grouped datasets for charts, ratio cards, and projections from the currently loaded selected-month rows, rather than a broader historical transaction dataset.
     - [`useCategoryChartController`](src/hooks/use-category-chart-controller.ts:61) powers the drill-down UX described in the charting plan.
 
 ### Category spend ownership
@@ -60,18 +60,18 @@ Key ideas:
 
 ## API layer & caching
 
-- `src/api/budget-tracker-api/*` contains client-side wrappers (`fetchTransactions`, `createGoal`, etc.) that talk to `/api/*` endpoints. They centralize JSON parsing and error handling for optimistic UI flows.
+- `src/api/budget-tracker-api/*` contains client-side wrappers (`fetchTransactions`, `createGoal`, etc.) that talk to `/api/*` endpoints. `fetchTransactions` always uses the paginated response contract (`items`, optional `nextCursor`) and defaults `month` to the current month for bootstrap-friendly callers.
 - App Router API routes (e.g., [`src/app/api/transactions/route.ts`](src/app/api/transactions/route.ts)) forward requests to the external REST API. They inject Cognito ID tokens into the Authorization header, proxy status codes, and trigger cache invalidation via `revalidateTag` when mutations succeed.
 - Cache tag constants live in [`src/constants/cache-tags.ts`](src/constants/cache-tags.ts); the server loader and API routes share them to keep SSR data synchronized with client writes.
 - [`src/constants/api.ts`](src/constants/api.ts) is the environment switchboard for AWS integrations. `NEXT_PUBLIC_AWS_ENVIRONMENT=dev` selects the dev API Gateway and dev Cognito identifiers for local runtime; any other value, including the default build path, resolves to prod.
 
 ## Feature surfaces
 
-- **Dashboard** stitches together cards, charts, and summaries. Client components read from `useBudgetData` and `useCategoryChartController` so interactions never trigger network calls unless CRUD is required.
-- **Transactions** use [`TransactionListWithFilters`](src/components/Transactions/TransactionListWithFilters/TransactionListWithFilters.tsx) plus [`useTransactionFilters`](src/hooks/use-transaction-filteres.ts:15) to perform purely client-side filtering on the selected month.
+- **Dashboard** stitches together cards, charts, and summaries. Client components read from `useBudgetData` and `useCategoryChartController`; derived metrics now intentionally reflect the currently loaded selected-month transaction rows unless a dedicated broader data source is introduced.
+- **Transactions** use [`TransactionListWithFilters`](src/components/Transactions/TransactionListWithFilters/TransactionListWithFilters.tsx) plus [`useTransactionFilters`](src/hooks/use-transaction-filteres.ts:15) to perform purely client-side filtering on the currently loaded selected-month `transactions` list. The `Load more` path appends into that same canonical list, so pagination and rendering now share a single source of truth.
 - **Categories & goals** expose CRUD flows composed of Radix dialogs (add/edit) and call the `/api/*` wrappers before updating the budget context.
 - **Categories** currently act as both user-managed budget limits and persisted monthly spend aggregates, so transaction operations can trigger follow-up category writes in addition to transaction writes.
-- **Statistics** rely on [`StatisticsView`](src/components/Statistics/StatisticsView/StatisticsView.tsx) and Recharts-driven widgets that consume `useStatisticsData` for daily/weekly/monthly aggregations, ratios, savings projections, and category breakdowns.
+- **Statistics** rely on [`StatisticsView`](src/components/Statistics/StatisticsView/StatisticsView.tsx) and Recharts-driven widgets that consume `useStatisticsData` for daily/weekly/monthly aggregations, ratios, savings projections, and category breakdowns derived from the selected month's loaded rows.
 - **Calendar** renders grouped transactions per day, reusing the same budget hook to avoid duplicate fetching.
 - **Settings** centralizes personalization controls (currently theme, notifications placeholder, etc.).
 

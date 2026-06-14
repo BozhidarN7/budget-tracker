@@ -1,4 +1,5 @@
-import type React from 'react';
+import type { MonthTransactionPageState } from './month-transactions';
+import { sortTransactionsByDateDesc } from './month-transactions';
 import type { Category, Transaction } from '@/types/budget';
 import {
   updateTransaction as apiUpdateTransaction,
@@ -8,6 +9,10 @@ import {
 import { updateCategory as apiUpdateCategory } from '@/api/budget-tracker-api/categories';
 import { formatMonthKey, parseDate } from '@/utils';
 import { initializeCategoryMonthData } from '@/utils/category-utils';
+
+function getMonthKey(transaction: Pick<Transaction, 'date'>) {
+  return formatMonthKey(parseDate(transaction.date));
+}
 
 // Normal transaction CRUD owns client-side category spend updates.
 // Recurring materialization updates category spend on the backend.
@@ -86,15 +91,29 @@ export const updateCategorySpending = async (
 export const createTransactionOperations = (
   transactions: Transaction[],
   categories: Category[],
-  setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>,
   setCategories: React.Dispatch<React.SetStateAction<Category[]>>,
   setError: (value: string | null) => void,
+  selectedMonth: string,
+  updateMonthState: (
+    month: string,
+    updater: (prev: MonthTransactionPageState) => MonthTransactionPageState,
+  ) => void,
+  markMonthStale: (month: string) => void,
 ) => {
   // Add transaction
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     try {
       const newTransaction = await createTransaction(transaction);
-      setTransactions((prev) => [...prev, newTransaction]);
+
+      if (getMonthKey(newTransaction) === selectedMonth) {
+        updateMonthState(selectedMonth, (prev) => ({
+          ...prev,
+          items: sortTransactionsByDateDesc([...prev.items, newTransaction]),
+          hasLoaded: prev.hasLoaded,
+        }));
+      } else {
+        markMonthStale(getMonthKey(newTransaction));
+      }
 
       // Update category spending and save to database
       const updatedCategories = await updateCategorySpending(
@@ -131,15 +150,36 @@ export const createTransactionOperations = (
       setCategories(categoriesAfterRemoval);
 
       const updatedTransaction = await apiUpdateTransaction(id, transaction);
-      setTransactions((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, ...updatedTransaction } : t)),
-      );
 
-      // Add spending to the new/updated category
       const mergedTransaction = {
         ...originalTransaction,
         ...updatedTransaction,
       } as Transaction;
+      const originalMonth = getMonthKey(originalTransaction);
+      const nextMonth = getMonthKey(mergedTransaction);
+
+      if (originalMonth === selectedMonth && nextMonth === selectedMonth) {
+        updateMonthState(selectedMonth, (prev) => ({
+          ...prev,
+          items: sortTransactionsByDateDesc(
+            prev.items.map((item) =>
+              item.id === id ? { ...item, ...mergedTransaction } : item,
+            ),
+          ),
+        }));
+      } else {
+        if (originalMonth === selectedMonth) {
+          updateMonthState(selectedMonth, (prev) => ({
+            ...prev,
+            items: prev.items.filter((item) => item.id !== id),
+          }));
+        }
+
+        markMonthStale(originalMonth);
+        markMonthStale(nextMonth);
+      }
+
+      // Add spending to the new/updated category
       const finalCategories = await updateCategorySpending(
         categoriesAfterRemoval,
         mergedTransaction,
@@ -163,7 +203,15 @@ export const createTransactionOperations = (
       }
 
       await deleteTransaction(id);
-      setTransactions((prev) => prev.filter((t) => t.id !== id));
+
+      if (getMonthKey(transaction) === selectedMonth) {
+        updateMonthState(selectedMonth, (prev) => ({
+          ...prev,
+          items: prev.items.filter((item) => item.id !== id),
+        }));
+      } else {
+        markMonthStale(getMonthKey(transaction));
+      }
 
       // Remove spending from the category and update database
       const updatedCategories = await updateCategorySpending(

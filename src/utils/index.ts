@@ -7,6 +7,7 @@ export { default as getLastNMonthKeys } from './get-last-n-month-keys';
 export { default as getPreviousMonthKey } from './get-previous-month-key';
 export { default as getToneColorClass } from './get-tone-color-class';
 export { default as parseDate } from './parse-date';
+export { default as splitMonthKey } from './split-month-key';
 export {
   buildRecurrenceInstances,
   buildInitialNextOccurrence,

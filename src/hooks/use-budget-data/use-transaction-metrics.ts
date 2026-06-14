@@ -5,9 +5,6 @@ import { formatMonthKey, parseDate } from '@/utils';
 type TransactionMetricsResult = {
   loadedTransactions: Transaction[];
   selectedMonthTransactions: Transaction[];
-  totalIncome: number;
-  totalExpenses: number;
-  netBalance: number;
   recentTransactions: Transaction[];
 };
 
@@ -24,16 +21,6 @@ export const getTransactionMetrics = (
     return transactionMonth === selectedMonth;
   });
 
-  const totalIncome = selectedMonthTransactions
-    .filter((transaction) => transaction.type === 'income')
-    .reduce((sum, transaction) => sum + transaction.amount, 0);
-
-  const totalExpenses = selectedMonthTransactions
-    .filter((transaction) => transaction.type === 'expense')
-    .reduce((sum, transaction) => sum + transaction.amount, 0);
-
-  const netBalance = totalIncome - totalExpenses;
-
   const recentTransactions = [...selectedMonthTransactions]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
@@ -41,9 +28,6 @@ export const getTransactionMetrics = (
   return {
     loadedTransactions,
     selectedMonthTransactions,
-    totalIncome,
-    totalExpenses,
-    netBalance,
     recentTransactions,
   };
 };

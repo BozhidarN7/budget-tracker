@@ -18,7 +18,7 @@ const buildTransaction = (
 };
 
 describe('useTransactionMetrics', () => {
-  it('calculates dashboard totals from loaded selected-month transactions only', () => {
+  it('returns selected-month preview data from loaded transactions only', () => {
     const loadedTransactions = [
       buildTransaction(),
       buildTransaction({
@@ -35,9 +35,6 @@ describe('useTransactionMetrics', () => {
 
     expect(result.loadedTransactions).toEqual(loadedTransactions);
     expect(result.selectedMonthTransactions).toEqual(loadedTransactions);
-    expect(result.totalIncome).toBe(1000);
-    expect(result.totalExpenses).toBe(200);
-    expect(result.netBalance).toBe(800);
     expect(
       result.recentTransactions.map((transaction) => transaction.id),
     ).toEqual(['txn-2', 'txn-1']);
@@ -67,7 +64,6 @@ describe('useTransactionMetrics', () => {
 
     const result = getTransactionMetrics(loadedTransactions, '2025-06');
 
-    expect(result.totalExpenses).toBe(1200);
     expect(result.selectedMonthTransactions).not.toContain(
       virtualRecurringInstance,
     );

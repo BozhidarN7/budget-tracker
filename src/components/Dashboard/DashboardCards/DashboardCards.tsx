@@ -5,64 +5,35 @@ import DashboardCardsSkeleton from '../DashboardCardsSkeleton';
 import { calculateTrend } from './utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useBudgetData, useCurrencyFormatter } from '@/hooks/';
-import type { Transaction } from '@/types/budget';
-import {
-  formatMonthKey,
-  getPreviousMonthKey,
-  getToneColorClass,
-  parseDate,
-} from '@/utils';
+import { getToneColorClass } from '@/utils';
 
 export default function DashboardCards() {
   const {
+    dashboardSummary,
     totalIncome,
     totalExpenses,
     netBalance,
-    loadedTransactions,
-    selectedMonth,
     isLoading,
   } = useBudgetData();
   const { formatCurrency } = useCurrencyFormatter();
 
-  const previousMonthKey = getPreviousMonthKey(selectedMonth);
-
-  const previousMonthTotals = loadedTransactions.reduce<{
-    income: number;
-    expenses: number;
-  }>(
-    (acc, transaction: Transaction) => {
-      const transactionMonth = formatMonthKey(parseDate(transaction.date));
-      if (transactionMonth !== previousMonthKey) {
-        return acc;
-      }
-
-      if (transaction.type === 'income') {
-        acc.income += transaction.amount;
-      } else if (transaction.type === 'expense') {
-        acc.expenses += transaction.amount;
-      }
-
-      return acc;
-    },
-    { income: 0, expenses: 0 },
-  );
-
-  const previousNetBalance =
-    previousMonthTotals.income - previousMonthTotals.expenses;
-
   const incomeTrend = calculateTrend(
     totalIncome,
-    previousMonthTotals.income,
+    dashboardSummary.previousMonth.income,
     'increase',
   );
 
   const expensesTrend = calculateTrend(
     totalExpenses,
-    previousMonthTotals.expenses,
+    dashboardSummary.previousMonth.expenses,
     'decrease',
   );
 
-  const netTrend = calculateTrend(netBalance, previousNetBalance, 'increase');
+  const netTrend = calculateTrend(
+    netBalance,
+    dashboardSummary.previousMonth.net,
+    'increase',
+  );
 
   if (isLoading) {
     return <DashboardCardsSkeleton />;

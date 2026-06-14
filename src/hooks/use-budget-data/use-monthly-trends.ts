@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { buildMonthlyTrendRange, buildMonthlyTrends } from './utils';
-import type { Transaction } from '@/types/budget';
+import { buildMonthlyTrendRange, getDashboardSummary } from './utils';
+import type { Category } from '@/types/budget';
 
 export const useMonthlyTrends = (
-  transactions: Transaction[],
+  categories: Category[],
   selectedMonth: string,
 ) => {
   const monthlyTrendRange = useMemo(() => {
@@ -11,8 +11,9 @@ export const useMonthlyTrends = (
   }, [selectedMonth]);
 
   const monthlyTrends = useMemo(() => {
-    return buildMonthlyTrends(transactions, monthlyTrendRange);
-  }, [monthlyTrendRange, transactions]);
+    return getDashboardSummary(categories, monthlyTrendRange, selectedMonth)
+      .monthlyTrends;
+  }, [categories, monthlyTrendRange, selectedMonth]);
 
   return {
     monthlyTrendRange,

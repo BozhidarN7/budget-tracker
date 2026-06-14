@@ -3,22 +3,21 @@
 import { useMemo } from 'react';
 import { format, startOfDay, startOfWeek, subDays, subWeeks } from 'date-fns';
 import useBudgetData from './use-budget-data';
+import { useStatisticsTransactions } from './use-statistics-transactions';
 import type { Category, Goal, Transaction } from '@/types/budget';
 import { formatMonthKey, getLastNMonthKeys, parseDate } from '@/utils';
 
 type StatisticsInput = {
-  loadedTransactions: Transaction[];
+  transactions: Transaction[];
   categories: Category[];
   goals: Goal[];
 };
 
 export const getStatisticsData = ({
-  loadedTransactions,
+  transactions,
   categories,
   goals,
 }: StatisticsInput) => {
-  const transactions = loadedTransactions;
-
   const groupTransactionsByPeriod = (
     periodType: 'daily' | 'weekly' | 'monthly',
     count: number,
@@ -235,14 +234,23 @@ export const getStatisticsData = ({
   };
 };
 
-export default function useStatisticsData() {
-  const { loadedTransactions, categories, goals } = useBudgetData();
+type UseStatisticsDataParams = {
+  initialTransactions?: Transaction[];
+};
+
+export default function useStatisticsData({
+  initialTransactions = [],
+}: UseStatisticsDataParams = {}) {
+  const { categories, goals } = useBudgetData();
+  const { data: transactions = [] } = useStatisticsTransactions({
+    initialTransactions,
+  });
 
   return useMemo(() => {
     return getStatisticsData({
-      loadedTransactions,
+      transactions,
       categories,
       goals,
     });
-  }, [categories, goals, loadedTransactions]);
+  }, [categories, goals, transactions]);
 }

@@ -1,4 +1,5 @@
 import StatisticsView from '@/components/Statistics/StatisticsView';
+import { getStatisticsTransactions } from '@/server/statistics-data';
 
 interface StatisticsPageProps {
   searchParams: Promise<{
@@ -10,6 +11,7 @@ export default async function StatisticsPage({
   searchParams,
 }: StatisticsPageProps) {
   const tab = (await searchParams).tab;
+  const initialTransactions = await getStatisticsTransactions();
 
   return (
     <div className="space-y-6">
@@ -18,7 +20,10 @@ export default async function StatisticsPage({
         Analyze your financial data with detailed charts and insights to make
         better budgeting decisions.
       </p>
-      <StatisticsView initialTab={tab} />
+      <StatisticsView
+        initialTab={tab}
+        initialTransactions={initialTransactions}
+      />
     </div>
   );
 }

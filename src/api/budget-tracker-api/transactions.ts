@@ -54,6 +54,24 @@ export async function fetchTransactions({
   }
 }
 
+export async function fetchAllTransactions(): Promise<Transaction[]> {
+  try {
+    const res = await fetch('/api/transactions/all', {
+      method: 'GET',
+    });
+
+    if (!res.ok) {
+      console.error('Error fetching all transactions:', await res.text());
+      return [];
+    }
+
+    return (await res.json()) as Transaction[];
+  } catch (error) {
+    console.error('Error fetching all transactions:', error);
+    return [];
+  }
+}
+
 export { buildTransactionsQuery };
 
 export async function createTransaction(

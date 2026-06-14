@@ -61,7 +61,7 @@ export default function RecentTransactions() {
       </div>
       <div className="flex justify-center">
         <Button variant="outline" asChild>
-          <Link href="/transactions">View All Transactions</Link>
+          <Link href="/dashboard/transactions">View All Transactions</Link>
         </Button>
       </div>
     </div>

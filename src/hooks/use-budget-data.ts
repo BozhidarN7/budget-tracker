@@ -2,6 +2,7 @@
 
 import {
   getCategoryLimits,
+  getDashboardSummary,
   getExpensesByCategory,
 } from './use-budget-data/utils/category-metrics';
 import { useBudgetSources } from './use-budget-data/use-budget-sources';
@@ -48,27 +49,30 @@ export default function useBudgetData() {
     recurringTransactions: data.recurringData,
   });
 
-  const {
-    loadedTransactions,
-    selectedMonthTransactions,
-    totalIncome,
-    totalExpenses,
-    netBalance,
-    recentTransactions,
-  } = useTransactionMetrics(data.transactionsData, selectedMonth);
+  const { loadedTransactions, selectedMonthTransactions, recentTransactions } =
+    useTransactionMetrics(data.transactionsData, selectedMonth);
 
   const { monthlyTrends } = useMonthlyTrends(
-    data.transactionsData,
+    data.categoriesData,
     selectedMonth,
   );
 
-  const { derivedCurrent, derivedTarget, primaryGoal, savingsProgress } =
-    useMonthlyGoals({
-      goals: data.goalsData,
-      isLoading: data.isLoading,
-      selectedMonth,
-      addGoal,
-    });
+  const dashboardSummary = getDashboardSummary(
+    data.categoriesData,
+    monthlyTrends.map((trend) => trend.monthKey),
+    selectedMonth,
+  );
+
+  const totalIncome = dashboardSummary.currentMonth.income;
+  const totalExpenses = dashboardSummary.currentMonth.expenses;
+  const netBalance = dashboardSummary.currentMonth.net;
+
+  const { derivedTarget, primaryGoal } = useMonthlyGoals({
+    goals: data.goalsData,
+    isLoading: data.isLoading,
+    selectedMonth,
+    addGoal,
+  });
 
   const expensesByCategory = getExpensesByCategory(
     data.categoriesData,
@@ -81,6 +85,9 @@ export default function useBudgetData() {
     totalExpenses,
     availableForSavings: netBalance,
   };
+
+  const savingsProgress =
+    derivedTarget > 0 ? (netBalance / derivedTarget) * 100 : 0;
 
   return {
     transactions: selectedMonthTransactions,
@@ -95,10 +102,11 @@ export default function useBudgetData() {
     netBalance,
     recentTransactions,
     expensesByCategory,
+    dashboardSummary,
     monthlyTrends,
     categoryLimits,
     savingsGoal: derivedTarget,
-    currentSavings: derivedCurrent,
+    currentSavings: netBalance,
     primaryGoal,
     savingsProgress,
     savingsBreakdown,

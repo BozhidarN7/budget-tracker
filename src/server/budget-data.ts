@@ -63,7 +63,7 @@ export async function getInitialBudgetData(): Promise<BudgetDataResult> {
     const currentMonth = getCurrentMonthKey();
     const { year, month } = splitMonthKey(currentMonth);
     const transactionsParams = new URLSearchParams({
-      yaer: year.toString(),
+      year: year.toString(),
       month: month.toString(),
       limit: TRANSACTIONS_PAGE_SIZE.toString(),
     });

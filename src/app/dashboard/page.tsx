@@ -1,3 +1,4 @@
+import { ViewTransition } from 'react';
 import DashboardCards from '@/components/Dashboard/DashboardCards';
 import ExpensesByCategorySummary from '@/components/Dashboard/ExpensesByCategorySummary';
 import MonthlyTrendsChart from '@/components/Dashboard/MonthlyTrendsChart';
@@ -6,6 +7,7 @@ import RecurringReminders from '@/components/Dashboard/RecurringReminders';
 import SavingsGoalProgress from '@/components/Dashboard/SavingsGoalProgress';
 import CategoryLimits from '@/components/Dashboard/CategoryLimits';
 import MonthSelector from '@/components/Dashboard/MonthSelector';
+import { TRANSACTIONS_LIST_DASHBOARD_TRANSACTIONS } from '@/constants';
 
 export default async function Dashboard() {
   return (
@@ -33,7 +35,9 @@ export default async function Dashboard() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <div className="bg-card rounded-lg border p-6 shadow-sm md:col-span-2">
           <h2 className="mb-4 text-xl font-semibold">Recent Transactions</h2>
-          <RecentTransactions />
+          <ViewTransition name={TRANSACTIONS_LIST_DASHBOARD_TRANSACTIONS}>
+            <RecentTransactions />
+          </ViewTransition>
         </div>
 
         <div className="space-y-6">

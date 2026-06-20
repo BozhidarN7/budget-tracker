@@ -1,8 +1,10 @@
 'use client';
 
+import { ViewTransition } from 'react';
 import TransactionFilters from '../TransactionFilters';
 import TransactionList from '../TransactionList';
 import { useBudgetData, useTransactionFilters } from '@/hooks/';
+import { TRANSACTIONS_LIST_DASHBOARD_TRANSACTIONS } from '@/constants';
 
 export default function TransactionListWithFilters() {
   const {
@@ -29,16 +31,18 @@ export default function TransactionListWithFilters() {
         onFilterChange={updateFilter}
         onClearFilters={clearFilters}
       />
-      <TransactionList
-        transactions={filteredTransactions}
-        isFilteredEmpty={isFilteredEmpty}
-        isLoading={isLoading || transactionPagination.isLoadingInitial}
-        isLoadingMore={transactionPagination.isLoadingMore}
-        hasMore={transactionPagination.hasMore}
-        loadMoreError={transactionPagination.error}
-        onLoadMore={loadMoreTransactions}
-        showLoadedFilterNote={hasFiltersApplied}
-      />
+      <ViewTransition name={TRANSACTIONS_LIST_DASHBOARD_TRANSACTIONS}>
+        <TransactionList
+          transactions={filteredTransactions}
+          isFilteredEmpty={isFilteredEmpty}
+          isLoading={isLoading || transactionPagination.isLoadingInitial}
+          isLoadingMore={transactionPagination.isLoadingMore}
+          hasMore={transactionPagination.hasMore}
+          loadMoreError={transactionPagination.error}
+          onLoadMore={loadMoreTransactions}
+          showLoadedFilterNote={hasFiltersApplied}
+        />
+      </ViewTransition>
     </div>
   );
 }

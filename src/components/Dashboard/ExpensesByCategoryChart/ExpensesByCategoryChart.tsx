@@ -1,7 +1,7 @@
 'use client';
 
 import { CalendarRange } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ViewTransition, useMemo, useState } from 'react';
 import {
   Cell,
   Pie,
@@ -33,6 +33,11 @@ import {
   formatPercentage,
   getLastNMonthKeys,
 } from '@/utils';
+import {
+  EXPENSES_BY_CATEGORY_CHART,
+  EXPENSES_BY_CATEGORY_LEGENG,
+  EXPENSES_BY_CATEGORY_TITLE,
+} from '@/constants';
 
 const VIEW_OPTIONS: ChartViewToggleOption[] = [
   { value: 'pie', label: 'Chart' },
@@ -141,15 +146,17 @@ export default function ExpensesByCategoryChart() {
       <Card>
         <CardHeader className="gap-4">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-            <div className="space-y-2">
-              <CardTitle className="text-base font-semibold">
-                Expenses by category
-              </CardTitle>
-              <p className="text-muted-foreground text-sm">
-                {readableMonth} · {controller.legendItems.length} categories
-                tracked
-              </p>
-            </div>
+            <ViewTransition name={EXPENSES_BY_CATEGORY_TITLE}>
+              <div className="space-y-2">
+                <CardTitle className="text-base font-semibold">
+                  Expenses by category
+                </CardTitle>
+                <p className="text-muted-foreground text-sm">
+                  {readableMonth} · {controller.legendItems.length} categories
+                  tracked
+                </p>
+              </div>
+            </ViewTransition>
 
             {headerActions}
           </div>
@@ -191,33 +198,35 @@ export default function ExpensesByCategoryChart() {
             <div className="gap-8 lg:grid lg:min-h-128 lg:grid-cols-[minmax(0,1fr)_320px]">
               <div className="space-y-4">
                 {viewMode === 'pie' ? (
-                  <div className="h-80 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={pieChartData}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={110}
-                          paddingAngle={1}
-                        >
-                          {pieChartData.map((slice) => (
-                            <Cell key={slice.name} fill={slice.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          content={
-                            <CategoryTooltipContent
-                              formatter={formatCurrency}
-                            />
-                          }
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
+                  <ViewTransition name={EXPENSES_BY_CATEGORY_CHART}>
+                    <div className="h-80 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={pieChartData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={110}
+                            paddingAngle={1}
+                          >
+                            {pieChartData.map((slice) => (
+                              <Cell key={slice.name} fill={slice.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            content={
+                              <CategoryTooltipContent
+                                formatter={formatCurrency}
+                              />
+                            }
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </ViewTransition>
                 ) : (
                   <div className="h-80 overflow-y-auto pr-2">
                     <ListView items={controller.legendItems} />
@@ -233,15 +242,17 @@ export default function ExpensesByCategoryChart() {
                 ) : null}
               </div>
 
-              <LegendPanel
-                items={controller.filteredLegendItems}
-                totalItems={controller.legendItems.length}
-                activeItems={activeLegendCount}
-                searchQuery={controller.searchQuery}
-                onSearchChange={controller.setSearchQuery}
-                onToggle={controller.toggleCategoryVisibility}
-                onOpenDetails={() => setIsDetailsOpen(true)}
-              />
+              <ViewTransition name={EXPENSES_BY_CATEGORY_LEGENG}>
+                <LegendPanel
+                  items={controller.filteredLegendItems}
+                  totalItems={controller.legendItems.length}
+                  activeItems={activeLegendCount}
+                  searchQuery={controller.searchQuery}
+                  onSearchChange={controller.setSearchQuery}
+                  onToggle={controller.toggleCategoryVisibility}
+                  onOpenDetails={() => setIsDetailsOpen(true)}
+                />
+              </ViewTransition>
             </div>
           )}
         </CardContent>

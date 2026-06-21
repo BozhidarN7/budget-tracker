@@ -69,8 +69,8 @@ export default function ExpensesByCategorySummary() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <ViewTransition name={EXPENSES_BY_CATEGORY_CHART}>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-56 min-w-0">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <PieChart>
                 <Pie
                   data={topCategories}

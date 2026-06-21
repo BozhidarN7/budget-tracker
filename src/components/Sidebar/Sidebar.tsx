@@ -52,6 +52,7 @@ export default function Sidebar() {
               alt="Financemore"
               className="h-auto w-full"
               fetchPriority="high"
+              loading="eager"
             />
           </Link>
         </div>
@@ -93,6 +94,7 @@ export default function Sidebar() {
               alt="Budget Tracker"
               className="h-auto w-full"
               fetchPriority="high"
+              loading="eager"
             />
           </Link>
         </div>

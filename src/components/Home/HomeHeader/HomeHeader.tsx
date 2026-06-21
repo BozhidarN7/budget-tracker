@@ -23,6 +23,7 @@ export default function HomeHeader({ links }: HomeHeaderProps) {
             alt="Financemore"
             className="h-auto w-full"
             fetchPriority="high"
+            loading="eager"
           />{' '}
         </Link>
         <p className="text-muted-foreground text-sm">

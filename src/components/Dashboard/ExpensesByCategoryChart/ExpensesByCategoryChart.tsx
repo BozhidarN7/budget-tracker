@@ -199,8 +199,12 @@ export default function ExpensesByCategoryChart() {
               <div className="space-y-4">
                 {viewMode === 'pie' ? (
                   <ViewTransition name={EXPENSES_BY_CATEGORY_CHART}>
-                    <div className="h-80 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
+                    <div className="h-80 w-full min-w-0">
+                      <ResponsiveContainer
+                        width="100%"
+                        height="100%"
+                        minWidth={0}
+                      >
                         <PieChart>
                           <Pie
                             data={pieChartData}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { startTransition, useCallback, useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchBudgetData } from './data-fetching';
 import {
@@ -69,10 +69,12 @@ export function useMonthTransactions({
       month: string,
       updater: (prev: MonthTransactionPageState) => MonthTransactionPageState,
     ) => {
-      setTransactionsByMonth((prev) => ({
-        ...prev,
-        [month]: updater(prev[month] ?? createEmptyMonthState()),
-      }));
+      startTransition(() => {
+        setTransactionsByMonth((prev) => ({
+          ...prev,
+          [month]: updater(prev[month] ?? createEmptyMonthState()),
+        }));
+      });
     },
     [],
   );

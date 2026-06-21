@@ -2,6 +2,7 @@
 
 import { CalendarIcon, Filter, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { startTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -20,7 +21,6 @@ import {
 import { cn } from '@/lib/utils';
 import { useBudgetData } from '@/hooks';
 import type { TransactionFilters as TransactionFiltersType } from '@/hooks/use-transaction-filteres';
-import { startTransition } from 'react';
 
 interface TransactionFiltersProps {
   filters: TransactionFiltersType;

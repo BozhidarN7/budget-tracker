@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { ViewTransition, startTransition, useState } from 'react';
 import CategoryListSkeleton from '../CategoryListSkeleton';
 import ExpenseCategoryList from '../ExpenseCategoryList';
 import IncomeCategoryList from '../IncomeCategoryList';
@@ -28,6 +28,12 @@ export default function CategoryList() {
     return <CategoryListSkeleton />;
   }
 
+  const handleMonthChange = (month: string) => {
+    startTransition(() => {
+      setSelectedMonth(month);
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
@@ -43,7 +49,7 @@ export default function CategoryList() {
             </TabsList>
 
             <div className="w-full md:w-auto">
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <Select value={selectedMonth} onValueChange={handleMonthChange}>
                 <SelectTrigger className="w-full md:w-[200px]">
                   <SelectValue placeholder="Select month" />
                 </SelectTrigger>
@@ -57,20 +63,21 @@ export default function CategoryList() {
               </Select>
             </div>
           </div>
+          <ViewTransition>
+            <TabsContent value="expense" className="mt-6">
+              <ExpenseCategoryList
+                categories={categories}
+                selectedMonth={selectedMonth}
+              />
+            </TabsContent>
 
-          <TabsContent value="expense" className="mt-6">
-            <ExpenseCategoryList
-              categories={categories}
-              selectedMonth={selectedMonth}
-            />
-          </TabsContent>
-
-          <TabsContent value="income" className="mt-6">
-            <IncomeCategoryList
-              categories={categories}
-              selectedMonth={selectedMonth}
-            />
-          </TabsContent>
+            <TabsContent value="income" className="mt-6">
+              <IncomeCategoryList
+                categories={categories}
+                selectedMonth={selectedMonth}
+              />
+            </TabsContent>
+          </ViewTransition>
         </Tabs>
       </div>
     </div>

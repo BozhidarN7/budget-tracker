@@ -43,6 +43,7 @@ export default function Sidebar() {
         <div className="flex items-center">
           <Link
             href="/dashboard"
+            transitionTypes={['nav-forward', 'nav-back']}
             className="flex items-center"
             onClick={() => setIsOpen(false)}
           >
@@ -83,6 +84,7 @@ export default function Sidebar() {
         <div className="hidden h-16 items-center border-b pr-2 md:flex">
           <Link
             href="/dashboard"
+            transitionTypes={['nav-forward', 'nav-back']}
             className="flex items-center"
             onClick={() => setIsOpen(false)}
           >
@@ -100,6 +102,7 @@ export default function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
+              transitionTypes={['nav-forward', 'nav-back']}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
                 pathname === item.href

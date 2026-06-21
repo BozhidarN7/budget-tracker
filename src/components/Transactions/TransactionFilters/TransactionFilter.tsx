@@ -20,6 +20,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useBudgetData } from '@/hooks';
 import type { TransactionFilters as TransactionFiltersType } from '@/hooks/use-transaction-filteres';
+import { startTransition } from 'react';
 
 interface TransactionFiltersProps {
   filters: TransactionFiltersType;
@@ -84,7 +85,9 @@ export default function TransactionFilters({
           </label>
           <Select
             value={filters.category}
-            onValueChange={(value) => onFilterChange('category', value)}
+            onValueChange={(value) =>
+              startTransition(() => onFilterChange('category', value))
+            }
           >
             <SelectTrigger id="category">
               <SelectValue placeholder="All Categories" />
@@ -109,7 +112,9 @@ export default function TransactionFilters({
           </label>
           <Select
             value={filters.type}
-            onValueChange={(value) => onFilterChange('type', value)}
+            onValueChange={(value) =>
+              startTransition(() => onFilterChange('type', value))
+            }
           >
             <SelectTrigger id="type">
               <SelectValue placeholder="All Types" />
@@ -147,7 +152,9 @@ export default function TransactionFilters({
                 <Calendar
                   mode="single"
                   selected={filters.dateFrom}
-                  onSelect={(date) => onFilterChange('dateFrom', date)}
+                  onSelect={(date) =>
+                    startTransition(() => onFilterChange('dateFrom', date))
+                  }
                   initialFocus
                 />
               </PopoverContent>
@@ -171,7 +178,9 @@ export default function TransactionFilters({
                 <Calendar
                   mode="single"
                   selected={filters.dateTo}
-                  onSelect={(date) => onFilterChange('dateTo', date)}
+                  onSelect={(date) =>
+                    startTransition(() => onFilterChange('dateTo', date))
+                  }
                   initialFocus
                 />
               </PopoverContent>
@@ -189,7 +198,9 @@ export default function TransactionFilters({
                 variant="ghost"
                 size="sm"
                 className="h-4 w-4 p-0"
-                onClick={() => onFilterChange('search', '')}
+                onClick={() =>
+                  startTransition(() => onFilterChange('search', ''))
+                }
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -202,7 +213,9 @@ export default function TransactionFilters({
                 variant="ghost"
                 size="sm"
                 className="h-4 w-4 p-0"
-                onClick={() => onFilterChange('category', 'all')}
+                onClick={() =>
+                  startTransition(() => onFilterChange('category', 'all'))
+                }
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -215,7 +228,9 @@ export default function TransactionFilters({
                 variant="ghost"
                 size="sm"
                 className="h-4 w-4 p-0"
-                onClick={() => onFilterChange('type', 'all')}
+                onClick={() =>
+                  startTransition(() => onFilterChange('type', 'all'))
+                }
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -228,7 +243,9 @@ export default function TransactionFilters({
                 variant="ghost"
                 size="sm"
                 className="h-4 w-4 p-0"
-                onClick={() => onFilterChange('dateFrom', undefined)}
+                onClick={() =>
+                  startTransition(() => onFilterChange('dateFrom', undefined))
+                }
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -241,7 +258,9 @@ export default function TransactionFilters({
                 variant="ghost"
                 size="sm"
                 className="h-4 w-4 p-0"
-                onClick={() => onFilterChange('dateTo', undefined)}
+                onClick={() =>
+                  startTransition(() => onFilterChange('dateTo', undefined))
+                }
               >
                 <X className="h-3 w-3" />
               </Button>

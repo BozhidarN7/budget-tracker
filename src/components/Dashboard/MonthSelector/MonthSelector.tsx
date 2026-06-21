@@ -1,5 +1,6 @@
 'use client';
 
+import { startTransition } from 'react';
 import { useBudgetContext } from '@/contexts/budget-context';
 import {
   Select,
@@ -23,7 +24,9 @@ export default function MonthSelector() {
       <Select
         value={selectedMonth}
         onValueChange={(month) => {
-          setSelectedMonth(month);
+          startTransition(() => {
+            setSelectedMonth(month);
+          });
           void ensureMonthTransactionsLoaded(month);
         }}
       >

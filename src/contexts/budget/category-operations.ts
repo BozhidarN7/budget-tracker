@@ -1,4 +1,5 @@
 import type React from 'react';
+import { startTransition } from 'react';
 import type { Category } from '@/types/budget';
 import {
   createCategory as apiCreateCategory,
@@ -92,7 +93,9 @@ export const createCategoryOperations = (
   const removeCategory = async (id: string) => {
     try {
       await deleteCategory(id);
-      setCategories((prev) => prev.filter((c) => c.id !== id));
+      startTransition(() => {
+        setCategories((prev) => prev.filter((c) => c.id !== id));
+      });
     } catch (err) {
       setError('Failed to delete category');
       throw err;

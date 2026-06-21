@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, ViewTransition } from 'react';
+import { ViewTransition, useState } from 'react';
 import { toast } from 'sonner';
 import { ArrowDown, ArrowUp, Edit, MoreHorizontal, Trash } from 'lucide-react';
 import EditTransactionDialog from '../EditTransactionDialog';

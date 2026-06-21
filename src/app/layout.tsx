@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
+import { ThemeProvider } from 'next-themes';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import ThemeProvider from '@/components/ThemeProvider';
 import { Toaster } from '@/components/ui/sonner';
 import QueryProvider from '@/components/QueryProvider';
 
@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <QueryProvider>
           <ThemeProvider

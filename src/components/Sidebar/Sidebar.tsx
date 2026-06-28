@@ -12,6 +12,7 @@ import {
   Menu,
   PieChart,
   Settings,
+  Sparkles,
   Target,
   X,
 } from 'lucide-react';
@@ -27,6 +28,7 @@ const navItems = [
   { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
   { name: 'Statistics', href: '/dashboard/statistics', icon: BarChart3 },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { name: 'AI Chat', href: '/dashboard/ai', icon: Sparkles },
 ];
 
 export default function Sidebar() {

@@ -1,4 +1,10 @@
 import type { UIDataTypes, UIMessage, UIMessagePart, UITools } from 'ai';
+import type {
+  PendingTransactionActionData,
+  PendingTransactionCandidate,
+  PendingTransactionData,
+  PendingTransactionStatus,
+} from '@/lib/ai-chat/pending-transaction';
 
 type MessageRole = UIMessage['role'];
 
@@ -25,8 +31,25 @@ type DisplayFallbackPart = {
   label: string;
 };
 
+export type DisplayPendingTransactionPart = {
+  candidateId: string;
+  kind: 'pending_transaction';
+  candidate: PendingTransactionCandidate;
+  status: PendingTransactionStatus;
+  errorMessage?: string;
+};
+
+export type DisplayPendingTransactionActionPart = {
+  action: 'cancel' | 'confirm';
+  actionId: string;
+  kind: 'pending_transaction_action';
+  targetMessageId: string;
+};
+
 export type DisplayMessagePart =
   | DisplayFallbackPart
+  | DisplayPendingTransactionActionPart
+  | DisplayPendingTransactionPart
   | DisplayTextPart
   | DisplayToolPart;
 
@@ -46,6 +69,18 @@ type ToolLikePart = Extract<
   state?: string;
   toolCallId?: string;
   errorText?: string;
+};
+
+type PendingTransactionDataPart = {
+  id?: string;
+  data: PendingTransactionData;
+  type: 'data-pendingTransactionCandidate';
+};
+
+type PendingTransactionActionDataPart = {
+  id?: string;
+  data: PendingTransactionActionData;
+  type: 'data-pendingTransactionAction';
 };
 
 export function normalizeMessages(messages: UIMessage[]): DisplayMessage[] {
@@ -96,12 +131,63 @@ function normalizeParts(parts: UIMessage['parts']): DisplayMessagePart[] {
       return [{ kind: 'fallback', label: `Custom content: ${part.kind}` }];
     }
 
+    if (part.type === 'data-pendingTransactionCandidate') {
+      const dataPart = part as PendingTransactionDataPart;
+
+      return [
+        {
+          candidateId:
+            dataPart.id ??
+            buildFallbackCandidateId(
+              dataPart.data.candidate,
+              dataPart.data.status,
+            ),
+          kind: 'pending_transaction',
+          candidate: dataPart.data.candidate,
+          status: dataPart.data.status,
+          ...(dataPart.data.errorMessage
+            ? {
+                errorMessage: dataPart.data.errorMessage,
+              }
+            : {}),
+        } satisfies DisplayPendingTransactionPart,
+      ];
+    }
+
+    if (part.type === 'data-pendingTransactionAction') {
+      const actionPart = part as PendingTransactionActionDataPart;
+
+      return [
+        {
+          action: actionPart.data.action,
+          actionId: actionPart.id ?? actionPart.data.actionId,
+          kind: 'pending_transaction_action',
+          targetMessageId: actionPart.data.targetMessageId,
+        } satisfies DisplayPendingTransactionActionPart,
+      ];
+    }
+
     return [{ kind: 'fallback', label: `Unsupported part: ${part.type}` }];
   });
 
   return normalizedParts.length > 0
     ? normalizedParts
     : [{ kind: 'fallback', label: 'No visible content' }];
+}
+
+function buildFallbackCandidateId(
+  candidate: PendingTransactionCandidate,
+  status: PendingTransactionStatus,
+) {
+  return [
+    candidate.type,
+    candidate.category,
+    candidate.amount.toFixed(2),
+    candidate.currency,
+    candidate.date,
+    candidate.description,
+    status,
+  ].join('|');
 }
 
 function normalizeToolPart(part: ToolLikePart): DisplayToolPart {

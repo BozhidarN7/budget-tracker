@@ -26,6 +26,8 @@
 - **Mock data:** [`src/mock`](src/mock) supplies transactions, categories, and goals when the backend is unreachable, ensuring consistent demos/offline states.
 - **Transactions contract:** `/transactions` is consumed as a cursor-paginated endpoint. The server bootstrap and client month-loading paths both request the current or selected month plus `limit`, and optionally `cursor`, instead of relying on a full-history transaction payload.
 - **Category spend integration:** normal transaction CRUD uses separate `/api/transactions*` and `/api/categories*` writes to keep `monthlyData.spent` in sync on the frontend, while recurring materialization is expected to update category spend on the backend.
+- **Shared AI chat contract:** pending-transaction message/data payloads are defined in `src/lib/ai-chat/pending-transaction.ts` and consumed by both `/api/chat` server code and client transcript normalization/hooks.
+- **Server category gateway:** reusable authenticated category fetch/validation now lives in `src/server/categories/*`; server code should use that layer rather than browser wrappers in `src/api/budget-tracker-api/categories.ts`.
 
 ## Commands
 
@@ -48,7 +50,8 @@
 - **Linting:** Extends `eslint-config-next` (core web vitals + TypeScript). Custom rules enforce max lines, import ordering, and unused-var suppression for `_` prefixes.
 - **Formatting:** Prettier prefers single quotes, semicolons, 80-character width, and integrates the Tailwind plugin for class sorting.
 - **Package management:** `package-lock.json` is checked in; Vercel builds set `NPM_FLAGS=--legacy-peer-deps` via [`vercel.json`](vercel.json).
-- **Testing:** Vitest is configured (`vitest.config.ts` with `@/*` path alias). Unit tests exist for recurrence utilities (`src/utils/recurrence.test.ts`), recurring-instance deduplication (`src/hooks/use-budget-data/use-recurring-instances.test.ts`), selected-month transaction metrics (`src/hooks/use-budget-data/use-transaction-metrics.test.ts`), and selected-month statistics derivations (`src/hooks/use-statistics-data.test.ts`). Playwright E2E coverage and broader hook/component tests remain to be added.
+- **Testing:** Vitest is configured (`vitest.config.ts` with `@/*` path alias). Unit tests exist for recurrence utilities (`src/utils/recurrence.test.ts`), recurring-instance deduplication (`src/hooks/use-budget-data/use-recurring-instances.test.ts`), selected-month transaction metrics (`src/hooks/use-budget-data/use-transaction-metrics.test.ts`), selected-month statistics derivations (`src/hooks/use-statistics-data.test.ts`), AI chat transcript routing/normalization (`src/app/api/chat/*.test.ts`, `src/components/AIChat/utils/normalize-message.test.ts`), and the shared category/transaction create flow (`src/server/categories/category-service.test.ts`, `src/server/transactions/create-transaction.test.ts`). Playwright E2E coverage and broader hook/component tests remain to be added.
+- **Typecheck caveat:** repo-wide `npm run ts:check` currently reports unrelated `RouteContext` errors in several `[id]` API routes, so targeted tests are the more reliable validation signal until those route typings are fixed.
 - **Documentation:** the current category spend reconciliation contract is captured in [`docs/backend-category-spend-reconciliation.md`](docs/backend-category-spend-reconciliation.md) and should be updated alongside any transaction or recurring-materialization contract changes.
 
 ## Deployment & hosting

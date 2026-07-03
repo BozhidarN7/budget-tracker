@@ -62,8 +62,15 @@ Key ideas:
 
 - `src/api/budget-tracker-api/*` contains client-side wrappers (`fetchTransactions`, `createGoal`, etc.) that talk to `/api/*` endpoints. `fetchTransactions` always uses the paginated response contract (`items`, optional `nextCursor`) and defaults `month` to the current month for bootstrap-friendly callers.
 - App Router API routes (e.g., [`src/app/api/transactions/route.ts`](src/app/api/transactions/route.ts)) forward requests to the external REST API. They inject Cognito ID tokens into the Authorization header, proxy status codes, and trigger cache invalidation via `revalidateTag` when mutations succeed.
+- Transaction creation now has a single HTTP entry point: [`src/app/api/transactions/route.ts`](src/app/api/transactions/route.ts) delegates POST requests to [`createTransactionWithCategorySync`](src/server/transactions/create-transaction.ts), and AI chat confirmation reuses that same route instead of maintaining a separate `/api/chat/confirm-transaction` endpoint.
 - Cache tag constants live in [`src/constants/cache-tags.ts`](src/constants/cache-tags.ts); the server loader and API routes share them to keep SSR data synchronized with client writes.
 - [`src/constants/api.ts`](src/constants/api.ts) is the environment switchboard for AWS integrations. `NEXT_PUBLIC_AWS_ENVIRONMENT=dev` selects the dev API Gateway and dev Cognito identifiers for local runtime; any other value, including the default build path, resolves to prod.
+
+## Shared server domains
+
+- Reusable server-side category access now lives under [`src/server/categories`](src/server/categories). That module owns authenticated category fetches against `${API_BASE_URL}/categorys` plus canonical validation outcomes (`ok`, `not_found`, `ambiguous`, `type_mismatch`).
+- [`src/server/budget-data.ts`](src/server/budget-data.ts) is back to bootstrap-loader ownership only; generic `fetchCategories()` was removed so other features do not depend on budget bootstrap internals.
+- Shared AI chat pending-transaction message contracts now live in [`src/lib/ai-chat/pending-transaction.ts`](src/lib/ai-chat/pending-transaction.ts), allowing `/api/chat` and the client normalization/hooks to share one type/source-of-truth without importing server-only modules into the client.
 
 ## Feature surfaces
 
@@ -71,6 +78,7 @@ Key ideas:
 - **Transactions** use [`TransactionListWithFilters`](src/components/Transactions/TransactionListWithFilters/TransactionListWithFilters.tsx) plus [`useTransactionFilters`](src/hooks/use-transaction-filteres.ts:15) to perform purely client-side filtering on the currently loaded selected-month `transactions` list. The `Load more` path appends into that same canonical list, so pagination and rendering now share a single source of truth.
 - **Categories & goals** expose CRUD flows composed of Radix dialogs (add/edit) and call the `/api/*` wrappers before updating the budget context.
 - **Categories** currently act as both user-managed budget limits and persisted monthly spend aggregates, so transaction operations can trigger follow-up category writes in addition to transaction writes.
+- **AI chat** is split between a thin coordinator route (`src/app/api/chat/route.ts`), transcript/pending-state helpers, shared pending-transaction contracts, and the server category gateway. The client still mutates transcript message parts locally for confirm/cancel flows, but confirmation persistence now goes through the same `/api/transactions` contract as the rest of the app.
 - **Statistics** rely on [`StatisticsView`](src/components/Statistics/StatisticsView/StatisticsView.tsx) and Recharts-driven widgets that consume `useStatisticsData` for daily/weekly/monthly aggregations, ratios, savings projections, and category breakdowns derived from the selected month's loaded rows.
 - **Calendar** renders grouped transactions per day, reusing the same budget hook to avoid duplicate fetching.
 - **Settings** centralizes personalization controls (currently theme, notifications placeholder, etc.).

@@ -1,15 +1,11 @@
 'use client';
 
-import { useChat } from '@ai-sdk/react';
-import { DefaultChatTransport, type UIMessage } from 'ai';
 import { Bot, LoaderCircle, MessageSquarePlus } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
 import Composer from '../Composer';
 import EmptyState from '../EmptyState';
 import MessageList from '../MessageList';
 import PromptSuggestions from '../PromptSuggestions';
-import type { DisplayMessage } from '../utils/normalize-message';
-import { normalizeMessages } from '../utils/normalize-message';
+import { useAiChatClient } from './hooks';
 import { Button } from '@/components/ui/button';
 
 const PROMPT_SUGGESTIONS = [
@@ -43,87 +39,23 @@ const PROMPT_SUGGESTIONS = [
   },
 ];
 
-const AUTO_SCROLL_RESUME_THRESHOLD_PX = 96;
-
-const isNearBottom = (element: HTMLDivElement) => {
-  const distanceFromBottom =
-    element.scrollHeight - element.scrollTop - element.clientHeight;
-
-  return distanceFromBottom <= AUTO_SCROLL_RESUME_THRESHOLD_PX;
-};
-
 export default function AIChatClient() {
-  const { messages, sendMessage, setMessages, status, stop, error } = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-    }),
-  });
-  const [input, setInput] = useState('');
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const normalizedMessages = useMemo<DisplayMessage[]>(() => {
-    return normalizeMessages(messages as UIMessage[]);
-  }, [messages]);
-  const isStreaming = status === 'submitted' || status === 'streaming';
-
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) {
-      return;
-    }
-
-    const handleScroll = () => {
-      setShouldAutoScroll(isNearBottom(scrollContainer));
-    };
-
-    handleScroll();
-    scrollContainer.addEventListener('scroll', handleScroll, {
-      passive: true,
-    });
-
-    return () => {
-      scrollContainer.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer || !shouldAutoScroll) {
-      return;
-    }
-
-    scrollContainer.scrollTo({
-      top: scrollContainer.scrollHeight,
-      behavior: 'smooth',
-    });
-  }, [normalizedMessages, shouldAutoScroll]);
-
-  const handleSubmit = () => {
-    const trimmedInput = input.trim();
-    if (trimmedInput.length === 0) {
-      return;
-    }
-
-    setShouldAutoScroll(true);
-    sendMessage({ text: trimmedInput });
-    setInput('');
-  };
-
-  const handleSuggestion = (prompt: string, action: 'prefill' | 'send') => {
-    if (action === 'prefill') {
-      setInput(prompt);
-      return;
-    }
-
-    setShouldAutoScroll(true);
-    sendMessage({ text: prompt });
-  };
-
-  const handleNewChat = () => {
-    stop();
-    setMessages([]);
-    setInput('');
-  };
+  const {
+    confirmingMessageId,
+    error,
+    handleCancelPendingTransaction,
+    handleConfirmPendingTransaction,
+    handleNewChat,
+    handleSubmit,
+    handleSuggestion,
+    input,
+    isStreaming,
+    normalizedMessages,
+    scrollContainerRef,
+    setInput,
+    status,
+    stop,
+  } = useAiChatClient();
 
   return (
     <section
@@ -181,14 +113,17 @@ export default function AIChatClient() {
             </div>
           ) : (
             <MessageList
+              confirmingMessageId={confirmingMessageId}
               messages={normalizedMessages}
+              onCancelPendingTransaction={handleCancelPendingTransaction}
+              onConfirmPendingTransaction={handleConfirmPendingTransaction}
               errorMessage={error?.message}
               isStreaming={isStreaming}
             />
           )}
         </div>
 
-        <div className="bg-background/95 supports-[backdrop-filter]:bg-background/80 border-t px-4 py-4 backdrop-blur sm:px-6">
+        <div className="bg-background/95 supports-backdrop-filter:bg-background/80 border-t px-4 py-4 backdrop-blur sm:px-6">
           <div className="mx-auto w-full max-w-4xl">
             <div className="mb-3">
               <PromptSuggestions

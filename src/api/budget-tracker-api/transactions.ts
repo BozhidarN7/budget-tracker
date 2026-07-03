@@ -1,4 +1,5 @@
 import type {
+  Category,
   PaginatedTransactionsResponse,
   Transaction,
 } from '@/types/budget';
@@ -74,9 +75,16 @@ export async function fetchAllTransactions(): Promise<Transaction[]> {
 
 export { buildTransactionsQuery };
 
+export type CreateTransactionResponse = {
+  canonicalCategoryName: string;
+  categories: Category[];
+  category: Category;
+  transaction: Transaction;
+};
+
 export async function createTransaction(
   transaction: Omit<Transaction, 'id'>,
-): Promise<Transaction> {
+): Promise<CreateTransactionResponse> {
   try {
     const res = await fetch('/api/transactions', {
       method: 'POST',
@@ -90,7 +98,7 @@ export async function createTransaction(
       throw new Error(`Error creating transaction: ${res.statusText}`);
     }
 
-    return (await res.json()) as Transaction;
+    return (await res.json()) as CreateTransactionResponse;
   } catch (error) {
     console.error('Error creating transaction:', error);
     throw error;

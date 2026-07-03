@@ -1,88 +1,174 @@
-import { UIMessage, convertToModelMessages, streamText, tool } from 'ai';
-import { ollama } from 'ai-sdk-ollama';
-import z from 'zod';
-import { createTransaction } from '@/api/budget-tracker-api/transactions';
-import { API_BASE_URL } from '@/constants/api';
-import { getTokensFromCookies } from '@/server/auth';
-
-async function buildAuthHeaders() {
-  const tokens = await getTokensFromCookies();
-  if (!tokens?.idToken) {
-    return null;
-  }
-
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${tokens.idToken}`,
-  };
-}
+import {
+  type ChatMessage,
+  buildGeneralConversationResponse,
+  buildPendingResolutionMessage,
+  buildPendingTransactionSummary,
+  canonicalizeCandidateCategory,
+  createStructuredResponse,
+  extractLastUserText,
+  isLikelyTransactionIntent,
+  toUiStreamResponse,
+} from './chat-response';
+import {
+  classifyPendingTransactionIntent,
+  findLatestUnresolvedPendingTransaction,
+} from './pending-transaction-state';
+import {
+  extractTransactionCandidate,
+  extractTransactionPatch,
+  getMissingFields,
+  isCompleteCandidate,
+} from './transaction-candidate-extraction';
+import { fetchServerCategories } from '@/server/categories';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
-const tools = {
-  addTransaction: tool({
-    description:
-      'Add new transaction. Use this tool when the user wants to add/create a new transaction',
-    inputSchema: z.object({
-      type: z.enum(['income', 'expense']),
-      amount: z.number(),
-      category: z
-        .string()
-        .describe('The category to which the transaction should belong'),
-      date: z
-        .string()
-        .describe(
-          'The date that the transaction occuer. Format is MMM d, yyyy',
-        ),
-      description: z
-        .string()
-        .describe('More information about the transaction'),
-      currency: z.enum(['EUR', 'BGN', 'USD', 'GBP']),
-    }),
-    inputExamples: [
-      {
-        input: {
-          type: 'expense',
-          amount: 20,
-          category: 'Food',
-          date: 'Jun 16, 2026',
-          description: 'Lidl',
-          currency: 'EUR',
-        },
-      },
-    ],
-    execute: async (transaction) => {
-      const headers = await buildAuthHeaders();
-      if (!headers) {
-        throw new Error('Unauthenticated');
-      }
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/transactions`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(transaction),
-        });
-
-        const newTransaction = await res.json();
-        return newTransaction;
-      } catch (err) {
-        throw err;
-      }
-    },
-  }),
-};
-
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const { messages }: { messages: ChatMessage[] } = await req.json();
+  const categories = await fetchServerCategories().catch(() => []);
+  const latestText = extractLastUserText(messages);
+  const activePending = findLatestUnresolvedPendingTransaction(messages);
+  const pendingIntent = activePending
+    ? await classifyPendingTransactionIntent(latestText)
+    : null;
 
-  const result = streamText({
-    model: ollama('gemma4:e4b'),
-    system: 'You are a helpful assistant.',
-    messages: await convertToModelMessages(messages),
-    tools,
+  if (latestText.length === 0) {
+    const result = await buildGeneralConversationResponse(categories, messages);
+
+    return toUiStreamResponse(messages, result);
+  }
+
+  if (pendingIntent?.intent === 'confirm') {
+    if (!activePending) {
+      return createStructuredResponse(messages, {
+        text: 'There is no pending transaction to confirm.',
+      });
+    }
+
+    if (pendingIntent.hasConflictingIntent) {
+      return createStructuredResponse(messages, {
+        text: 'I detected both confirmation and an edit request. Send either a pure confirmation or a separate edit first.',
+      });
+    }
+
+    return createStructuredResponse(messages, {
+      action: {
+        action: 'confirm',
+        actionId: crypto.randomUUID(),
+        targetMessageId: activePending.messageId,
+      },
+      text: 'Confirming the pending transaction now.',
+    });
+  }
+
+  if (pendingIntent?.intent === 'cancel') {
+    if (!activePending) {
+      return createStructuredResponse(messages, {
+        text: 'There is no pending transaction to cancel.',
+      });
+    }
+
+    return createStructuredResponse(messages, {
+      action: {
+        action: 'cancel',
+        actionId: crypto.randomUUID(),
+        targetMessageId: activePending.messageId,
+      },
+      text: 'Cancelling the pending transaction now.',
+    });
+  }
+
+  if (activePending) {
+    if (pendingIntent?.intent !== 'edit') {
+      return createStructuredResponse(messages, {
+        text: 'You already have a pending transaction draft. Confirm it, cancel it, or send an edit like "change amount to 25" before creating another one.',
+      });
+    }
+
+    const patch = await extractTransactionPatch(latestText);
+
+    if (Object.keys(patch).length === 0) {
+      return createStructuredResponse(messages, {
+        text: 'I could not determine what to change. Specify at least one field, such as amount, category, date, currency, type, or description.',
+      });
+    }
+
+    const mergedCandidate = {
+      ...activePending.candidate,
+      ...patch,
+    };
+    const {
+      candidate: candidateWithCanonicalCategory,
+      invalidCategoryMessage,
+    } = canonicalizeCandidateCategory(categories, mergedCandidate);
+    const missingFields = getMissingFields(candidateWithCanonicalCategory);
+
+    if (invalidCategoryMessage || missingFields.length > 0) {
+      return toUiStreamResponse(
+        messages,
+        buildPendingResolutionMessage(
+          categories,
+          candidateWithCanonicalCategory,
+          invalidCategoryMessage,
+          missingFields,
+        ),
+      );
+    }
+
+    if (!isCompleteCandidate(candidateWithCanonicalCategory)) {
+      return createStructuredResponse(messages, {
+        text: 'The updated draft is still incomplete. Provide any remaining required fields before confirmation.',
+      });
+    }
+
+    return createStructuredResponse(messages, {
+      pendingCandidate: {
+        candidate: candidateWithCanonicalCategory,
+        candidateId: activePending.candidateId,
+        status: 'awaiting_confirmation',
+      },
+      text: `Updated pending transaction. ${buildPendingTransactionSummary(candidateWithCanonicalCategory)}`,
+    });
+  }
+
+  const candidate = await extractTransactionCandidate(latestText);
+  const { candidate: candidateWithCanonicalCategory, invalidCategoryMessage } =
+    canonicalizeCandidateCategory(categories, candidate);
+  const missingFields = getMissingFields(candidateWithCanonicalCategory);
+  const hasCandidateFields =
+    Object.keys(candidateWithCanonicalCategory).length > 0;
+
+  if (!hasCandidateFields && !isLikelyTransactionIntent(latestText)) {
+    const result = await buildGeneralConversationResponse(categories, messages);
+
+    return toUiStreamResponse(messages, result);
+  }
+
+  if (invalidCategoryMessage || missingFields.length > 0) {
+    return toUiStreamResponse(
+      messages,
+      buildPendingResolutionMessage(
+        categories,
+        candidateWithCanonicalCategory,
+        invalidCategoryMessage,
+        missingFields,
+      ),
+    );
+  }
+
+  if (!isCompleteCandidate(candidateWithCanonicalCategory)) {
+    return createStructuredResponse(messages, {
+      text: 'I still need all required transaction fields before preparing a pending draft.',
+    });
+  }
+
+  return createStructuredResponse(messages, {
+    pendingCandidate: {
+      candidate: candidateWithCanonicalCategory,
+      candidateId: crypto.randomUUID(),
+      status: 'awaiting_confirmation',
+    },
+    text: buildPendingTransactionSummary(candidateWithCanonicalCategory),
   });
-
-  return result.toUIMessageStreamResponse();
 }

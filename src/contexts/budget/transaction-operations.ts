@@ -8,79 +8,47 @@ import {
 } from '@/api/budget-tracker-api/transactions';
 import { updateCategory as apiUpdateCategory } from '@/api/budget-tracker-api/categories';
 import { formatMonthKey, parseDate } from '@/utils';
-import { initializeCategoryMonthData } from '@/utils/category-utils';
+import { applyCategorySpendChange } from '@/utils/transactions/apply-category-spend-change';
 
 function getMonthKey(transaction: Pick<Transaction, 'date'>) {
   return formatMonthKey(parseDate(transaction.date));
 }
 
-// Normal transaction CRUD owns client-side category spend updates.
+// Transaction update/delete operations still own client-side category spend updates.
+// Add operations now trust the server mutation response as source of truth.
 // Recurring materialization updates category spend on the backend.
 export const updateCategorySpending = async (
   categories: Category[],
   transaction: Transaction,
   isAdding = true,
 ): Promise<Category[]> => {
-  const { category: categoryName, amount, type, date } = transaction;
-  const transactionDate = parseDate(date);
-  const monthKey = formatMonthKey(transactionDate);
-
-  // First, create an updated categories array for the local state
-  const updatedCategories = categories.map((category) => {
-    if (category.name === categoryName && category.type === type) {
-      const monthlyData = { ...category.monthlyData };
-
-      // Initialize month data if it doesn't exist
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = initializeCategoryMonthData(category, monthKey);
-      }
-
-      // Update spent amount
-      const currentSpent = monthlyData[monthKey].spent || 0;
-      monthlyData[monthKey] = {
-        ...monthlyData[monthKey],
-        spent: isAdding ? currentSpent + amount : currentSpent - amount,
-      };
-
-      return {
-        ...category,
-        monthlyData,
-      };
-    }
-    return category;
-  });
-
-  // Then, find the category that needs to be updated in the database
-  const categoryToUpdate = categories.find(
-    (c) => c.name === categoryName && c.type === type,
+  const updatedCategories = categories.map((category) =>
+    applyCategorySpendChange(
+      category,
+      transaction,
+      isAdding ? 'add' : 'remove',
+    ),
   );
+
+  const categoryToUpdate = categories.find(
+    (c) => c.name === transaction.category && c.type === transaction.type,
+  );
+
   if (categoryToUpdate) {
     try {
-      const monthlyData = { ...categoryToUpdate.monthlyData };
+      const updatedCategory = updatedCategories.find(
+        (category) => category.id === categoryToUpdate.id,
+      );
 
-      // Initialize month data if it doesn't exist
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = initializeCategoryMonthData(
-          categoryToUpdate,
-          monthKey,
-        );
+      if (!updatedCategory) {
+        return updatedCategories;
       }
 
-      // Update spent amount
-      const currentSpent = monthlyData[monthKey].spent || 0;
-      monthlyData[monthKey] = {
-        ...monthlyData[monthKey],
-        spent: isAdding ? currentSpent + amount : currentSpent - amount,
-      };
-
-      // Call the API to update the category in the database
       await apiUpdateCategory(categoryToUpdate.id, {
-        monthlyData,
+        monthlyData: updatedCategory.monthlyData,
       });
     } catch (error) {
       console.error('Failed to update category in database:', error);
-      // Don't throw the error here to prevent transaction operations from failing
-      // Just log it and continue
     }
   }
 
@@ -103,7 +71,8 @@ export const createTransactionOperations = (
   // Add transaction
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     try {
-      const newTransaction = await createTransaction(transaction);
+      const createResult = await createTransaction(transaction);
+      const newTransaction = createResult.transaction;
 
       if (getMonthKey(newTransaction) === selectedMonth) {
         updateMonthState(selectedMonth, (prev) => ({
@@ -115,12 +84,7 @@ export const createTransactionOperations = (
         markMonthStale(getMonthKey(newTransaction));
       }
 
-      // Update category spending and save to database
-      const updatedCategories = await updateCategorySpending(
-        categories,
-        newTransaction as Transaction,
-      );
-      setCategories(updatedCategories);
+      setCategories(createResult.categories);
 
       return newTransaction;
     } catch (err) {

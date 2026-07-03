@@ -1,4 +1,5 @@
 import { Bot, User } from 'lucide-react';
+import { PendingTransactionCard } from '../PendingTransactionCard';
 import ToolEventCard from '../ToolEventCard';
 import type {
   DisplayMessage,
@@ -7,10 +8,18 @@ import type {
 import { cn } from '@/lib/utils';
 
 type MessageItemProps = {
+  isConfirming?: boolean;
   message: DisplayMessage;
+  onCancelPendingTransaction?: () => void;
+  onConfirmPendingTransaction?: (messageId: string) => void;
 };
 
-export default function MessageItem({ message }: MessageItemProps) {
+export default function MessageItem({
+  isConfirming,
+  message,
+  onCancelPendingTransaction,
+  onConfirmPendingTransaction,
+}: MessageItemProps) {
   const isUser = message.role === 'user';
 
   return (
@@ -49,7 +58,14 @@ export default function MessageItem({ message }: MessageItemProps) {
 
           <div className="space-y-3">
             {message.parts.map((part, index) => (
-              <MessagePartRenderer key={`${message.id}-${index}`} part={part} />
+              <MessagePartRenderer
+                key={`${message.id}-${index}`}
+                isConfirming={isConfirming}
+                messageId={message.id}
+                onCancelPendingTransaction={onCancelPendingTransaction}
+                onConfirmPendingTransaction={onConfirmPendingTransaction}
+                part={part}
+              />
             ))}
           </div>
         </div>
@@ -64,13 +80,42 @@ export default function MessageItem({ message }: MessageItemProps) {
   );
 }
 
-function MessagePartRenderer({ part }: { part: DisplayMessagePart }) {
+function MessagePartRenderer({
+  isConfirming,
+  messageId,
+  onCancelPendingTransaction,
+  onConfirmPendingTransaction,
+  part,
+}: {
+  isConfirming?: boolean;
+  messageId: string;
+  onCancelPendingTransaction?: () => void;
+  onConfirmPendingTransaction?: (messageId: string) => void;
+  part: DisplayMessagePart;
+}) {
   if (part.kind === 'text') {
     return <p className="text-sm leading-6 whitespace-pre-wrap">{part.text}</p>;
   }
 
+  if (part.kind === 'pending_transaction') {
+    return (
+      <PendingTransactionCard
+        candidate={part.candidate}
+        errorMessage={part.errorMessage}
+        isConfirming={isConfirming}
+        onCancel={onCancelPendingTransaction}
+        onConfirm={() => onConfirmPendingTransaction?.(messageId)}
+        status={part.status}
+      />
+    );
+  }
+
   if (part.kind === 'tool') {
     return <ToolEventCard part={part} />;
+  }
+
+  if (part.kind === 'pending_transaction_action') {
+    return null;
   }
 
   return (

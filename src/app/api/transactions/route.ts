@@ -1,8 +1,11 @@
-import { revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { API_BASE_URL } from '@/constants/api';
 import { getTokensFromCookies } from '@/server/auth';
-import { CACHE_TAGS } from '@/constants';
+import {
+  CreateTransactionError,
+  createTransactionInputSchema,
+  createTransactionWithCategorySync,
+} from '@/server/transactions/create-transaction';
 
 async function buildAuthHeaders() {
   const tokens = await getTokensFromCookies();
@@ -37,28 +40,30 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const headers = await buildAuthHeaders();
-  if (!headers) {
-    return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
-  }
+  try {
+    const body = await request.json();
+    const input = createTransactionInputSchema.parse(body);
+    const result = await createTransactionWithCategorySync(input);
 
-  const body = await request.text();
-
-  const res = await fetch(`${API_BASE_URL}/transactions`, {
-    method: 'POST',
-    headers,
-    body,
-  });
-
-  const data = await res.json().catch(() => null);
-
-  if (res.ok) {
-    try {
-      revalidateTag(CACHE_TAGS.budget.transactions, { expire: 0 });
-    } catch (error) {
-      console.warn('Failed to revalidate cache:', error);
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    if (error instanceof CreateTransactionError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
     }
-  }
 
-  return NextResponse.json(data, { status: res.status });
+    if (error instanceof Error && error.name === 'ZodError') {
+      return NextResponse.json(
+        { error: 'Invalid transaction payload' },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Failed to create transaction' },
+      { status: 500 },
+    );
+  }
 }

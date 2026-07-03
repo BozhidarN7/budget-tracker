@@ -1,4 +1,3 @@
-import { getTokensFromCookies } from '@/server/auth';
 import { API_BASE_URL } from '@/constants/api';
 import { TRANSACTIONS_PAGE_SIZE } from '@/api/budget-tracker-api/transactions';
 import type {
@@ -8,6 +7,7 @@ import type {
   RecurringTransaction,
 } from '@/types/budget';
 import { CACHE_TAGS } from '@/constants';
+import { getTokensFromCookies } from '@/server/auth';
 import { getCurrentMonthKey, splitMonthKey } from '@/utils';
 
 export interface BudgetData {

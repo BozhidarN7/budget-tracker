@@ -4,20 +4,32 @@ import type { DisplayMessage } from '../utils/normalize-message';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type MessageListProps = {
+  confirmingMessageId?: string | null;
   messages: DisplayMessage[];
+  onCancelPendingTransaction?: () => void;
+  onConfirmPendingTransaction?: (messageId: string) => void;
   errorMessage?: string;
   isStreaming: boolean;
 };
 
 export default function MessageList({
+  confirmingMessageId,
   messages,
+  onCancelPendingTransaction,
+  onConfirmPendingTransaction,
   errorMessage,
   isStreaming,
 }: MessageListProps) {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
       {messages.map((message) => (
-        <MessageItem key={message.id} message={message} />
+        <MessageItem
+          key={message.id}
+          isConfirming={confirmingMessageId === message.id}
+          message={message}
+          onCancelPendingTransaction={onCancelPendingTransaction}
+          onConfirmPendingTransaction={onConfirmPendingTransaction}
+        />
       ))}
 
       {isStreaming ? (

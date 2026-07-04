@@ -16,7 +16,7 @@ export async function getStatisticsTransactions(): Promise<Transaction[]> {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${tokens.idToken}`,
       },
-      cache: 'no-store',
+      cache: 'force-cache',
     });
 
     if (!res.ok) {

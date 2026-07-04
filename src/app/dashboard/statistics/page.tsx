@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import FallbackLoader from '@/components/FallbackLoader';
 import StatisticsView from '@/components/Statistics/StatisticsView';
 import ViewTransitionPage from '@/components/ViewTransitionPage';
 import { getStatisticsTransactions } from '@/server/statistics-data';
@@ -11,9 +13,6 @@ interface StatisticsPageProps {
 export default async function StatisticsPage({
   searchParams,
 }: StatisticsPageProps) {
-  const tab = (await searchParams).tab;
-  const initialTransactions = await getStatisticsTransactions();
-
   return (
     <ViewTransitionPage>
       <div className="space-y-6">
@@ -22,11 +21,22 @@ export default async function StatisticsPage({
           Analyze your financial data with detailed charts and insights to make
           better budgeting decisions.
         </p>
-        <StatisticsView
-          initialTab={tab}
-          initialTransactions={initialTransactions}
-        />
+        <Suspense fallback={<FallbackLoader />}>
+          <RenderView searchParams={searchParams} />
+        </Suspense>
       </div>
     </ViewTransitionPage>
+  );
+}
+
+async function RenderView({ searchParams }: StatisticsPageProps) {
+  const tab = (await searchParams).tab;
+  const initialTransactions = await getStatisticsTransactions();
+
+  return (
+    <StatisticsView
+      initialTab={tab}
+      initialTransactions={initialTransactions}
+    />
   );
 }

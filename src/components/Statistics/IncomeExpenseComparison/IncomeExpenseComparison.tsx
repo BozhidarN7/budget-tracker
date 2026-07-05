@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import {
   Bar,
   BarChart,
@@ -21,10 +22,18 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useCurrencyFormatter, useStatisticsData } from '@/hooks/';
+import { Transaction } from '@/types/budget';
 
-export default function IncomeExpenseComparison() {
+interface IncomeExpenseComparisonProps {
+  initialTransactionsPromise: Promise<Transaction[]>;
+}
+
+export default function IncomeExpenseComparison({
+  initialTransactionsPromise,
+}: IncomeExpenseComparisonProps) {
+  const initialTransactions = use(initialTransactionsPromise);
   const { monthlyComparison, incomeSourceBreakdown, incomeVsExpenseRatio } =
-    useStatisticsData();
+    useStatisticsData({ initialTransactions });
   const { formatCurrency } = useCurrencyFormatter();
 
   const hasMonthlyData = monthlyComparison.some(

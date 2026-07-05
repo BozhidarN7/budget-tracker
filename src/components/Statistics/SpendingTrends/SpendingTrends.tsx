@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { use, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -27,10 +27,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCurrencyFormatter, useStatisticsData } from '@/hooks/';
+import { Transaction } from '@/types/budget';
 
-export default function SpendingTrends() {
-  const { dailySpending, weeklySpending, monthlySpending } =
-    useStatisticsData();
+interface SpendingTrendsProps {
+  initialTransactionsPromise: Promise<Transaction[]>;
+}
+
+export default function SpendingTrends({
+  initialTransactionsPromise,
+}: SpendingTrendsProps) {
+  const initialTransactions = use(initialTransactionsPromise);
+  const { dailySpending, weeklySpending, monthlySpending } = useStatisticsData({
+    initialTransactions,
+  });
   const [timeframe, setTimeframe] = useState('monthly');
   const { formatCurrency } = useCurrencyFormatter();
 

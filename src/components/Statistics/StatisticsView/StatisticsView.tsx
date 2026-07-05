@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useLayoutEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SpendingTrends from '../SpendingTrends';
 import CategoryAnalysis from '../CategoryAnalysis';
@@ -40,10 +40,16 @@ export default function StatisticsView({
 
   const [activeTab, setActiveTab] = useState(normalizedInitialTab);
 
+  useLayoutEffect(() => {
+    return () => {
+      setActiveTab(normalizedInitialTab);
+    };
+  }, [normalizedInitialTab]);
+
   return (
     <Tabs
       defaultValue={normalizedInitialTab}
-      value={initialTab || activeTab}
+      value={activeTab}
       onValueChange={setActiveTab}
       className="space-y-4"
     >

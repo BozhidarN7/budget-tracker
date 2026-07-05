@@ -24,6 +24,7 @@
 - **Shared transaction mutation hardening:** `createTransactionWithCategorySync` now performs case-insensitive category resolution, rejects ambiguous case-insensitive matches, persists with canonical category names, and returns `canonicalCategoryName` metadata for callers.
 - **Pending-card UX fix:** `MessageList`/`AIChatClient` now track confirmation state per message via `confirmingMessageId`, fixing the bug where all pending cards appeared to be confirming when one request was in flight.
 - **Coverage expansion:** Added focused tests for chat intent routing (`src/app/api/chat/route.test.ts`), transcript-state helpers (`src/app/api/chat/pending-transaction-state.test.ts`), pending/action normalization (`src/components/AIChat/utils/normalize-message.test.ts`), the new shared category gateway (`src/server/categories/category-service.test.ts`), and shared mutation canonicalization/error paths (`src/server/transactions/create-transaction.test.ts`).
+- **Dashboard loading alignment:** the auth and budget-data suspense states in `src/app/dashboard/layout.tsx` now share the same shell-level content container under the header. `BudgetLoading` was reduced to the inner spinner/text block so the handoff from `FallbackLoader` to the real header + budget fallback no longer shifts the message vertically.
 
 ## Open considerations
 

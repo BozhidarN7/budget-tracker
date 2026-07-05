@@ -39,6 +39,7 @@ export async function PUT(
   if (res.ok) {
     try {
       revalidateTag(CACHE_TAGS.budget.transactions, { expire: 0 });
+      revalidateTag(CACHE_TAGS.budget.allTransactions, { expire: 0 });
     } catch (error) {
       console.warn('Failed to revalidate cache:', error);
     }
@@ -66,6 +67,7 @@ export async function DELETE(
   if (res.status === 200 || res.status === 204) {
     try {
       revalidateTag(CACHE_TAGS.budget.transactions, { expire: 0 });
+      revalidateTag(CACHE_TAGS.budget.allTransactions, { expire: 0 });
     } catch (error) {
       console.warn('Failed to revalidate cache:', error);
     }

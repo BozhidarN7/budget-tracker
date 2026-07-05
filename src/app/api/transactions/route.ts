@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { API_BASE_URL } from '@/constants/api';
 import { getTokensFromCookies } from '@/server/auth';
 import {
@@ -6,6 +7,7 @@ import {
   createTransactionInputSchema,
   createTransactionWithCategorySync,
 } from '@/server/transactions/create-transaction';
+import { CACHE_TAGS } from '@/constants';
 
 async function buildAuthHeaders() {
   const tokens = await getTokensFromCookies();
@@ -45,6 +47,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const input = createTransactionInputSchema.parse(body);
     const result = await createTransactionWithCategorySync(input);
 
+    revalidateTag(CACHE_TAGS.budget.allTransactions, { expire: 0 });
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
     if (error instanceof CreateTransactionError) {

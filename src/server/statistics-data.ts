@@ -1,3 +1,4 @@
+import { CACHE_TAGS } from '@/constants';
 import { API_BASE_URL } from '@/constants/api';
 import { getTokensFromCookies } from '@/server/auth';
 import type { Transaction } from '@/types/budget';
@@ -17,6 +18,7 @@ export async function getStatisticsTransactions(): Promise<Transaction[]> {
         Authorization: `Bearer ${tokens.idToken}`,
       },
       cache: 'force-cache',
+      next: { tags: [CACHE_TAGS.budget.allTransactions] },
     });
 
     if (!res.ok) {

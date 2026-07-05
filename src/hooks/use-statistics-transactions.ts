@@ -19,5 +19,6 @@ export function useStatisticsTransactions({
     queryKey: statisticsQueryKeys.transactions,
     queryFn: fetchAllTransactions,
     initialData: initialTransactions,
+    staleTime: 0,
   });
 }

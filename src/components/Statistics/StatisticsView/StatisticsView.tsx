@@ -1,25 +1,30 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import SpendingTrends from '../SpendingTrends';
 import CategoryAnalysis from '../CategoryAnalysis';
 import IncomeExpenseComparison from '../IncomeExpenseComparison';
 import SavingsAnalysis from '../SavingsAnalysis';
-import { useStatisticsData } from '@/hooks';
+import {
+  CategoryAnalysisSkeleton,
+  IncomeExpenseComparisonSkeleton,
+  SavingsAnalysisSkeleton,
+  SpendingTrendsSkeleton,
+} from './StatisticsViewSkeletons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Transaction } from '@/types/budget';
 
 interface StatisticsViewProps {
-  initialTab?: string;
-  initialTransactions?: Transaction[];
+  initialTransactionsPromise?: Promise<Transaction[]>;
 }
 
 export default function StatisticsView({
-  initialTab = 'trends',
-  initialTransactions = [],
+  initialTransactionsPromise = Promise.resolve([]),
 }: StatisticsViewProps) {
-  useStatisticsData({ initialTransactions });
+  const searchParams = useSearchParams();
 
+  const initialTab = searchParams.get('tab') || '';
   const normalizedInitialTab = useMemo(() => {
     const allowedTabs = new Set([
       'trends',
@@ -38,7 +43,7 @@ export default function StatisticsView({
   return (
     <Tabs
       defaultValue={normalizedInitialTab}
-      value={activeTab}
+      value={initialTab || activeTab}
       onValueChange={setActiveTab}
       className="space-y-4"
     >
@@ -49,16 +54,32 @@ export default function StatisticsView({
         <TabsTrigger value="savings">Savings Analysis</TabsTrigger>
       </TabsList>
       <TabsContent value="trends" className="space-y-4">
-        <SpendingTrends />
+        <Suspense fallback={<SpendingTrendsSkeleton />}>
+          <SpendingTrends
+            initialTransactionsPromise={initialTransactionsPromise}
+          />
+        </Suspense>
       </TabsContent>
       <TabsContent value="categories" className="space-y-4">
-        <CategoryAnalysis />
+        <Suspense fallback={<CategoryAnalysisSkeleton />}>
+          <CategoryAnalysis
+            initialTransactionsPromise={initialTransactionsPromise}
+          />
+        </Suspense>
       </TabsContent>
       <TabsContent value="comparison" className="space-y-4">
-        <IncomeExpenseComparison />
+        <Suspense fallback={<IncomeExpenseComparisonSkeleton />}>
+          <IncomeExpenseComparison
+            initialTransactionsPromise={initialTransactionsPromise}
+          />
+        </Suspense>
       </TabsContent>
       <TabsContent value="savings" className="space-y-4">
-        <SavingsAnalysis />
+        <Suspense fallback={<SavingsAnalysisSkeleton />}>
+          <SavingsAnalysis
+            initialTransactionsPromise={initialTransactionsPromise}
+          />
+        </Suspense>
       </TabsContent>
     </Tabs>
   );

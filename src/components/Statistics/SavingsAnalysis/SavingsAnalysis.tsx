@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import {
   Area,
   AreaChart,
@@ -25,14 +26,22 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useCurrencyFormatter, useStatisticsData } from '@/hooks/';
+import { Transaction } from '@/types/budget';
 
-export default function SavingsAnalysis() {
+interface SavingsAnalysisProps {
+  initialTransactionsPromise: Promise<Transaction[]>;
+}
+
+export default function SavingsAnalysis({
+  initialTransactionsPromise,
+}: SavingsAnalysisProps) {
+  const initialTransactions = use(initialTransactionsPromise);
   const {
     savingsRate,
     savingsGoalProgress,
     savingsProjection,
     savingsDistribution,
-  } = useStatisticsData();
+  } = useStatisticsData({ initialTransactions });
   const { formatCurrency } = useCurrencyFormatter();
 
   const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];

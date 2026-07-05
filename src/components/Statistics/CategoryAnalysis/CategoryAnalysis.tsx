@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import {
   Bar,
   BarChart,
@@ -21,10 +22,18 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { useCurrencyFormatter, useStatisticsData } from '@/hooks/';
 import { cn } from '@/lib/utils';
+import { Transaction } from '@/types/budget';
 
-export default function CategoryAnalysis() {
+interface CategoryAnalysisProps {
+  initialTransactionsPromise: Promise<Transaction[]>;
+}
+
+export default function CategoryAnalysis({
+  initialTransactionsPromise,
+}: CategoryAnalysisProps) {
+  const initialTransactions = use(initialTransactionsPromise);
   const { categoryBreakdown, categoryTrends, categoryLimits } =
-    useStatisticsData();
+    useStatisticsData({ initialTransactions });
   const { formatCurrency } = useCurrencyFormatter();
 
   const COLORS = [

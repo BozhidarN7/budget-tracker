@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useLayoutEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SpendingTrends from '../SpendingTrends';
 import CategoryAnalysis from '../CategoryAnalysis';
@@ -40,19 +40,12 @@ export default function StatisticsView({
 
   const [activeTab, setActiveTab] = useState(normalizedInitialTab);
 
-  useLayoutEffect(() => {
-    return () => {
-      setActiveTab(normalizedInitialTab);
-    };
+  useEffect(() => {
+    setActiveTab(normalizedInitialTab);
   }, [normalizedInitialTab]);
 
   return (
-    <Tabs
-      defaultValue={normalizedInitialTab}
-      value={activeTab}
-      onValueChange={setActiveTab}
-      className="space-y-4"
-    >
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
       <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
         <TabsTrigger value="trends">Spending Trends</TabsTrigger>
         <TabsTrigger value="categories">Category Analysis</TabsTrigger>

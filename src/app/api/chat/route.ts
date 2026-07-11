@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import {
   type ChatMessage,
   buildGeneralConversationResponse,
@@ -20,13 +21,19 @@ import {
   isCompleteCandidate,
 } from './transaction-candidate-extraction';
 import { fetchServerCategories } from '@/server/categories';
+import { buildAuthHeaders } from '@/server/auth';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
+  const headers = await buildAuthHeaders();
+  if (!headers) {
+    return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+  }
+
   const { messages }: { messages: ChatMessage[] } = await req.json();
-  const categories = await fetchServerCategories().catch(() => []);
+  const categories = await fetchServerCategories(headers);
   const latestText = extractLastUserText(messages);
   const activePending = findLatestUnresolvedPendingTransaction(messages);
   const pendingIntent = activePending

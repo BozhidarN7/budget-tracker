@@ -1,20 +1,8 @@
 import { revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { API_BASE_URL } from '@/constants/api';
-import { getTokensFromCookies } from '@/server/auth';
+import { buildAuthHeaders } from '@/server/auth';
 import { CACHE_TAGS } from '@/constants';
-
-async function buildAuthHeaders() {
-  const tokens = await getTokensFromCookies();
-  if (!tokens?.idToken) {
-    return null;
-  }
-
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${tokens.idToken}`,
-  };
-}
 
 export async function GET(): Promise<NextResponse> {
   const headers = await buildAuthHeaders();

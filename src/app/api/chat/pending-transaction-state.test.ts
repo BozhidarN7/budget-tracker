@@ -7,11 +7,13 @@ import {
 } from './pending-transaction-state';
 import type { Category } from '@/types/budget';
 
-const generateTextMock = vi.fn();
-const outputObjectMock = vi.fn((config) => ({ kind: 'object', ...config }));
-const ollamaMock = vi.fn((modelId: string) => ({
-  provider: 'ollama',
-  modelId,
+const { generateTextMock, ollamaMock, outputObjectMock } = vi.hoisted(() => ({
+  generateTextMock: vi.fn(),
+  ollamaMock: vi.fn((modelId: string) => ({
+    provider: 'ollama',
+    modelId,
+  })),
+  outputObjectMock: vi.fn((config) => ({ kind: 'object', ...config })),
 }));
 
 vi.mock('ai', () => ({

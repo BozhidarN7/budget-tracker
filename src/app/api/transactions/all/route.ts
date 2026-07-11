@@ -1,18 +1,6 @@
 import { NextResponse } from 'next/server';
 import { API_BASE_URL } from '@/constants/api';
-import { getTokensFromCookies } from '@/server/auth';
-
-async function buildAuthHeaders() {
-  const tokens = await getTokensFromCookies();
-  if (!tokens?.idToken) {
-    return null;
-  }
-
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${tokens.idToken}`,
-  };
-}
+import { buildAuthHeaders } from '@/server/auth';
 
 export async function GET(): Promise<NextResponse> {
   const headers = await buildAuthHeaders();

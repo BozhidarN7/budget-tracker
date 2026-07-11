@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const buildAuthHeadersMock = vi.fn();
 const extractTransactionCandidateMock = vi.fn();
 const extractTransactionPatchMock = vi.fn();
 const fetchServerCategoriesMock = vi.fn();
 const getMissingFieldsMock = vi.fn();
 const isCompleteCandidateMock = vi.fn();
 const classifyPendingTransactionIntentMock = vi.fn();
+
+vi.mock('@/server/auth', () => ({
+  buildAuthHeaders: buildAuthHeadersMock,
+}));
 
 vi.mock('./transaction-candidate-extraction', () => ({
   extractTransactionCandidate: extractTransactionCandidateMock,
@@ -58,6 +63,10 @@ const pendingCandidate = {
 describe('/api/chat route intent handling', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    buildAuthHeadersMock.mockResolvedValue({
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer test-token',
+    });
     fetchServerCategoriesMock.mockResolvedValue(categories);
     extractTransactionCandidateMock.mockResolvedValue({});
     extractTransactionPatchMock.mockResolvedValue({});
@@ -68,6 +77,33 @@ describe('/api/chat route intent handling', () => {
       confidence: 0.25,
       hasConflictingIntent: false,
     });
+  });
+
+  it('returns 401 before chat processing when authentication is missing', async () => {
+    buildAuthHeadersMock.mockResolvedValue(null);
+
+    const { POST } = await import('./route');
+    const response = await POST(
+      new Request('http://localhost/api/chat', {
+        method: 'POST',
+        body: JSON.stringify({
+          messages: [
+            {
+              id: 'user-1',
+              role: 'user',
+              parts: [{ type: 'text', text: 'add expense 25 shopping' }],
+            },
+          ],
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: 'Unauthenticated',
+    });
+    expect(fetchServerCategoriesMock).not.toHaveBeenCalled();
+    expect(extractTransactionCandidateMock).not.toHaveBeenCalled();
   });
 
   it('emits structured confirm action when user sends confirm', async () => {

@@ -21,6 +21,11 @@ export const REFRESH_TOKEN_COOKIE = 'bt_rt';
 
 export type ServerAuthTokens = AuthTokens;
 
+export type ServerAuthHeaders = {
+  Authorization: string;
+  'Content-Type': 'application/json';
+};
+
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
     const [, payload] = token.split('.');
@@ -70,6 +75,18 @@ export async function getTokensFromCookies(): Promise<ServerAuthTokens | null> {
     accessToken: accessToken || '',
     idToken: idToken || '',
     refreshToken,
+  };
+}
+
+export async function buildAuthHeaders(): Promise<ServerAuthHeaders | null> {
+  const tokens = await getTokensFromCookies();
+  if (!tokens?.idToken) {
+    return null;
+  }
+
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${tokens.idToken}`,
   };
 }
 

@@ -32,6 +32,12 @@ const eslintConfig = [
     },
   },
   {
+    files: ['**/*.test.{js,ts,jsx,tsx}'],
+    rules: {
+      'max-lines': 'off',
+    },
+  },
+  {
     ignores: [
       'node_modules/**',
       '.next/**',

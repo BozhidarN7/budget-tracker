@@ -10,8 +10,11 @@ import {
 } from '@/server/categories';
 import type { Category, CurrencyCode, Transaction } from '@/types/budget';
 import { applyCategorySpendChange } from '@/utils/transactions/apply-category-spend-change';
+import { formatMonthKey, parseDate } from '@/utils';
+import { ServerAuthHeaders } from '@/server/auth';
 
 const SUPPORTED_CURRENCIES = ['EUR', 'BGN', 'USD', 'GBP'] as const;
+const CATEGORY_UPDATE_RETRY_LIMIT = 3;
 
 export const createTransactionInputSchema = pendingTransactionCandidateSchema;
 
@@ -85,6 +88,65 @@ async function persistCategory(
   return category;
 }
 
+async function syncCategorySpendAfterTransaction(
+  headers: ServerAuthHeaders,
+  categoryId: string,
+  transaction: Transaction,
+) {
+  const transactionMonthKey = formatMonthKey(parseDate(transaction.date));
+
+  for (let attempt = 0; attempt < CATEGORY_UPDATE_RETRY_LIMIT; attempt += 1) {
+    const categories = await fetchServerCategories(headers).catch((error) => {
+      if (
+        error instanceof Error &&
+        error.message === 'Failed to load categories'
+      ) {
+        throw new CreateTransactionError(
+          'Failed to reload categories for transaction reconciliation',
+          500,
+        );
+      }
+
+      throw error;
+    });
+
+    const category = categories.find((item) => item.id === categoryId);
+
+    if (!category) {
+      throw new CreateTransactionError(
+        'Failed to reload category for transaction reconciliation',
+        500,
+      );
+    }
+
+    const updatedCategoryDraft = applyCategorySpendChange(
+      category,
+      transaction,
+      'add',
+    );
+    const persistedCategory = await persistCategory(
+      headers,
+      category.id,
+      updatedCategoryDraft.monthlyData,
+    );
+
+    if (
+      persistedCategory.monthlyData[transactionMonthKey]?.spent ===
+      updatedCategoryDraft.monthlyData[transactionMonthKey]?.spent
+    ) {
+      return {
+        categories,
+        category: persistedCategory,
+      };
+    }
+  }
+
+  throw new CreateTransactionError(
+    'Failed to reconcile category spending after transaction creation',
+    500,
+  );
+}
+
 function validateCategory(
   categories: Category[],
   input: CreateTransactionInput,
@@ -145,18 +207,15 @@ export async function createTransactionWithCategorySync(
     category: category.name,
   };
   const transaction = await persistTransaction(headers, canonicalInput);
-  const updatedCategoryDraft = applyCategorySpendChange(
-    category,
-    transaction,
-    'add',
-  );
-  const updatedCategory = await persistCategory(
+  const categorySyncResult = await syncCategorySpendAfterTransaction(
     headers,
     category.id,
-    updatedCategoryDraft.monthlyData,
+    transaction,
   );
-  const updatedCategories = categories.map((item) =>
-    item.id === updatedCategory.id ? updatedCategory : item,
+  const updatedCategories = categorySyncResult.categories.map((item) =>
+    item.id === categorySyncResult.category.id
+      ? categorySyncResult.category
+      : item,
   );
 
   revalidateTag(CACHE_TAGS.budget.transactions, { expire: 0 });
@@ -165,7 +224,7 @@ export async function createTransactionWithCategorySync(
   return {
     canonicalCategoryName: category.name,
     categories: updatedCategories,
-    category: updatedCategory,
+    category: categorySyncResult.category,
     transaction,
   };
 }

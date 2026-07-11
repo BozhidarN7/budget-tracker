@@ -54,9 +54,9 @@ Key ideas:
 ### Category spend ownership
 
 - Category spend widgets currently read `category.monthlyData[month].spent` rather than deriving category totals from transactions on every render.
-- Normal transaction CRUD follows a split-write flow in [`src/contexts/budget/transaction-operations.ts`](src/contexts/budget/transaction-operations.ts): create/update/delete the transaction first, then persist an updated category `monthlyData` payload through the categories API.
+- Normal transaction CRUD follows a split-write flow in [`src/contexts/budget/transaction-operations.ts`](src/contexts/budget/transaction-operations.ts): create/update/delete the transaction first, then persist an updated category `monthlyData` payload through the categories API. For server-side transaction create specifically, [`createTransactionWithCategorySync`](src/server/transactions/create-transaction.ts) now validates the category up front, creates the transaction, re-fetches categories, reapplies the month spend delta from the fresh category snapshot, and retries if the returned category month total does not match the expected reconciled value.
 - Recurring materialization is assumed to update category spend on the backend, and the frontend expects fetched categories to already include those materialized amounts.
-- This split contract is documented in [`docs/backend-category-spend-reconciliation.md`](docs/backend-category-spend-reconciliation.md). The main architectural risk is stale client overwrites when the frontend sends a full `monthlyData` object after backend-side recurring changes.
+- This split contract is documented in [`docs/backend-category-spend-reconciliation.md`](docs/backend-category-spend-reconciliation.md). The immediate stale pre-create snapshot bug for server-side create has been mitigated, but the main architectural risk remains full-object category overwrites without backend-side optimistic concurrency or atomic aggregation.
 
 ## API layer & caching
 

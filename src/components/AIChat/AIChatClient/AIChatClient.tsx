@@ -92,7 +92,7 @@ export default function AIChatClient() {
           </div>
 
           <Button variant="outline" size="sm" onClick={handleNewChat}>
-            <MessageSquarePlus className="h-4 w-4" />
+            <MessageSquarePlus className="h-4 w-4" aria-hidden="true" />
             New chat
           </Button>
         </div>
